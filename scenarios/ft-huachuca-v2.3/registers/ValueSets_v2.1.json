@@ -1,0 +1,46 @@
+{
+  "commandStatusCodes": [
+    "PENDING",
+    "ACCEPTED",
+    "REJECTED",
+    "SCHEDULED",
+    "UPDATED",
+    "CANCELED",
+    "EXECUTING",
+    "FAILED",
+    "COMPLETED"
+  ],
+  "acousticClassLabels": [
+    "uas",
+    "vehicle",
+    "footsteps",
+    "impulsive",
+    "unknown"
+  ],
+  "sstTrackTags": [
+    "dynamic",
+    "static",
+    ""
+  ],
+  "startStopActions": [
+    "start",
+    "stop",
+    "restart"
+  ],
+  "applyModes": [
+    "immediate",
+    "nextFrame",
+    "nextRestart"
+  ],
+  "snapshotFormats": [
+    "wav",
+    "flac",
+    "json"
+  ],
+  "networkModes": [
+    "single-node",
+    "multi-node-association",
+    "triangulation-enabled",
+    "full-pipeline"
+  ]
+}

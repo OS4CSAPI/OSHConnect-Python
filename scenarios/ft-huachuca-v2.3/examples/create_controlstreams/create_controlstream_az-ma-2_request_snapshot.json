@@ -1,0 +1,64 @@
+{
+  "name": "AZ-MA-2 Request Snapshot ControlStream",
+  "description": "Snapshot.",
+  "type": "command",
+  "live": true,
+  "system@link": {
+    "href": "/sensorhub/api/systems/AZ-MA-2-ACTUATOR",
+    "title": "AZ-MA-2-ACTUATOR"
+  },
+  "schema": {
+    "parametersSchema": {
+      "type": "DataRecord",
+      "definition": "https://os4csapi.org/def/csapi/commands/requestSnapshotParams",
+      "label": "Snapshot Params",
+      "fields": [
+        {
+          "name": "trackId",
+          "type": "Count",
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "name": "durationMs",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/csapi/durationMs",
+          "label": "Duration",
+          "uom": {
+            "code": "ms"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                10,
+                60000
+              ]
+            ]
+          }
+        },
+        {
+          "name": "format",
+          "type": "Category",
+          "definition": "https://os4csapi.org/def/csapi/format",
+          "label": "Format",
+          "constraint": {
+            "type": "AllowedTokens",
+            "values": [
+              "wav",
+              "flac",
+              "json"
+            ]
+          }
+        }
+      ]
+    },
+    "commandFormat": "application/json"
+  },
+  "procedure@link": {
+    "href": "/sensorhub/api/procedures/AZ-MA-2-PROC-ODAS",
+    "title": "AZ-MA-2-PROC-ODAS"
+  },
+  "inputName": "snapshot",
+  "async": false
+}

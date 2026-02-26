@@ -1,0 +1,17 @@
+digraph G {
+rankdir=LR;
+AOI[label="AZ-DEP-AOI-001\nDeployment (AOI polygon)"];
+NET[label="AZ-MA-NET\nSystem (container)"];
+PROP[label="/properties\n(Property definitions)"];
+DEP_SYS[label="DeployedSystem\n(deployment ↔ system)"];
+CTRL[label="ControlStream\n(schema.commandFormat)"];
+CMD[label="Command\nPOST /controlstreams/{id}/commands"];
+STATUS[label="CommandStatus\nGET /commands/{id}/status"];
+NET -> AOI;
+NET -> DEP_SYS;
+DEP_SYS -> AOI;
+DEP_SYS -> NET;
+PROP -> CTRL;
+CTRL -> CMD;
+CMD -> STATUS;
+}

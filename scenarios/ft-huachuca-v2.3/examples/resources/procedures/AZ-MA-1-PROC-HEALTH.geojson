@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-1-PROC-HEALTH",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:Procedure",
+    "uid": "urn:os4csapi:procedure:odas:az-ma-1:health-monitor:v1",
+    "name": "Health Proc (AZ-MA-1)",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

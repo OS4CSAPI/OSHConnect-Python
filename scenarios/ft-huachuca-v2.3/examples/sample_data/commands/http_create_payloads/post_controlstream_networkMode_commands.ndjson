@@ -1,0 +1,2 @@
+{"parameters": {"mode": "full-pipeline", "note": "enable assoc+triang"}}
+{"parameters": {"mode": "triangulation-enabled", "note": "triang only"}}

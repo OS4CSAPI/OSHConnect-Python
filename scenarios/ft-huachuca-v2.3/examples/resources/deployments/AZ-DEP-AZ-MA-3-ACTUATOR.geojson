@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-AZ-MA-3-ACTUATOR",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:az-ma-3:actuator:ft-huachuca:001",
+    "name": "Deployment AZ-MA-3-ACTUATOR",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

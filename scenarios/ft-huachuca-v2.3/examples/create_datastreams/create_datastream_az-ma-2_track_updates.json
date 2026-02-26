@@ -1,0 +1,212 @@
+{
+  "name": "AZ-MA-2 Track Updates",
+  "description": "Per-track updates.",
+  "type": "observation",
+  "live": true,
+  "schema": {
+    "obsFormat": "application/json",
+    "resultSchema": {
+      "type": "DataRecord",
+      "definition": "https://os4csapi.org/def/odas/track/updateRecordOSH",
+      "label": "Track update",
+      "fields": [
+        {
+          "name": "timestamp",
+          "type": "Time",
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds",
+          "uom": {
+            "code": "s",
+            "label": "seconds"
+          },
+          "referenceTime": "1970-01-01T00:00:00Z"
+        },
+        {
+          "name": "odasTimeStamp",
+          "type": "Count",
+          "definition": "https://os4csapi.org/def/odas/frameIndex",
+          "label": "ODAS timeStamp/frame index"
+        },
+        {
+          "name": "id",
+          "type": "Count",
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "name": "tag",
+          "type": "Text",
+          "definition": "https://os4csapi.org/def/odas/trackTag",
+          "label": "Track tag",
+          "constraint": {
+            "type": "AllowedTokens",
+            "values": [
+              "dynamic",
+              "static",
+              ""
+            ]
+          }
+        },
+        {
+          "name": "x",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/directionCosineX",
+          "label": "Direction cosine X",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                -1,
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "name": "y",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/directionCosineY",
+          "label": "Direction cosine Y",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                -1,
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "name": "z",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+          "label": "Direction cosine Z",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                -1,
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "name": "activity",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/trackActivity",
+          "label": "Activity",
+          "uom": {
+            "code": "1"
+          }
+        },
+        {
+          "name": "bearingTrue",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/bearingTrue",
+          "label": "Bearing true",
+          "uom": {
+            "code": "deg"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                0,
+                360
+              ]
+            ]
+          }
+        },
+        {
+          "name": "elevation",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/elevation",
+          "label": "Elevation",
+          "uom": {
+            "code": "deg"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                -90,
+                90
+              ]
+            ]
+          }
+        },
+        {
+          "name": "bearingStdDev",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/bearingStdDev",
+          "label": "Bearing std dev",
+          "uom": {
+            "code": "deg"
+          }
+        },
+        {
+          "name": "classLabel",
+          "type": "Category",
+          "definition": "https://os4csapi.org/def/odas/classLabel",
+          "label": "Class label",
+          "constraint": {
+            "type": "AllowedTokens",
+            "values": [
+              "uas",
+              "vehicle",
+              "footsteps",
+              "impulsive",
+              "unknown"
+            ]
+          }
+        },
+        {
+          "name": "classConfidence",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/classConfidence",
+          "label": "Class confidence",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                0,
+                1
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "deployment@link": {
+    "href": "/sensorhub/api/deployments/AZ-DEP-AZ-MA-2",
+    "title": "AZ-DEP-AZ-MA-2",
+    "type": "application/geo+json"
+  },
+  "procedure@link": {
+    "href": "/sensorhub/api/procedures/AZ-MA-2-PROC-ODAS",
+    "title": "AZ-MA-2-PROC-ODAS",
+    "type": "application/geo+json"
+  },
+  "featureOfInterest@link": {
+    "href": "/sensorhub/api/deployments/AZ-DEP-AOI-001",
+    "title": "AOI",
+    "type": "application/geo+json"
+  },
+  "phenomenonTimeInterval": "PT1S",
+  "resultTimeInterval": "PT1S"
+}

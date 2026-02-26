@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:memUsedMB",
+  "label": "memUsedMB",
+  "description": "Memory used MB (demo)",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/InformationEntropy",
+  "objectType": "https://os4csapi.org/def/csapi/memUsedMB",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "MB"
+    }
+  ]
+}

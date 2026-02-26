@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:timestamp",
+  "label": "timestamp",
+  "description": "Epoch seconds (first field for OSHConnect)",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Time",
+  "objectType": "https://os4csapi.org/def/odas/time/epochSeconds",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Time"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "s"
+    }
+  ]
+}

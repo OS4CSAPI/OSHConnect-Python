@@ -1,0 +1,5 @@
+flowchart LR
+PROP[/properties\nProperty defs/] --> CTRL[ControlStream\nschema.commandFormat]
+CTRL --> CMD[Command\nPOST /controlstreams/{id}/commands]
+CMD --> STATUS[CommandStatus\n/commands/{id}/status]
+AOI[AZ-DEP-AOI-001 Deployment] --> DEP_SYS[DeployedSystem]\nDEP_SYS --> NET[AZ-MA-NET System]

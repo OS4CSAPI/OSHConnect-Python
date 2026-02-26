@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": "AZ-GTRK-0001",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:Sample",
+    "uid": "urn:os4csapi:sample:globaltrack:GT-0001",
+    "name": "GlobalTrackSample GT-0001",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

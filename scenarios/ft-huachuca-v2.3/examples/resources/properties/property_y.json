@@ -1,0 +1,22 @@
+{
+  "uniqueId": "urn:os4csapi:property:y",
+  "label": "y",
+  "description": "Direction cosine Y",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/directionCosineY",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:sweType",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:uomCode",
+      "label": "uomCode",
+      "value": "1"
+    }
+  ],
+  "links": []
+}

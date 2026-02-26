@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:activityLevel",
+  "label": "activityLevel",
+  "description": "Scene activity level",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/csapi/activityLevel",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "1"
+    }
+  ]
+}

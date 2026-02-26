@@ -1,0 +1,29 @@
+{
+  "system": {
+    "href": "/sensorhub/api/systems/AZ-MA-NET",
+    "title": "AZ-MA-NET",
+    "type": "application/geo+json"
+  },
+  "description": "AOI-wide operational context.",
+  "configuration": {
+    "setValues": [
+      {
+        "ref": "parameters/samplingRate",
+        "value": {
+          "type": "Quantity",
+          "value": 16000,
+          "uom": {
+            "code": "Hz"
+          }
+        }
+      },
+      {
+        "ref": "parameters/nPots",
+        "value": {
+          "type": "Count",
+          "value": 4
+        }
+      }
+    ]
+  }
+}

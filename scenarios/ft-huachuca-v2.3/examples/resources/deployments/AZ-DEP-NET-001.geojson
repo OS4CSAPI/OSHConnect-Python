@@ -1,0 +1,40 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-NET-001",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -110.277897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.649006
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:network:ft-huachuca:001",
+    "name": "Network Deployment",
+    "validTime": {
+      "begin": "2026-02-26T00:00:00Z",
+      "end": null
+    }
+  }
+}

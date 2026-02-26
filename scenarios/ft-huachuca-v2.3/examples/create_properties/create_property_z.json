@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:z",
+  "label": "z",
+  "description": "Direction cosine Z",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/directionCosineZ",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "1"
+    }
+  ]
+}

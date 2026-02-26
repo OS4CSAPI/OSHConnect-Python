@@ -1,0 +1,20 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-2-MIC5",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.257897,
+      31.655006
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Sensor",
+    "uid": "urn:os4csapi:system:odas:az-ma-2:mic5",
+    "name": "AZ-MA-2 Microphone Element 5",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

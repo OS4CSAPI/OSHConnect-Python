@@ -1,0 +1,20 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-2-MICARRAY",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.257897,
+      31.655006
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Sensor",
+    "uid": "urn:os4csapi:system:odas:az-ma-2:micarray",
+    "name": "AZ-MA-2 MICARRAY",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

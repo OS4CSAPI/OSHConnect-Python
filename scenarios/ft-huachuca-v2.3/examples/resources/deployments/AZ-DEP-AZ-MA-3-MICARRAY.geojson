@@ -1,0 +1,20 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-AZ-MA-3-MICARRAY",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.269897,
+      31.650005999999998
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:az-ma-3:micarray:ft-huachuca:001",
+    "name": "Deployment AZ-MA-3-MICARRAY",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

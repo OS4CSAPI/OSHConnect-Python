@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:E",
+  "label": "E",
+  "description": "ODAS SSL relative energy metric",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/relativeEnergy",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "1"
+    }
+  ]
+}

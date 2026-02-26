@@ -1,0 +1,6 @@
+{"parameters": {"module": "ssl", "parameter": "ssl.probMin", "value": "0.25", "applyMode": "nextFrame"}}
+{"parameters": {"module": "sst", "parameter": "sst.maxTracks", "value": "8", "applyMode": "nextRestart"}}
+{"parameters": {"module": "ssl", "parameter": "ssl.probMin", "value": "0.25", "applyMode": "nextFrame"}}
+{"parameters": {"module": "sst", "parameter": "sst.maxTracks", "value": "8", "applyMode": "nextRestart"}}
+{"parameters": {"module": "ssl", "parameter": "ssl.probMin", "value": "0.25", "applyMode": "nextFrame"}}
+{"parameters": {"module": "sst", "parameter": "sst.maxTracks", "value": "8", "applyMode": "nextRestart"}}

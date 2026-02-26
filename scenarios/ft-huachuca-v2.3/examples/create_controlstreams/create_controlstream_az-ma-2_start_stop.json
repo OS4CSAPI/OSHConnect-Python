@@ -1,0 +1,46 @@
+{
+  "name": "AZ-MA-2 Start Stop ControlStream",
+  "description": "Start/stop.",
+  "type": "command",
+  "live": true,
+  "system@link": {
+    "href": "/sensorhub/api/systems/AZ-MA-2-ACTUATOR",
+    "title": "AZ-MA-2-ACTUATOR"
+  },
+  "schema": {
+    "parametersSchema": {
+      "type": "DataRecord",
+      "definition": "https://os4csapi.org/def/csapi/commands/startStopParams",
+      "label": "Start/Stop Params",
+      "fields": [
+        {
+          "name": "action",
+          "type": "Category",
+          "definition": "https://os4csapi.org/def/csapi/action",
+          "label": "Action",
+          "constraint": {
+            "type": "AllowedTokens",
+            "values": [
+              "start",
+              "stop",
+              "restart"
+            ]
+          }
+        },
+        {
+          "name": "modules",
+          "type": "Text",
+          "definition": "https://os4csapi.org/def/csapi/modules",
+          "label": "Modules CSV"
+        }
+      ]
+    },
+    "commandFormat": "application/json"
+  },
+  "procedure@link": {
+    "href": "/sensorhub/api/procedures/AZ-MA-2-PROC-ODAS",
+    "title": "AZ-MA-2-PROC-ODAS"
+  },
+  "inputName": "startStop",
+  "async": false
+}

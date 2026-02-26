@@ -1,0 +1,104 @@
+{
+  "name": "AZ-MA-1 Health",
+  "description": "Health.",
+  "type": "observation",
+  "live": true,
+  "schema": {
+    "obsFormat": "application/json",
+    "resultSchema": {
+      "type": "DataRecord",
+      "definition": "https://os4csapi.org/def/csapi/health/statusRecordOSH",
+      "label": "Health",
+      "fields": [
+        {
+          "name": "timestamp",
+          "type": "Time",
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds",
+          "uom": {
+            "code": "s",
+            "label": "seconds"
+          },
+          "referenceTime": "1970-01-01T00:00:00Z"
+        },
+        {
+          "name": "cpuLoad",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/csapi/cpuLoad",
+          "label": "CPU load",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                0,
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "name": "memUsedMB",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/csapi/memUsedMB",
+          "label": "Mem used",
+          "uom": {
+            "code": "MB"
+          }
+        },
+        {
+          "name": "tempC",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/csapi/tempC",
+          "label": "Temp",
+          "uom": {
+            "code": "Cel",
+            "label": "Celsius"
+          }
+        },
+        {
+          "name": "latencyMs",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/csapi/latencyMs",
+          "label": "Latency",
+          "uom": {
+            "code": "ms"
+          }
+        },
+        {
+          "name": "uptimeS",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/csapi/uptimeS",
+          "label": "Uptime",
+          "uom": {
+            "code": "s"
+          }
+        }
+      ]
+    }
+  },
+  "deployment@link": {
+    "href": "/sensorhub/api/deployments/AZ-DEP-AZ-MA-1",
+    "title": "AZ-DEP-AZ-MA-1",
+    "type": "application/geo+json"
+  },
+  "procedure@link": {
+    "href": "/sensorhub/api/procedures/AZ-MA-1-PROC-HEALTH",
+    "title": "AZ-MA-1-PROC-HEALTH",
+    "type": "application/geo+json"
+  },
+  "featureOfInterest@link": {
+    "href": "/sensorhub/api/deployments/AZ-DEP-AOI-001",
+    "title": "AOI",
+    "type": "application/geo+json"
+  },
+  "phenomenonTimeInterval": "PT1S",
+  "resultTimeInterval": "PT1S",
+  "system@link": {
+    "href": "/sensorhub/api/systems/AZ-MA-1",
+    "title": "AZ-MA-1",
+    "type": "application/geo+json"
+  }
+}

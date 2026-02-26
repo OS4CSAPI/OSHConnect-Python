@@ -1,0 +1,20 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-AZ-MA-1-COMMS",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.272897,
+      31.663006
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:az-ma-1:comms:ft-huachuca:001",
+    "name": "Deployment AZ-MA-1-COMMS",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

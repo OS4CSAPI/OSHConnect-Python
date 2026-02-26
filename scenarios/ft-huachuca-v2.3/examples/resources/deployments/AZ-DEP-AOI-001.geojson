@@ -1,0 +1,40 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-AOI-001",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -110.277897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.649006
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:aoi:ft-huachuca-range-01",
+    "name": "AOI Deployment",
+    "validTime": {
+      "begin": "2026-02-26T00:00:00Z",
+      "end": null
+    }
+  }
+}

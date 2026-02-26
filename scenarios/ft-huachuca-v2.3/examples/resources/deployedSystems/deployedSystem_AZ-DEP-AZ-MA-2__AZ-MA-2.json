@@ -1,0 +1,29 @@
+{
+  "system": {
+    "href": "/sensorhub/api/systems/AZ-MA-2",
+    "title": "AZ-MA-2",
+    "type": "application/geo+json"
+  },
+  "description": "Deployed system AZ-MA-2 in deployment AZ-DEP-AZ-MA-2.",
+  "configuration": {
+    "setValues": [
+      {
+        "ref": "parameters/samplingRate",
+        "value": {
+          "type": "Quantity",
+          "value": 16000,
+          "uom": {
+            "code": "Hz"
+          }
+        }
+      },
+      {
+        "ref": "parameters/nPots",
+        "value": {
+          "type": "Count",
+          "value": 4
+        }
+      }
+    ]
+  }
+}

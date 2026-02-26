@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:classConfidence",
+  "label": "classConfidence",
+  "description": "Class confidence",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/classConfidence",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "1"
+    }
+  ]
+}

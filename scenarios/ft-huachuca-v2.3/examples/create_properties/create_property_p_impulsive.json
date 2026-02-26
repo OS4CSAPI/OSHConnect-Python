@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:p_impulsive",
+  "label": "p_impulsive",
+  "description": "P(impulsive)",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/p_impulsive",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "1"
+    }
+  ]
+}

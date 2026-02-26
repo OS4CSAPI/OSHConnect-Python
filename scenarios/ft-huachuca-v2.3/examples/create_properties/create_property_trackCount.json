@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:trackCount",
+  "label": "trackCount",
+  "description": "Active tracks",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/csapi/trackCount",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Count"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": ""
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-1-TRK-3",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:Sample",
+    "uid": "urn:os4csapi:sample:az-ma-1:track:0003",
+    "name": "TrackSample AZ-MA-1/3",
+    "provisionalClass": "footsteps",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

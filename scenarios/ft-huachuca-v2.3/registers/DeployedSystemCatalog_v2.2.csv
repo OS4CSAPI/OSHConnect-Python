@@ -1,0 +1,8 @@
+deploymentId,systemId,file
+AZ-DEP-AOI-001,AZ-MA-1,deployedSystem_AZ-DEP-AOI-001__AZ-MA-1.json
+AZ-DEP-AOI-001,AZ-MA-2,deployedSystem_AZ-DEP-AOI-001__AZ-MA-2.json
+AZ-DEP-AOI-001,AZ-MA-3,deployedSystem_AZ-DEP-AOI-001__AZ-MA-3.json
+AZ-DEP-AOI-001,AZ-MA-NET,deployedSystem_AZ-DEP-AOI-001__AZ-MA-NET.json
+AZ-DEP-AZ-MA-1,AZ-MA-1,deployedSystem_AZ-DEP-AZ-MA-1__AZ-MA-1.json
+AZ-DEP-AZ-MA-2,AZ-MA-2,deployedSystem_AZ-DEP-AZ-MA-2__AZ-MA-2.json
+AZ-DEP-AZ-MA-3,AZ-MA-3,deployedSystem_AZ-DEP-AZ-MA-3__AZ-MA-3.json

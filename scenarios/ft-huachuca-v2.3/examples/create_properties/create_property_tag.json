@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:tag",
+  "label": "tag",
+  "description": "ODAS tag",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/trackTag",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Text"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": ""
+    }
+  ]
+}

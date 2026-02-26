@@ -1,0 +1,22 @@
+{
+  "uniqueId": "urn:os4csapi:property:p_footsteps",
+  "label": "p_footsteps",
+  "description": "P(footsteps)",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/p_footsteps",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:sweType",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:uomCode",
+      "label": "uomCode",
+      "value": "1"
+    }
+  ],
+  "links": []
+}

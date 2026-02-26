@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:method",
+  "label": "method",
+  "description": "Method",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/csapi/method",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Text"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": ""
+    }
+  ]
+}

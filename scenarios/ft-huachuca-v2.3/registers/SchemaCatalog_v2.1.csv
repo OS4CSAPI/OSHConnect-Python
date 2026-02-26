@@ -1,0 +1,14 @@
+schemaName,kind,format
+scene_summary_OSH_v2.1.json,DataStream resultSchema,application/json
+ssl_potential_scene_OSH_v2.1.json,DataStream resultSchema,application/json
+sst_tracked_scene_OSH_v2.1.json,DataStream resultSchema,application/json
+track_update_OSH_v2.1.json,DataStream resultSchema,application/json
+lob_OSH_v2.1.json,DataStream resultSchema,application/json
+triangulated_position_OSH_v2.1.json,DataStream resultSchema,application/json
+classification_probs_OSH_v2.1.json,DataStream resultSchema,application/json
+health_OSH_v2.1.json,DataStream resultSchema,application/json
+cmdschema_odas_control_v2.1.json,ControlStream parametersSchema,application/json
+cmdschema_calibrate_orientation_v2.1.json,ControlStream parametersSchema,application/json
+cmdschema_start_stop_v2.1.json,ControlStream parametersSchema,application/json
+cmdschema_request_snapshot_v2.1.json,ControlStream parametersSchema,application/json
+cmdschema_network_mode_v2.1.json,ControlStream parametersSchema,application/json

@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:p_uas",
+  "label": "p_uas",
+  "description": "P(UAS)",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/p_uas",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "1"
+    }
+  ]
+}

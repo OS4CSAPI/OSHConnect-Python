@@ -1,0 +1,21 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-3",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.269897,
+      31.650005999999998
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:System",
+    "uid": "urn:os4csapi:system:odas:az-ma-3",
+    "name": "ODAS Mic Array Node AZ-MA-3",
+    "assetType": "Equipment",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

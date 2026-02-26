@@ -1,0 +1,121 @@
+{
+  "type": "DataRecord",
+  "definition": "https://os4csapi.org/def/odas/sst/trackedSourcesRecordOSH",
+  "label": "SST tracked sources",
+  "fields": [
+    {
+      "name": "timestamp",
+      "type": "Time",
+      "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+      "label": "Epoch seconds",
+      "uom": {
+        "code": "s",
+        "label": "seconds"
+      },
+      "referenceTime": "1970-01-01T00:00:00Z"
+    },
+    {
+      "name": "odasTimeStamp",
+      "type": "Count",
+      "definition": "https://os4csapi.org/def/odas/frameIndex",
+      "label": "ODAS timeStamp/frame index"
+    },
+    {
+      "name": "src",
+      "type": "DataArray",
+      "definition": "https://os4csapi.org/def/odas/sst/trackedSourceArray",
+      "label": "Tracked sources",
+      "elementType": {
+        "name": "element",
+        "type": "DataRecord",
+        "definition": "https://os4csapi.org/def/odas/sst/trackedSource",
+        "label": "SST tracked source",
+        "fields": [
+          {
+            "name": "id",
+            "type": "Count",
+            "definition": "https://os4csapi.org/def/odas/trackId",
+            "label": "Track ID"
+          },
+          {
+            "name": "tag",
+            "type": "Text",
+            "definition": "https://os4csapi.org/def/odas/trackTag",
+            "label": "Track tag",
+            "constraint": {
+              "type": "AllowedTokens",
+              "values": [
+                "dynamic",
+                "static",
+                ""
+              ]
+            }
+          },
+          {
+            "name": "x",
+            "type": "Quantity",
+            "definition": "https://os4csapi.org/def/odas/directionCosineX",
+            "label": "Direction cosine X",
+            "uom": {
+              "code": "1"
+            },
+            "constraint": {
+              "type": "AllowedValues",
+              "intervals": [
+                [
+                  -1,
+                  1
+                ]
+              ]
+            }
+          },
+          {
+            "name": "y",
+            "type": "Quantity",
+            "definition": "https://os4csapi.org/def/odas/directionCosineY",
+            "label": "Direction cosine Y",
+            "uom": {
+              "code": "1"
+            },
+            "constraint": {
+              "type": "AllowedValues",
+              "intervals": [
+                [
+                  -1,
+                  1
+                ]
+              ]
+            }
+          },
+          {
+            "name": "z",
+            "type": "Quantity",
+            "definition": "https://os4csapi.org/def/odas/directionCosineZ",
+            "label": "Direction cosine Z",
+            "uom": {
+              "code": "1"
+            },
+            "constraint": {
+              "type": "AllowedValues",
+              "intervals": [
+                [
+                  -1,
+                  1
+                ]
+              ]
+            }
+          },
+          {
+            "name": "activity",
+            "type": "Quantity",
+            "definition": "https://os4csapi.org/def/odas/trackActivity",
+            "label": "Activity",
+            "uom": {
+              "code": "1"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-2-PLATFORM",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.257897,
+      31.655006
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Platform",
+    "uid": "urn:os4csapi:platform:az-ma-2:tripod",
+    "name": "AZ-MA-2 Tripod Platform",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

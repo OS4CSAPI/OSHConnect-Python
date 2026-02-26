@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": "AZ-PROC-ASSOC",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:Procedure",
+    "uid": "urn:os4csapi:procedure:odas:network:association:v1",
+    "name": "Association Procedure",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

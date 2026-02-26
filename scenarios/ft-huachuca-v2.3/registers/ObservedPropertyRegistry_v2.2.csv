@@ -1,0 +1,32 @@
+fieldName,definitionURI,sweType,uom,description
+timestamp,https://os4csapi.org/def/odas/time/epochSeconds,Time,s,Epoch seconds (first field for OSHConnect)
+odasTimeStamp,https://os4csapi.org/def/odas/frameIndex,Count,,ODAS frame index / timeStamp
+x,https://os4csapi.org/def/odas/directionCosineX,Quantity,1,Direction cosine X
+y,https://os4csapi.org/def/odas/directionCosineY,Quantity,1,Direction cosine Y
+z,https://os4csapi.org/def/odas/directionCosineZ,Quantity,1,Direction cosine Z
+E,https://os4csapi.org/def/odas/relativeEnergy,Quantity,1,ODAS SSL relative energy metric
+id,https://os4csapi.org/def/odas/trackId,Count,,ODAS SST track id
+tag,https://os4csapi.org/def/odas/trackTag,Text,,ODAS tag
+activity,https://os4csapi.org/def/odas/trackActivity,Quantity,1,ODAS activity metric
+bearingTrue,https://os4csapi.org/def/odas/bearingTrue,Quantity,deg,Bearing clockwise from true north
+elevation,https://os4csapi.org/def/odas/elevation,Quantity,deg,Elevation
+bearingStdDev,https://os4csapi.org/def/odas/bearingStdDev,Quantity,deg,Bearing uncertainty (demo/derived)
+classLabel,https://os4csapi.org/def/odas/classLabel,Category,,Class label
+classConfidence,https://os4csapi.org/def/odas/classConfidence,Quantity,1,Class confidence
+p_uas,https://os4csapi.org/def/odas/p_uas,Quantity,1,P(UAS)
+p_vehicle,https://os4csapi.org/def/odas/p_vehicle,Quantity,1,P(vehicle)
+p_footsteps,https://os4csapi.org/def/odas/p_footsteps,Quantity,1,P(footsteps)
+p_impulsive,https://os4csapi.org/def/odas/p_impulsive,Quantity,1,P(impulsive)
+p_unknown,https://os4csapi.org/def/odas/p_unknown,Quantity,1,P(unknown)
+lat,https://os4csapi.org/def/csapi/lat,Quantity,deg,Latitude
+lon,https://os4csapi.org/def/csapi/lon,Quantity,deg,Longitude
+posErrorM,https://os4csapi.org/def/csapi/posErrorM,Quantity,m,Position error (1-sigma)
+nSensors,https://os4csapi.org/def/csapi/nSensors,Count,,Contributing sensors
+method,https://os4csapi.org/def/csapi/method,Text,,Method
+cpuLoad,https://os4csapi.org/def/csapi/cpuLoad,Quantity,1,CPU load
+memUsedMB,https://os4csapi.org/def/csapi/memUsedMB,Quantity,MB,Memory used MB (demo)
+tempC,https://os4csapi.org/def/csapi/tempC,Quantity,Cel,Temperature (C)
+latencyMs,https://os4csapi.org/def/csapi/latencyMs,Quantity,ms,Latency ms
+uptimeS,https://os4csapi.org/def/csapi/uptimeS,Quantity,s,Uptime seconds
+trackCount,https://os4csapi.org/def/csapi/trackCount,Count,,Active tracks
+activityLevel,https://os4csapi.org/def/csapi/activityLevel,Quantity,1,Scene activity level

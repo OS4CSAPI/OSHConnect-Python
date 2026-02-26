@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-2-PROC-TRANSFORM",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:Procedure",
+    "uid": "urn:os4csapi:procedure:odas:az-ma-2:frame-transform:v1",
+    "name": "Transform (AZ-MA-2)",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-2-ACTUATOR",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:Actuator",
+    "uid": "urn:os4csapi:system:odas:az-ma-2:actuator",
+    "name": "AZ-MA-2 ACTUATOR",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

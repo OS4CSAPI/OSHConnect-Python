@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:tempC",
+  "label": "tempC",
+  "description": "Temperature (C)",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Temperature",
+  "objectType": "https://os4csapi.org/def/csapi/tempC",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "Cel"
+    }
+  ]
+}

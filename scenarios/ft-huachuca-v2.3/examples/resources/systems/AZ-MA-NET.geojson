@@ -1,0 +1,15 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-NET",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:System",
+    "uid": "urn:os4csapi:system:odas:az-ma-net",
+    "name": "Ft Huachuca Acoustic Sensing Network (MA-NET)",
+    "description": "Container system hosting global samples and network-level streams.",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

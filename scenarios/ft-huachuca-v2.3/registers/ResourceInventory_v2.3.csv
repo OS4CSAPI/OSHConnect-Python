@@ -1,0 +1,91 @@
+resourceType,id,uid,name
+System,AZ-MA-NET,urn:os4csapi:system:odas:az-ma-net,Ft Huachuca Acoustic Sensing Network (MA-NET)
+System,AZ-MA-1-PLATFORM,urn:os4csapi:platform:az-ma-1:tripod,AZ-MA-1 Tripod Platform
+System,AZ-MA-1,urn:os4csapi:system:odas:az-ma-1,ODAS Mic Array Node AZ-MA-1
+System,AZ-MA-1-MICARRAY,urn:os4csapi:system:odas:az-ma-1:micarray,AZ-MA-1 MICARRAY
+System,AZ-MA-1-EDGE,urn:os4csapi:system:odas:az-ma-1:edge,AZ-MA-1 EDGE
+System,AZ-MA-1-COMMS,urn:os4csapi:system:odas:az-ma-1:comms,AZ-MA-1 COMMS
+System,AZ-MA-1-POWER,urn:os4csapi:system:odas:az-ma-1:power,AZ-MA-1 POWER
+System,AZ-MA-1-ACTUATOR,urn:os4csapi:system:odas:az-ma-1:actuator,AZ-MA-1 ACTUATOR
+System,AZ-MA-1-MIC1,urn:os4csapi:system:odas:az-ma-1:mic1,AZ-MA-1 Microphone Element 1
+System,AZ-MA-1-MIC2,urn:os4csapi:system:odas:az-ma-1:mic2,AZ-MA-1 Microphone Element 2
+System,AZ-MA-1-MIC3,urn:os4csapi:system:odas:az-ma-1:mic3,AZ-MA-1 Microphone Element 3
+System,AZ-MA-1-MIC4,urn:os4csapi:system:odas:az-ma-1:mic4,AZ-MA-1 Microphone Element 4
+System,AZ-MA-1-MIC5,urn:os4csapi:system:odas:az-ma-1:mic5,AZ-MA-1 Microphone Element 5
+System,AZ-MA-1-MIC6,urn:os4csapi:system:odas:az-ma-1:mic6,AZ-MA-1 Microphone Element 6
+System,AZ-MA-1-MIC7,urn:os4csapi:system:odas:az-ma-1:mic7,AZ-MA-1 Microphone Element 7
+System,AZ-MA-2-PLATFORM,urn:os4csapi:platform:az-ma-2:tripod,AZ-MA-2 Tripod Platform
+System,AZ-MA-2,urn:os4csapi:system:odas:az-ma-2,ODAS Mic Array Node AZ-MA-2
+System,AZ-MA-2-MICARRAY,urn:os4csapi:system:odas:az-ma-2:micarray,AZ-MA-2 MICARRAY
+System,AZ-MA-2-EDGE,urn:os4csapi:system:odas:az-ma-2:edge,AZ-MA-2 EDGE
+System,AZ-MA-2-COMMS,urn:os4csapi:system:odas:az-ma-2:comms,AZ-MA-2 COMMS
+System,AZ-MA-2-POWER,urn:os4csapi:system:odas:az-ma-2:power,AZ-MA-2 POWER
+System,AZ-MA-2-ACTUATOR,urn:os4csapi:system:odas:az-ma-2:actuator,AZ-MA-2 ACTUATOR
+System,AZ-MA-2-MIC1,urn:os4csapi:system:odas:az-ma-2:mic1,AZ-MA-2 Microphone Element 1
+System,AZ-MA-2-MIC2,urn:os4csapi:system:odas:az-ma-2:mic2,AZ-MA-2 Microphone Element 2
+System,AZ-MA-2-MIC3,urn:os4csapi:system:odas:az-ma-2:mic3,AZ-MA-2 Microphone Element 3
+System,AZ-MA-2-MIC4,urn:os4csapi:system:odas:az-ma-2:mic4,AZ-MA-2 Microphone Element 4
+System,AZ-MA-2-MIC5,urn:os4csapi:system:odas:az-ma-2:mic5,AZ-MA-2 Microphone Element 5
+System,AZ-MA-2-MIC6,urn:os4csapi:system:odas:az-ma-2:mic6,AZ-MA-2 Microphone Element 6
+System,AZ-MA-2-MIC7,urn:os4csapi:system:odas:az-ma-2:mic7,AZ-MA-2 Microphone Element 7
+System,AZ-MA-3-PLATFORM,urn:os4csapi:platform:az-ma-3:tripod,AZ-MA-3 Tripod Platform
+System,AZ-MA-3,urn:os4csapi:system:odas:az-ma-3,ODAS Mic Array Node AZ-MA-3
+System,AZ-MA-3-MICARRAY,urn:os4csapi:system:odas:az-ma-3:micarray,AZ-MA-3 MICARRAY
+System,AZ-MA-3-EDGE,urn:os4csapi:system:odas:az-ma-3:edge,AZ-MA-3 EDGE
+System,AZ-MA-3-COMMS,urn:os4csapi:system:odas:az-ma-3:comms,AZ-MA-3 COMMS
+System,AZ-MA-3-POWER,urn:os4csapi:system:odas:az-ma-3:power,AZ-MA-3 POWER
+System,AZ-MA-3-ACTUATOR,urn:os4csapi:system:odas:az-ma-3:actuator,AZ-MA-3 ACTUATOR
+System,AZ-MA-3-MIC1,urn:os4csapi:system:odas:az-ma-3:mic1,AZ-MA-3 Microphone Element 1
+System,AZ-MA-3-MIC2,urn:os4csapi:system:odas:az-ma-3:mic2,AZ-MA-3 Microphone Element 2
+System,AZ-MA-3-MIC3,urn:os4csapi:system:odas:az-ma-3:mic3,AZ-MA-3 Microphone Element 3
+System,AZ-MA-3-MIC4,urn:os4csapi:system:odas:az-ma-3:mic4,AZ-MA-3 Microphone Element 4
+System,AZ-MA-3-MIC5,urn:os4csapi:system:odas:az-ma-3:mic5,AZ-MA-3 Microphone Element 5
+System,AZ-MA-3-MIC6,urn:os4csapi:system:odas:az-ma-3:mic6,AZ-MA-3 Microphone Element 6
+System,AZ-MA-3-MIC7,urn:os4csapi:system:odas:az-ma-3:mic7,AZ-MA-3 Microphone Element 7
+Deployment,AZ-DEP-AOI-001,urn:os4csapi:deployment:aoi:ft-huachuca-range-01,AOI Deployment
+Deployment,AZ-DEP-NET-001,urn:os4csapi:deployment:network:ft-huachuca:001,Network Deployment
+Deployment,AZ-DEP-AZ-MA-1,urn:os4csapi:deployment:az-ma-1:ft-huachuca:001,Deployment AZ-MA-1
+Deployment,AZ-DEP-AZ-MA-1-MICARRAY,urn:os4csapi:deployment:az-ma-1:micarray:ft-huachuca:001,Deployment AZ-MA-1-MICARRAY
+Deployment,AZ-DEP-AZ-MA-1-EDGE,urn:os4csapi:deployment:az-ma-1:edge:ft-huachuca:001,Deployment AZ-MA-1-EDGE
+Deployment,AZ-DEP-AZ-MA-1-COMMS,urn:os4csapi:deployment:az-ma-1:comms:ft-huachuca:001,Deployment AZ-MA-1-COMMS
+Deployment,AZ-DEP-AZ-MA-1-POWER,urn:os4csapi:deployment:az-ma-1:power:ft-huachuca:001,Deployment AZ-MA-1-POWER
+Deployment,AZ-DEP-AZ-MA-1-ACTUATOR,urn:os4csapi:deployment:az-ma-1:actuator:ft-huachuca:001,Deployment AZ-MA-1-ACTUATOR
+Deployment,AZ-DEP-AZ-MA-2,urn:os4csapi:deployment:az-ma-2:ft-huachuca:001,Deployment AZ-MA-2
+Deployment,AZ-DEP-AZ-MA-2-MICARRAY,urn:os4csapi:deployment:az-ma-2:micarray:ft-huachuca:001,Deployment AZ-MA-2-MICARRAY
+Deployment,AZ-DEP-AZ-MA-2-EDGE,urn:os4csapi:deployment:az-ma-2:edge:ft-huachuca:001,Deployment AZ-MA-2-EDGE
+Deployment,AZ-DEP-AZ-MA-2-COMMS,urn:os4csapi:deployment:az-ma-2:comms:ft-huachuca:001,Deployment AZ-MA-2-COMMS
+Deployment,AZ-DEP-AZ-MA-2-POWER,urn:os4csapi:deployment:az-ma-2:power:ft-huachuca:001,Deployment AZ-MA-2-POWER
+Deployment,AZ-DEP-AZ-MA-2-ACTUATOR,urn:os4csapi:deployment:az-ma-2:actuator:ft-huachuca:001,Deployment AZ-MA-2-ACTUATOR
+Deployment,AZ-DEP-AZ-MA-3,urn:os4csapi:deployment:az-ma-3:ft-huachuca:001,Deployment AZ-MA-3
+Deployment,AZ-DEP-AZ-MA-3-MICARRAY,urn:os4csapi:deployment:az-ma-3:micarray:ft-huachuca:001,Deployment AZ-MA-3-MICARRAY
+Deployment,AZ-DEP-AZ-MA-3-EDGE,urn:os4csapi:deployment:az-ma-3:edge:ft-huachuca:001,Deployment AZ-MA-3-EDGE
+Deployment,AZ-DEP-AZ-MA-3-COMMS,urn:os4csapi:deployment:az-ma-3:comms:ft-huachuca:001,Deployment AZ-MA-3-COMMS
+Deployment,AZ-DEP-AZ-MA-3-POWER,urn:os4csapi:deployment:az-ma-3:power:ft-huachuca:001,Deployment AZ-MA-3-POWER
+Deployment,AZ-DEP-AZ-MA-3-ACTUATOR,urn:os4csapi:deployment:az-ma-3:actuator:ft-huachuca:001,Deployment AZ-MA-3-ACTUATOR
+Procedure,AZ-MA-1-PROC-ODAS,urn:os4csapi:procedure:odas:az-ma-1:processing-chain:v1,ODAS Processing Chain (AZ-MA-1)
+Procedure,AZ-MA-1-PROC-TRANSFORM,urn:os4csapi:procedure:odas:az-ma-1:frame-transform:v1,Transform (AZ-MA-1)
+Procedure,AZ-MA-1-PROC-HEALTH,urn:os4csapi:procedure:odas:az-ma-1:health-monitor:v1,Health Proc (AZ-MA-1)
+Procedure,AZ-MA-1-PROC-CAL,urn:os4csapi:procedure:odas:az-ma-1:calibration:v1,Calibration Proc (AZ-MA-1)
+Procedure,AZ-MA-2-PROC-ODAS,urn:os4csapi:procedure:odas:az-ma-2:processing-chain:v1,ODAS Processing Chain (AZ-MA-2)
+Procedure,AZ-MA-2-PROC-TRANSFORM,urn:os4csapi:procedure:odas:az-ma-2:frame-transform:v1,Transform (AZ-MA-2)
+Procedure,AZ-MA-2-PROC-HEALTH,urn:os4csapi:procedure:odas:az-ma-2:health-monitor:v1,Health Proc (AZ-MA-2)
+Procedure,AZ-MA-2-PROC-CAL,urn:os4csapi:procedure:odas:az-ma-2:calibration:v1,Calibration Proc (AZ-MA-2)
+Procedure,AZ-MA-3-PROC-ODAS,urn:os4csapi:procedure:odas:az-ma-3:processing-chain:v1,ODAS Processing Chain (AZ-MA-3)
+Procedure,AZ-MA-3-PROC-TRANSFORM,urn:os4csapi:procedure:odas:az-ma-3:frame-transform:v1,Transform (AZ-MA-3)
+Procedure,AZ-MA-3-PROC-HEALTH,urn:os4csapi:procedure:odas:az-ma-3:health-monitor:v1,Health Proc (AZ-MA-3)
+Procedure,AZ-MA-3-PROC-CAL,urn:os4csapi:procedure:odas:az-ma-3:calibration:v1,Calibration Proc (AZ-MA-3)
+Procedure,AZ-PROC-ASSOC,urn:os4csapi:procedure:odas:network:association:v1,Association Procedure
+Procedure,AZ-PROC-TRIANG,urn:os4csapi:procedure:odas:network:triangulation:v1,Triangulation Procedure
+Procedure,AZ-PROC-CLASSIFY,urn:os4csapi:procedure:odas:network:classification:v1,Classification Procedure
+SamplingFeature,AZ-GTRK-0001,urn:os4csapi:sample:globaltrack:GT-0001,GlobalTrackSample GT-0001
+SamplingFeature,AZ-GTRK-0002,urn:os4csapi:sample:globaltrack:GT-0002,GlobalTrackSample GT-0002
+SamplingFeature,AZ-GTRK-0003,urn:os4csapi:sample:globaltrack:GT-0003,GlobalTrackSample GT-0003
+SamplingFeature,AZ-MA-1-TRK-1,urn:os4csapi:sample:az-ma-1:track:0001,TrackSample AZ-MA-1/1
+SamplingFeature,AZ-MA-1-TRK-2,urn:os4csapi:sample:az-ma-1:track:0002,TrackSample AZ-MA-1/2
+SamplingFeature,AZ-MA-1-TRK-3,urn:os4csapi:sample:az-ma-1:track:0003,TrackSample AZ-MA-1/3
+SamplingFeature,AZ-MA-2-TRK-1,urn:os4csapi:sample:az-ma-2:track:0001,TrackSample AZ-MA-2/1
+SamplingFeature,AZ-MA-2-TRK-2,urn:os4csapi:sample:az-ma-2:track:0002,TrackSample AZ-MA-2/2
+SamplingFeature,AZ-MA-2-TRK-3,urn:os4csapi:sample:az-ma-2:track:0003,TrackSample AZ-MA-2/3
+SamplingFeature,AZ-MA-3-TRK-1,urn:os4csapi:sample:az-ma-3:track:0001,TrackSample AZ-MA-3/1
+SamplingFeature,AZ-MA-3-TRK-2,urn:os4csapi:sample:az-ma-3:track:0002,TrackSample AZ-MA-3/2
+SamplingFeature,AZ-MA-3-TRK-3,urn:os4csapi:sample:az-ma-3:track:0003,TrackSample AZ-MA-3/3

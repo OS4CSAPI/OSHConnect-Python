@@ -1,0 +1,20 @@
+{"id": "status-cmd-0001-accepted", "command@id": "cmd-0001", "reportTime": "2026-02-26T22:49:27Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0001-completed", "command@id": "cmd-0001", "reportTime": "2026-02-26T22:49:28Z", "statusCode": "COMPLETED", "message": "Demo completed"}
+{"id": "status-cmd-0002-accepted", "command@id": "cmd-0002", "reportTime": "2026-02-26T22:49:28Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0002-completed", "command@id": "cmd-0002", "reportTime": "2026-02-26T22:49:29Z", "statusCode": "COMPLETED", "message": "Demo completed"}
+{"id": "status-cmd-0003-accepted", "command@id": "cmd-0003", "reportTime": "2026-02-26T22:49:29Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0003-completed", "command@id": "cmd-0003", "reportTime": "2026-02-26T22:49:30Z", "statusCode": "COMPLETED", "message": "Demo completed"}
+{"id": "status-cmd-0004-accepted", "command@id": "cmd-0004", "reportTime": "2026-02-26T22:49:30Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0004-completed", "command@id": "cmd-0004", "reportTime": "2026-02-26T22:49:31Z", "statusCode": "COMPLETED", "message": "Demo completed"}
+{"id": "status-cmd-0005-accepted", "command@id": "cmd-0005", "reportTime": "2026-02-26T22:49:31Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0005-completed", "command@id": "cmd-0005", "reportTime": "2026-02-26T22:49:32Z", "statusCode": "COMPLETED", "message": "Demo completed"}
+{"id": "status-cmd-0006-accepted", "command@id": "cmd-0006", "reportTime": "2026-02-26T22:49:32Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0006-completed", "command@id": "cmd-0006", "reportTime": "2026-02-26T22:49:33Z", "statusCode": "COMPLETED", "message": "Demo completed"}
+{"id": "status-cmd-0007-accepted", "command@id": "cmd-0007", "reportTime": "2026-02-26T22:49:33Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0007-completed", "command@id": "cmd-0007", "reportTime": "2026-02-26T22:49:34Z", "statusCode": "COMPLETED", "message": "Demo completed"}
+{"id": "status-cmd-0008-accepted", "command@id": "cmd-0008", "reportTime": "2026-02-26T22:49:34Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0008-completed", "command@id": "cmd-0008", "reportTime": "2026-02-26T22:49:35Z", "statusCode": "COMPLETED", "message": "Demo completed"}
+{"id": "status-cmd-0009-accepted", "command@id": "cmd-0009", "reportTime": "2026-02-26T22:49:35Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0009-completed", "command@id": "cmd-0009", "reportTime": "2026-02-26T22:49:36Z", "statusCode": "COMPLETED", "message": "Demo completed"}
+{"id": "status-cmd-0010-accepted", "command@id": "cmd-0010", "reportTime": "2026-02-26T22:49:36Z", "statusCode": "ACCEPTED"}
+{"id": "status-cmd-0010-completed", "command@id": "cmd-0010", "reportTime": "2026-02-26T22:49:37Z", "statusCode": "COMPLETED", "message": "Demo completed"}

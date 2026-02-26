@@ -1,0 +1,28 @@
+{
+  "type": "DataRecord",
+  "definition": "https://os4csapi.org/def/csapi/commands/networkModeParams",
+  "label": "Network mode",
+  "fields": [
+    {
+      "name": "mode",
+      "type": "Category",
+      "definition": "https://os4csapi.org/def/csapi/mode",
+      "label": "Mode",
+      "constraint": {
+        "type": "AllowedTokens",
+        "values": [
+          "single-node",
+          "multi-node-association",
+          "triangulation-enabled",
+          "full-pipeline"
+        ]
+      }
+    },
+    {
+      "name": "note",
+      "type": "Text",
+      "definition": "https://os4csapi.org/def/csapi/note",
+      "label": "Note"
+    }
+  ]
+}

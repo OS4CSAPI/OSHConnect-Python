@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:uptimeS",
+  "label": "uptimeS",
+  "description": "Uptime seconds",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Time",
+  "objectType": "https://os4csapi.org/def/csapi/uptimeS",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "s"
+    }
+  ]
+}

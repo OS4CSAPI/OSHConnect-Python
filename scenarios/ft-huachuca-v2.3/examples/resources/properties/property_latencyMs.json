@@ -1,0 +1,22 @@
+{
+  "uniqueId": "urn:os4csapi:property:latencyMs",
+  "label": "latencyMs",
+  "description": "Latency ms",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Time",
+  "objectType": "https://os4csapi.org/def/csapi/latencyMs",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:sweType",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:uomCode",
+      "label": "uomCode",
+      "value": "ms"
+    }
+  ],
+  "links": []
+}

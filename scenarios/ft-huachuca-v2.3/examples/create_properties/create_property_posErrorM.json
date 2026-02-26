@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:posErrorM",
+  "label": "posErrorM",
+  "description": "Position error (1-sigma)",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/csapi/posErrorM",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "m"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-AZ-MA-2",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.257897,
+      31.655006
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:az-ma-2:ft-huachuca:001",
+    "name": "Deployment AZ-MA-2",
+    "validTime": {
+      "begin": "2026-02-26T00:00:00Z",
+      "end": null
+    },
+    "relatedTo@link": [
+      {
+        "href": "/sensorhub/api/deployments/AZ-DEP-AOI-001",
+        "title": "AOI"
+      }
+    ]
+  }
+}

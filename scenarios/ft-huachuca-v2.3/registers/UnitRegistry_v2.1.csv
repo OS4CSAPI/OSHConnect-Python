@@ -1,0 +1,8 @@
+uom,meaning
+1,unitless (UCUM)
+deg,degrees (UCUM)
+m,meters (UCUM)
+s,seconds (UCUM)
+ms,milliseconds (UCUM)
+Cel,Celsius (UCUM)
+MB,megabytes (demo telemetry)

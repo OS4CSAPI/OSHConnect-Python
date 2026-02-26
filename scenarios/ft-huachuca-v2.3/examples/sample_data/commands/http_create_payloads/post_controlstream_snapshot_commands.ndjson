@@ -1,0 +1,6 @@
+{"parameters": {"trackId": 1, "durationMs": 5000, "format": "wav"}}
+{"parameters": {"trackId": 2, "durationMs": 3000, "format": "flac"}}
+{"parameters": {"trackId": 1, "durationMs": 5000, "format": "wav"}}
+{"parameters": {"trackId": 2, "durationMs": 3000, "format": "flac"}}
+{"parameters": {"trackId": 1, "durationMs": 5000, "format": "wav"}}
+{"parameters": {"trackId": 2, "durationMs": 3000, "format": "flac"}}

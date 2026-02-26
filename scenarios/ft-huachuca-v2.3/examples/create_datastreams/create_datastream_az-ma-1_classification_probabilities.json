@@ -1,0 +1,140 @@
+{
+  "name": "AZ-MA-1 Classification Probabilities",
+  "description": "Class probs.",
+  "type": "observation",
+  "live": true,
+  "schema": {
+    "obsFormat": "application/json",
+    "resultSchema": {
+      "type": "DataRecord",
+      "definition": "https://os4csapi.org/def/odas/class/probabilitiesRecordOSH",
+      "label": "Class probabilities",
+      "fields": [
+        {
+          "name": "timestamp",
+          "type": "Time",
+          "definition": "https://os4csapi.org/def/odas/time/epochSeconds",
+          "label": "Epoch seconds",
+          "uom": {
+            "code": "s",
+            "label": "seconds"
+          },
+          "referenceTime": "1970-01-01T00:00:00Z"
+        },
+        {
+          "name": "trackId",
+          "type": "Count",
+          "definition": "https://os4csapi.org/def/odas/trackId",
+          "label": "Track ID"
+        },
+        {
+          "name": "p_uas",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/p_uas",
+          "label": "P(UAS)",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                0,
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "name": "p_vehicle",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/p_vehicle",
+          "label": "P(vehicle)",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                0,
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "name": "p_footsteps",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/p_footsteps",
+          "label": "P(footsteps)",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                0,
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "name": "p_impulsive",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/p_impulsive",
+          "label": "P(impulsive)",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                0,
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "name": "p_unknown",
+          "type": "Quantity",
+          "definition": "https://os4csapi.org/def/odas/p_unknown",
+          "label": "P(unknown)",
+          "uom": {
+            "code": "1"
+          },
+          "constraint": {
+            "type": "AllowedValues",
+            "intervals": [
+              [
+                0,
+                1
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "deployment@link": {
+    "href": "/sensorhub/api/deployments/AZ-DEP-AZ-MA-1",
+    "title": "AZ-DEP-AZ-MA-1",
+    "type": "application/geo+json"
+  },
+  "procedure@link": {
+    "href": "/sensorhub/api/procedures/AZ-PROC-CLASSIFY",
+    "title": "AZ-PROC-CLASSIFY",
+    "type": "application/geo+json"
+  },
+  "featureOfInterest@link": {
+    "href": "/sensorhub/api/deployments/AZ-DEP-AOI-001",
+    "title": "AOI",
+    "type": "application/geo+json"
+  },
+  "phenomenonTimeInterval": "PT1S",
+  "resultTimeInterval": "PT1S"
+}

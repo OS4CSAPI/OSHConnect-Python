@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:lat",
+  "label": "lat",
+  "description": "Latitude",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Angle",
+  "objectType": "https://os4csapi.org/def/csapi/lat",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "deg"
+    }
+  ]
+}

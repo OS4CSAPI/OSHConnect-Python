@@ -1,0 +1,69 @@
+{
+  "name": "AZ-MA-3 ODAS Control ControlStream",
+  "description": "Set ODAS params.",
+  "type": "command",
+  "live": true,
+  "system@link": {
+    "href": "/sensorhub/api/systems/AZ-MA-3-ACTUATOR",
+    "title": "AZ-MA-3-ACTUATOR"
+  },
+  "schema": {
+    "parametersSchema": {
+      "type": "DataRecord",
+      "definition": "https://os4csapi.org/def/csapi/commands/odasControlParams",
+      "label": "ODAS Control Params",
+      "fields": [
+        {
+          "name": "module",
+          "type": "Category",
+          "definition": "https://os4csapi.org/def/csapi/module",
+          "label": "Module",
+          "constraint": {
+            "type": "AllowedTokens",
+            "values": [
+              "sne",
+              "ssl",
+              "sst",
+              "sss",
+              "classify",
+              "general"
+            ]
+          }
+        },
+        {
+          "name": "parameter",
+          "type": "Text",
+          "definition": "https://os4csapi.org/def/csapi/parameter",
+          "label": "Parameter path"
+        },
+        {
+          "name": "value",
+          "type": "Text",
+          "definition": "https://os4csapi.org/def/csapi/value",
+          "label": "Value string"
+        },
+        {
+          "name": "applyMode",
+          "type": "Category",
+          "definition": "https://os4csapi.org/def/csapi/applyMode",
+          "label": "Apply",
+          "constraint": {
+            "type": "AllowedTokens",
+            "values": [
+              "immediate",
+              "nextFrame",
+              "nextRestart"
+            ]
+          }
+        }
+      ]
+    },
+    "commandFormat": "application/json"
+  },
+  "procedure@link": {
+    "href": "/sensorhub/api/procedures/AZ-MA-3-PROC-ODAS",
+    "title": "AZ-MA-3-PROC-ODAS"
+  },
+  "inputName": "odasControl",
+  "async": false
+}

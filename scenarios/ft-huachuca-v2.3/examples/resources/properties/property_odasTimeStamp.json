@@ -1,0 +1,22 @@
+{
+  "uniqueId": "urn:os4csapi:property:odasTimeStamp",
+  "label": "odasTimeStamp",
+  "description": "ODAS frame index / timeStamp",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/frameIndex",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:sweType",
+      "label": "sweType",
+      "value": "Count"
+    },
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:uomCode",
+      "label": "uomCode",
+      "value": ""
+    }
+  ],
+  "links": []
+}

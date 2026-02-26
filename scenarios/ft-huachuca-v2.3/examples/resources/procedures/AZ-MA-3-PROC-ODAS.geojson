@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-3-PROC-ODAS",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:ObservingProcedure",
+    "uid": "urn:os4csapi:procedure:odas:az-ma-3:processing-chain:v1",
+    "name": "ODAS Processing Chain (AZ-MA-3)",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

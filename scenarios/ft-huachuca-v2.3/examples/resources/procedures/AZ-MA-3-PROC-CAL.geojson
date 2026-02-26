@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": "AZ-MA-3-PROC-CAL",
+  "geometry": null,
+  "properties": {
+    "featureType": "sosa:Procedure",
+    "uid": "urn:os4csapi:procedure:odas:az-ma-3:calibration:v1",
+    "name": "Calibration Proc (AZ-MA-3)",
+    "validTime": {
+      "begin": "2026-01-01T00:00:00Z",
+      "end": null
+    }
+  }
+}

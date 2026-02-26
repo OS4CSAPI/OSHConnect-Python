@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:lon",
+  "label": "lon",
+  "description": "Longitude",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Angle",
+  "objectType": "https://os4csapi.org/def/csapi/lon",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": "deg"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "uniqueId": "urn:os4csapi:property:bearingTrue",
+  "label": "bearingTrue",
+  "description": "Bearing clockwise from true north",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Angle",
+  "objectType": "https://os4csapi.org/def/odas/bearingTrue",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:sweType",
+      "label": "sweType",
+      "value": "Quantity"
+    },
+    {
+      "type": "Text",
+      "definition": "urn:os4csapi:qualifier:uomCode",
+      "label": "uomCode",
+      "value": "deg"
+    }
+  ],
+  "links": []
+}

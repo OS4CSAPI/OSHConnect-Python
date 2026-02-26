@@ -1,0 +1,82 @@
+{
+  "api_root": "http://45.55.99.236:8080/sensorhub/api",
+  "auth": {
+    "username": "ogc",
+    "password": "ogc"
+  },
+  "mode": "best_effort",
+  "notes": [
+    "Preferred creation path: POST nested resources (e.g., /systems/{sysId}/datastreams, /systems/{sysId}/controlstreams).",
+    "If your server requires root endpoints, use examples/create_datastreams_root and include system@link.",
+    "After observations exist, schema updates may be rejected per CSAPI Part 2; create a new stream instead."
+  ],
+  "datastreams": [
+    {
+      "systemId": "AZ-MA-1",
+      "createTemplate": "examples/create_datastreams/create_datastream_az-ma-1_scene_summary.json",
+      "ndjson": "examples/sample_data/observations/scene_summary.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-1",
+      "createTemplate": "examples/create_datastreams/create_datastream_az-ma-1_ssl_potential_sources.json",
+      "ndjson": "examples/sample_data/observations/ssl_potential_sources.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-1",
+      "createTemplate": "examples/create_datastreams/create_datastream_az-ma-1_sst_tracked_sources.json",
+      "ndjson": "examples/sample_data/observations/sst_tracked_sources.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-1",
+      "createTemplate": "examples/create_datastreams/create_datastream_az-ma-1_track_updates.json",
+      "ndjson": "examples/sample_data/observations/track_updates.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-1",
+      "createTemplate": "examples/create_datastreams/create_datastream_az-ma-1_lob.json",
+      "ndjson": "examples/sample_data/observations/lobs.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-1",
+      "createTemplate": "examples/create_datastreams/create_datastream_az-ma-1_classification_probabilities.json",
+      "ndjson": "examples/sample_data/observations/class_probabilities.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-1",
+      "createTemplate": "examples/create_datastreams/create_datastream_az-ma-1_health.json",
+      "ndjson": "examples/sample_data/observations/health.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-NET",
+      "createTemplate": "examples/create_datastreams/create_datastream_az-ma-net_triangulated_positions.json",
+      "ndjson": "examples/sample_data/observations/triangulated_positions.ndjson"
+    }
+  ],
+  "controlstreams": [
+    {
+      "systemId": "AZ-MA-1-ACTUATOR",
+      "createTemplate": "examples/create_controlstreams/create_controlstream_az-ma-1_odas_control.json",
+      "createPayloads": "examples/sample_data/commands/http_create_payloads/post_controlstream_odasControl_commands.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-1-ACTUATOR",
+      "createTemplate": "examples/create_controlstreams/create_controlstream_az-ma-1_start_stop.json",
+      "createPayloads": "examples/sample_data/commands/http_create_payloads/post_controlstream_startStop_commands.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-1-ACTUATOR",
+      "createTemplate": "examples/create_controlstreams/create_controlstream_az-ma-1_request_snapshot.json",
+      "createPayloads": "examples/sample_data/commands/http_create_payloads/post_controlstream_snapshot_commands.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-1-ACTUATOR",
+      "createTemplate": "examples/create_controlstreams/create_controlstream_az-ma-1_calibrate_orientation.json",
+      "createPayloads": "examples/sample_data/commands/http_create_payloads/post_controlstream_calibration_commands.ndjson"
+    },
+    {
+      "systemId": "AZ-MA-NET",
+      "createTemplate": "examples/create_controlstreams/create_controlstream_az-ma-net_network_mode.json",
+      "createPayloads": "examples/sample_data/commands/http_create_payloads/post_controlstream_networkMode_commands.ndjson"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "uniqueId": "urn:os4csapi:property:classLabel",
+  "label": "classLabel",
+  "description": "Class label",
+  "baseProperty": "http://qudt.org/vocab/quantitykind/Dimensionless",
+  "objectType": "https://os4csapi.org/def/odas/classLabel",
+  "qualifiers": [
+    {
+      "type": "Text",
+      "label": "sweType",
+      "value": "Category"
+    },
+    {
+      "type": "Text",
+      "label": "uomCode",
+      "value": ""
+    }
+  ]
+}
