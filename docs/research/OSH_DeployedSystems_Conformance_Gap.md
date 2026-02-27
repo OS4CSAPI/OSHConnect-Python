@@ -1,6 +1,6 @@
-# OSH SensorHub: `deployedSystems` Conformance Gap Analysis
+# OSH SensorHub: `deployedSystems@link` Conformance Gap Analysis
 
-**Date:** 2026-02-27  
+**Date:** 2026-02-27 (Revised)  
 **Server:** OSH SensorHub v2.x at `http://45.55.99.236:8080/sensorhub/api`  
 **Standard:** [OGC API — Connected Systems — Part 1: Feature Resources 1.0.0](https://docs.ogc.org/is/23-001/23-001.html) (OGC 23-001)  
 **Related Reports:**  
@@ -8,39 +8,54 @@
 - [OSH Cascade Delete Experiment](./OSH_Cascade_Delete_Experiment.md)  
 - [OSH Ghost Resource / Stale Index Bug](./OSH_Ghost_Resource_Stale_Index_Bug.md)
 
+> **Revision Note:** This report corrects the initial version published on 2026-02-27. The original report incorrectly claimed that the standard requires a `/deployments/{id}/deployedSystems` sub-resource endpoint. Upon closer reading, the standard defines `deployedSystems` as an **inline GeoJSON property** (`properties/deployedSystems@link`), _not_ as a sub-resource endpoint. The actual conformance gap is narrower but still significant: the server silently strips this inline property and never returns it.
+
 ---
 
 ## 1. Executive Summary
 
-The `deployedSystems` association is one of the most important relationships defined by the OGC Connected Systems API (CSAPI) standard. It is the **only standard mechanism** for linking Deployment resources to the System resources that participate in those deployments. Our testing reveals that the OSH SensorHub reference implementation **does not implement the `deployedSystems` endpoint**, returning HTTP 302 redirects to the Vaadin admin UI instead of API responses. This is not a minor omission — it breaks a **Required** association defined in Clause 11 of the standard and cascades into failures across multiple conformance classes including advanced filtering, recursive association resolution, and the core semantic model. The gap makes it impossible for API clients to programmatically discover which systems are deployed where, undermining the fundamental SOSA/SSN relationship between `ssn:Deployment` and `sosa:deployedSystem`.
+The `deployedSystems` association is the **only standard mechanism** for linking a Deployment resource to the System resources that participate in that deployment. In the GeoJSON encoding (Table 43), it maps to an **inline property** (`properties/deployedSystems@link`) — a JSON array of links embedded directly in the deployment's GeoJSON `properties`, the same pattern as `platform@link`.
+
+Our testing reveals that OSH SensorHub **silently strips the `deployedSystems@link` property on write and never returns it on read**. When a deployment is created or replaced via PUT with `deployedSystems@link` in the payload, the server accepts the request without error but discards the property. Subsequent GET requests return the deployment without any `deployedSystems@link` data, even though `platform@link` in the same payload _is_ correctly persisted and returned.
+
+Additionally, the reverse navigation endpoint (`/systems/{sysId}/deployments`, required by Requirement 17) returns HTTP 302 redirects instead of API responses.
+
+These gaps make it impossible for API clients to programmatically discover which systems are deployed where, undermining the fundamental SOSA/SSN `sosa:deployedSystem` relationship.
 
 ---
 
 ## 2. What the Standard Requires
 
-### 2.1 The `deployedSystems` Association (Clause 11.2.2)
+### 2.1 The `deployedSystems` Association (Clause 11.2.2, Table 11)
 
-Table 11 of the CSAPI Part 1 standard defines the associations of a Deployment resource:
+Table 11 defines the associations of a Deployment resource:
 
 | Association | SOSA/SSN Mapping | Description | Target | Obligation |
 |---|---|---|---|---|
-| **platform** | `sosa:deployedOnPlatform` | The platform on which the systems are deployed | A single Feature resource | Optional |
-| **deployedSystems** | `sosa:deployedSystem` | The list of Systems deployed during the Deployment | A list of System resources | **Required** |
-| **subdeployments** | — | The list of subdeployments | A list of Deployment resources | **Required** |
+| platform | `sosa:deployedOnPlatform` | The platform on which the systems are deployed | A single Feature resource | Optional |
+| **deployedSystems** | `sosa:deployedSystem` | The list of Systems deployed during the Deployment, if any | A list of System resources | **Required** |
+| subdeployments | — | The list of subdeployments | A list of Deployment resources | Required |
 
-The `deployedSystems` association has **Required** obligation. Every Deployment resource representation SHALL include this association.
+### 2.2 GeoJSON Encoding: Inline Property, Not an Endpoint (Clause 19.1.6, Table 43)
 
-### 2.2 GeoJSON Encoding (Clause 19.1.6)
+Table 43 specifies exactly how each Deployment association maps to GeoJSON. This is the crucial distinction:
 
-Table 43 of the standard specifies exactly how `deployedSystems` maps to GeoJSON:
+| Association | GeoJSON Path | Encoding | Pattern |
+|---|---|---|---|
+| platform | `properties/platform@link` | Weblink to a System resource | **Inline property** |
+| **deployedSystems** | **`properties/deployedSystems@link`** | **JSON Array of links to System resources** | **Inline property** |
+| parentDeployment | `links` | Weblink to a Deployment resource | HATEOAS link |
+| subdeployments | `links` | Weblink to a Deployment resources endpoint | HATEOAS link |
 
-| Association | GeoJSON Path | Encoding |
-|---|---|---|
-| platform | `properties/platform@link` | Weblink resolving to a System resource |
-| **deployedSystems** | `properties/deployedSystems@link` | **JSON Array of links to System resources** |
-| subdeployments | `links` (rel=`subdeployments`) | Weblink resolving to a Deployment resources endpoint |
+Key observation: `deployedSystems` uses the same pattern as `platform` — an **inline property** inside `properties`, NOT a HATEOAS link in the `links` array. There is no `ogc-rel:deployedSystems` link relation type defined in Table 3. Clause 11.4 defines only three endpoint types for deployments:
 
-The standard provides a normative example showing the expected encoding:
+1. **Canonical resources endpoint**: `{api_root}/deployments` (Req 16)
+2. **Canonical resource endpoint**: `{api_root}/deployments/{id}` (Req 14)
+3. **Nested from System**: `{api_root}/systems/{sysId}/deployments` (Req 17)
+
+There is **no** `/deployments/{id}/deployedSystems` sub-resource endpoint defined in the standard.
+
+The standard's normative GeoJSON example shows the expected encoding:
 
 ```json
 {
@@ -70,91 +85,70 @@ The standard provides a normative example showing the expected encoding:
 }
 ```
 
-### 2.3 Reverse Navigation: System → Deployments (Clause 11.4.3)
+### 2.3 Reverse Navigation: System → Deployments (Clause 11.4.3, Requirement 17)
 
-The standard also requires the reverse direction — from a System to its Deployments:
+The standard does define a real endpoint for the reverse direction:
 
 > **Requirement /req/deployment/ref-from-system:**  
 > - The `deployments` association in a System resource representation SHALL be implemented as a link to a Deployment resources endpoint at path `{api_root}/systems/{sysId}/deployments`.  
 > - The endpoint SHALL only expose the Deployment resources where the System with ID sysId was deployed.
 
-Table 5 of the standard defines the System's `deployments` association:
+This is conditional: it only applies when the server implements both the System Features and Deployment Features requirements classes _and_ provides the `deployments` association in System representations. The `deployments` association itself is Optional per Table 5.
 
-| Association | SOSA/SSN Mapping | Description | Obligation |
-|---|---|---|---|
-| deployments | `sosa:hasDeployment` | The Deployments that the System is part of | Optional |
+### 2.4 Recursive Association Resolution (Clause 12.6, Table 13)
 
-### 2.4 Recursive Association Resolution (Clause 12.6)
+When a Deployment has subdeployments, the `deployedSystems` inline property should aggregate systems from the entire hierarchy:
 
-When a Deployment has subdeployments, the standard requires that the `deployedSystems` association **recursively aggregates** systems from all subdeployments:
+| Association | Rule |
+|---|---|
+| **deployedSystems** | The Systems deployed during the Deployment **and all its subdeployments, recursively**. |
 
-> **Requirement /req/subdeployment/recursive-assoc (Table 13):**  
-> - `deployedSystems`: The Systems deployed during the Deployment **and all its subdeployments, recursively**.
+This means the `deployedSystems@link` array in a parent deployment's GeoJSON should include systems from all child and grandchild deployments, not just directly associated ones.
 
-This is critical for hierarchical deployment models. A parent deployment (e.g., "Field Campaign 2026") should return all systems deployed across its entire tree of subdeployments.
+### 2.5 Standard Ambiguity: Conformance Test Procedures
 
-### 2.5 Advanced Filtering Dependencies (Clause 16.6)
+While the normative encoding requirements (Tables 43, 52) consistently define `deployedSystems` as an inline property, some **conformance test procedures** in Annex A reference a sub-resource URL pattern:
 
-Multiple advanced filtering capabilities depend on the `deployedSystems` association:
+- **A.10 `/conf/advanced-filtering/deployment-by-system`**: _"Retrieve all deployed systems by issuing an HTTP GET request at `{deploymentCanonicalUrl}/deployedSystems?recursive=true`."_
 
-| Filter | Requirement ID | Behavior |
-|---|---|---|
-| `?system={id}` | `/req/advanced-filtering/deployment-by-system` | Find deployments where a specific system is deployed |
-| `?observedProperty={id}` | `/req/advanced-filtering/deployment-by-obsprop` | Find deployments by observed property (via deployedSystems) |
-| `?controlledProperty={id}` | `/req/advanced-filtering/deployment-by-controlprop` | Find deployments by controlled property (via deployedSystems) |
+- **A.10 `/conf/advanced-filtering/deployment-by-obsprop`**: Same pattern.
 
-All three filters require resolving `deployedSystems` to function. From Annex A abstract test `/conf/advanced-filtering/deployment-by-obsprop`:
+- **A.6 `/conf/subdeployment/recursive-assoc`**: _"If the Deployment resource contains a link with relation type deployedSystems, verify that all deployed systems are returned. Issue an HTTP GET request to the link URL."_
 
-> "Retrieve all deployed systems by issuing an HTTP GET request at `{deploymentCanonicalUrl}/deployedSystems?recursive=true`. For each Deployed System resource in the returned collection: Retrieve the system description..."
-
-Without `deployedSystems`, **none of these queries can work**.
+These test procedures suggest the standard authors may have intended a sub-resource endpoint (or at minimum a HATEOAS link) for `deployedSystems`, even though the normative encoding tables only define an inline property. This is an **inconsistency between the encoding requirements and the conformance test procedures** that should be raised with the OGC CSAPI working group.
 
 ---
 
 ## 3. What the Server Actually Does
 
-### 3.1 The `deployedSystems` Endpoint Returns HTTP 302
+### 3.1 The `deployedSystems@link` Inline Property Is Silently Stripped
 
-Testing the endpoint on multiple deployments:
+**This is the core issue.** When a deployment is created or replaced via HTTP PUT with `deployedSystems@link` in the GeoJSON payload, the server accepts the request (HTTP 204) but discards the property.
 
 ```http
-GET /sensorhub/api/deployments/0480/deployedSystems HTTP/1.1
-Authorization: Basic b2djOm9nYw==
+PUT /sensorhub/api/deployments/049g HTTP/1.1
+Content-Type: application/geo+json
 
-HTTP/1.1 302 Found
-Location: http://45.55.99.236:8080/sensorhub
+{
+  "properties": {
+    "platform@link": {
+      "href": "http://45.55.99.236:8080/sensorhub/api/systems/04fg",
+      "uid": "urn:x-odas:platform:xcore-mic-board-001",
+      "title": "ODAS — XMOS xCORE-200 Microphone Array Board #001"
+    },
+    "deployedSystems@link": [
+      {
+        "href": "http://45.55.99.236:8080/sensorhub/api/systems/04fg",
+        "title": "XMOS Array Board"
+      }
+    ]
+  }
+}
 ```
 
-Following the redirect leads to the Vaadin admin landing page — not an API response:
+Response: HTTP 204 No Content (accepted).
 
-```html
-<!doctype html>
-<html>
-  <head><title>OpenSensorHub Landing Page</title></head>
-  <body>
-    <div id="sensorhub-470871803" class="v-app sensorhub landingui">
-      <noscript>You have to enable javascript...</noscript>
-    </div>
-  </body>
-</html>
-```
-
-This behavior was confirmed across **all deployment resources** on the server:
-
-| Deployment ID | Name | `/deployedSystems` Result |
-|---|---|---|
-| `0480` | Demo - Field Campaign 2026 | HTTP 302 → Vaadin |
-| `048g` | Demo - North Site Deployment | HTTP 302 → Vaadin |
-| `049g` | Conference Room 3A — Single Array | HTTP 302 → Vaadin |
-| `04a0` | Campus Perimeter — 3-Array Triangulation | HTTP 302 → Vaadin |
-| `04cg` | AOI Deployment | HTTP 302 → Vaadin |
-| `04d0` | Network Deployment | HTTP 302 → Vaadin |
-
-**Every deployment returns the same 302 redirect.** The `/deployedSystems` sub-resource endpoint is simply not implemented.
-
-### 3.2 The `deployedSystems@link` Property Is Not Returned
-
-When retrieving a deployment resource individually, the `deployedSystems@link` property is absent from the GeoJSON representation even when a `platform@link` is present:
+Subsequent GET:
 
 ```json
 {
@@ -173,181 +167,136 @@ When retrieving a deployment resource individually, the `deployedSystems@link` p
 }
 ```
 
-Note: `platform@link` IS preserved and returned (the server correctly stores it). But `deployedSystems@link` is **completely absent** from every deployment response.
+`platform@link` is preserved. `deployedSystems@link` is **gone** — silently discarded.
 
-### 3.3 The `deployedSystems@link` Property Is Silently Stripped on Write
+### 3.2 No Deployment Has `deployedSystems@link` in Its Response
 
-We previously documented (in [OSH_Deployment_Hierarchy_and_System_Association.md](./OSH_Deployment_Hierarchy_and_System_Association.md)) that when a deployment is created or replaced via HTTP PUT with a `deployedSystems@link` array in the payload, **the server silently strips the property**. It is accepted without error but never stored or returned.
+Across all 18 deployments on the server, none returns `deployedSystems@link` in any form:
 
-```
-PUT /sensorhub/api/deployments/049g HTTP/1.1
-Content-Type: application/geo+json
+| Deployment ID | Name | `platform@link` | `deployedSystems@link` |
+|---|---|---|---|
+| `0480` | Demo - Field Campaign 2026 | — | ❌ Absent |
+| `048g` | Demo - North Site Deployment | — | ❌ Absent |
+| `049g` | Conference Room 3A — Single Array | ✅ Present | ❌ Absent |
+| `04a0` | Campus Perimeter — 3-Array Triangulation | ✅ Present | ❌ Absent |
+| `04cg` | AOI Deployment | — | ❌ Absent |
 
-{
-  "properties": {
-    "platform@link": { "href": "...", "uid": "...", "title": "..." },
-    "deployedSystems@link": [
-      { "href": "http://45.55.99.236:8080/sensorhub/api/systems/04fg", "title": "Array Board" }
-    ]
-  }
-}
+### 3.3 Reverse Navigation Also Fails (Requirement 17)
 
-→ HTTP 204 No Content (accepted)
-→ Subsequent GET: platform@link present, deployedSystems@link ABSENT
-```
-
-### 3.4 Reverse Navigation Also Fails
-
-The System → Deployments reverse navigation endpoint is equally non-functional:
+The System → Deployments endpoint required by Req 17 returns HTTP 302:
 
 ```http
 GET /sensorhub/api/systems/04fg/deployments HTTP/1.1
+Authorization: Basic b2djOm9nYw==
 
 HTTP/1.1 302 Found
 Location: http://45.55.99.236:8080/sensorhub
 ```
 
-No System resource includes a `deployments` link in its HATEOAS `links` array either.
+No System resource on the server includes an `ogc-rel:deployments` link in its HATEOAS `links` array. The reverse direction is completely non-functional.
 
-### 3.5 Server Conformance Declaration
+### 3.4 Non-Standard Sub-Resource Paths Return 302
 
-Despite the above failures, the server's `/conformance` endpoint declares conformance to both the Deployment and Subdeployment requirements classes:
-
-```
-http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/deployment
-http://www.opengis.net/spec/ogcapi-connectedsystems-1/1.0/conf/subdeployment
-```
-
-This is an **incorrect conformance claim**. Per Clause 11.2.2, the `deployedSystems` association has Required obligation and must be implemented as part of the Deployment conformance class. The declared conformance should either be qualified (partial) or the endpoint should be implemented.
+For completeness: accessing `/deployments/{id}/deployedSystems` or `/deployments/{id}/systems` also returns HTTP 302 → Vaadin landing page. While the standard doesn't require these endpoints (see §2.2 above), the 302-to-Vaadin pattern is the server's default response for _any_ unrecognized path, confirming there is no handler for deployment-system association queries.
 
 ---
 
 ## 4. Impact Analysis
 
-### 4.1 Which Systems Are Deployed Where? — UNANSWERABLE
+### 4.1 The Deployment ↔ System Link Is Invisible
 
-The fundamental question driving the SOSA/SSN Deployment concept is: *"Which systems participated in which deployments?"* Without `deployedSystems`, this question has **no API answer**.
+The fundamental question driving the SOSA/SSN Deployment concept is: _"Which systems participated in which deployments?"_ Without `deployedSystems@link`, this question has **no API answer**.
 
-A client browsing a Deployment resource sees:
+A client browsing a Deployment sees:
 - ✅ Name, description, location, validTime
 - ✅ Subdeployments (hierarchy)
-- ✅ Platform reference (`platform@link`)  
-- ❌ **Deployed Systems — always empty/missing**
+- ✅ Platform reference (`platform@link`)
+- ❌ **Deployed Systems — always absent**
 
 ### 4.2 Broken Bidirectional Navigation
 
-The CSAPI standard defines a bidirectional relationship:
+The standard defines a bidirectional relationship:
 
 ```
-System  ──sosa:hasDeployment──▶  Deployment
-                                    │
-Deployment ──sosa:deployedSystem──▶  System
+Deployment ──deployedSystems@link──▶ System(s)   [inline property — STRIPPED]
+System     ──/systems/{id}/deployments──▶ Deployment(s)  [Req 17 — 302 REDIRECT]
 ```
 
-Both directions fail:
-- `GET /deployments/{id}/deployedSystems` → 302 redirect
-- `GET /systems/{id}/deployments` → 302 redirect
-- No `deployments` link in System HATEOAS links
-- No `deployedSystems@link` property in Deployment JSON
+Both directions are non-functional. The association is completely severed.
 
-The relationship between Systems and Deployments is **completely severed**.
+### 4.3 Impact on CSAPI Explorer Demo
 
-### 4.3 Cascading Query Failures
+Our Explorer demo's "Deployed Systems" panel previously attempted to hit a `/{id}/systems` sub-resource endpoint that the standard doesn't define. The server returned 302 → HTML, which the fetch layer treated as success with garbage data → panel showed 0 items.
 
-Without `deployedSystems`, the following standard-defined queries cannot function:
+The fix (implemented alongside this report revision) reads from `deployedSystems@link` inline properties first, with `platform@link` as a fallback for servers like OSH that strip `deployedSystems@link`.
 
-1. **"Find all deployments involving system X"** — `?system={id}` filter (Req 48)
-2. **"Find deployments observing temperature"** — `?observedProperty={id}` filter (Req 50)
-3. **"Find deployments controlling valves"** — `?controlledProperty={id}` filter (Req 51)
-4. **Recursive deployment aggregation** — parent deployment showing all systems across subdeployments (Req 23)
+### 4.4 Impact on Operational Use Cases
 
-These queries are defined in the Advanced Filtering conformance class, but they fundamentally depend on the `deployedSystems` association being resolvable.
-
-### 4.4 Impact on CSAPI Explorer
-
-In our CSAPI Explorer demo application, the Deployments detail page includes a "Deployed Systems" panel that always shows **"0 — None found"** for every deployment on this server. The data model diagram cannot render the `Deployment → System` edge with live data. This makes the deployment section of the Explorer appear incomplete despite full standard coverage in the client code.
-
-### 4.5 Impact on Operational Use Cases
-
-For our ODAS C-UAS acoustic sensor demo, we have:
-- 3 Deployments (single-array, campus triangulation, network hierarchy)
-- Each deployment has a `platform@link` pointing to the XMOS microphone array system
-- But the `deployedSystems` relationship is invisible through the API
-
-This means an operational query like *"Which sensors are currently deployed at the campus perimeter?"* cannot be answered through standard API navigation. A client would need to scan all deployments and extract `platform@link` as a workaround — which only covers the platform, not the full set of deployed subsystems (the 7 microphone sensors, the DSP processing pipeline, etc.).
+For our ODAS C-UAS acoustic sensor demo:
+- 3 Deployments each have `platform@link` pointing to their XMOS microphone array system
+- But `deployedSystems@link` (which should list the individual microphone sensors, DSP subsystems, etc.) is always empty
+- An operational query like _"Which sensors are actively deployed at the campus perimeter?"_ cannot be answered through the standard inline property
 
 ---
 
 ## 5. Root Cause Analysis
 
-### 5.1 The 302 Redirect Pattern
+### 5.1 The Property Persistence Pattern
 
-The HTTP 302 redirect to `/sensorhub` (the Vaadin admin UI root) is the server's default behavior for **any unrecognized sub-resource path**. This is the same pattern observed for other unimplemented endpoints. The server's servlet dispatcher does not have a handler registered for the `/deployments/{id}/deployedSystems` path, so the request falls through to the default Vaadin redirect.
+The server's GeoJSON parser appears to handle `@link` properties selectively:
 
-### 5.2 Likely Implementation Status
-
-Based on the evidence:
-
-1. **The sub-resource endpoint** (`/deployments/{id}/deployedSystems`) is **not implemented** — no servlet handler registered
-2. **The `deployedSystems@link` property** is **not stored** — silently stripped on ingestion
-3. **The reverse navigation endpoint** (`/systems/{id}/deployments`) is **not implemented**
-4. **The internal data model** may not have a table/mapping for the system-deployment association
-
-The `platform@link` property IS stored and returned correctly, suggesting the server's deployment data model has a `platform` foreign-key field but lacks a many-to-many `deployedSystems` junction table.
-
-### 5.3 Conformance Class Assessment
-
-| Conformance Class | URI | Requirement | Status |
+| Property | Persisted | Returned | Pattern |
 |---|---|---|---|
-| Deployment Features | `/conf/deployment` | `deployedSystems` Required association | ❌ FAIL |
-| Deployment Features | `/conf/deployment` | `/req/deployment/ref-from-system` | ❌ FAIL |
-| Subdeployments | `/conf/subdeployment` | `/req/subdeployment/recursive-assoc` | ❌ FAIL |
-| Advanced Filtering | `/conf/advanced-filtering` | `deployment-by-system` | ❌ FAIL |
-| Advanced Filtering | `/conf/advanced-filtering` | `deployment-by-obsprop` | ❌ FAIL |
-| Advanced Filtering | `/conf/advanced-filtering` | `deployment-by-controlprop` | ❌ FAIL |
-| GeoJSON Format | `/conf/geojson` | `deployment-mappings` (Table 43) | ❌ FAIL |
+| `platform@link` | ✅ Yes | ✅ Yes | Single object link |
+| `systemKind@link` | ✅ Yes | ✅ Yes | Single object link |
+| `sampledFeature@link` | ✅ Yes | ✅ Yes | Single object link |
+| **`deployedSystems@link`** | ❌ No | ❌ No | **Array of object links** |
+
+The distinguishing factor appears to be that `deployedSystems@link` is a **JSON Array** of links, while the properties that work (`platform@link`, `systemKind@link`) are **single objects**. The server's GeoJSON ingestion pipeline likely does not handle `@link` properties with array values.
+
+### 5.2 Conformance Assessment
+
+| Requirement | Standard Section | What It Requires | Status |
+|---|---|---|---|
+| Deployment associations (Table 11) | §11.2.2 | `deployedSystems` = Required | ❌ FAIL (stripped on write, absent on read) |
+| GeoJSON deployment mappings (Table 43) | §19.1.6 | `properties/deployedSystems@link` | ❌ FAIL (never returned) |
+| System → Deployments endpoint (Req 17) | §11.4.3 | `{api_root}/systems/{sysId}/deployments` | ❌ FAIL (302 redirect) |
+| Recursive associations (Table 13) | §12.6 | `deployedSystems` aggregated across subdeployments | ❌ FAIL (no data to aggregate) |
+| GeoJSON deployment schema (Req 83) | §19.1.6 | Response valid against `deployment.json` schema | ⚠️ Partial (schema may allow empty) |
 
 ---
 
 ## 6. Workarounds
 
-### 6.1 `platform@link` as a Partial Proxy
+### 6.1 `platform@link` as a Partial Proxy (Implemented)
 
-The server does preserve `platform@link`, which identifies the **platform** (top-level system) on which systems are deployed. For simple scenarios where a single platform hosts sensors, this provides partial information:
+The server preserves `platform@link`, which identifies the top-level system (platform) on which the deployment operates:
 
 ```json
 "platform@link": {
   "href": "http://server/api/systems/04fg",
-  "uid": "urn:x-odas:platform:xcore-mic-board-001",
+  "rel": "platform",
   "title": "ODAS — XMOS xCORE-200 Microphone Array Board #001"
 }
 ```
 
-Limitations:
-- Only tells you the **platform**, not the individual sensors/subsystems deployed
-- Per the SOSA ontology, `deployedOnPlatform` and `deployedSystem` are **different relationships** — the platform is where the deployment happens, the deployed systems are what gets deployed
-- A deployment may involve multiple independent systems (not just one platform)
+Our CSAPI Explorer demo now reads this as a fallback when `deployedSystems@link` is absent, resolving the platform system and displaying it in the Deployed Systems panel with a note that the data comes from `platform@link` rather than the standard `deployedSystems@link` property.
+
+**Limitations:**
+- `platform@link` identifies where the deployment happens (the platform), not _what_ is deployed (the sensors/subsystems)
+- Per SOSA ontology, `sosa:deployedOnPlatform` ≠ `sosa:deployedSystem` — they are semantically different relations
+- Only provides a single system reference, not the full list of deployed subsystems
 - `platform@link` is Optional per the standard, so not guaranteed to be present
 
-### 6.2 Client-Side Join via Subsystem Discovery
+### 6.2 Client-Side Subsystem Inference
 
-A more complete workaround involves:
+A more detailed workaround extends 6.1:
 
-1. Read `platform@link` from the deployment to get the platform system ID
-2. Fetch `GET /systems/{platformId}/subsystems?recursive=true` to discover all subsystems
-3. Infer that all subsystems of the platform are "deployed" during this deployment
+1. Resolve `platform@link` to get the platform system ID
+2. Fetch `GET /systems/{platformId}/subsystems?recursive=true`
+3. Infer that platform + subsystems are the "deployed systems"
 
-This works for our ODAS scenario but is **semantically incorrect** — subsystems of a platform are permanently attached components, not deployment-scoped associations. A platform might have subsystems that are NOT deployed during a particular deployment (e.g., a disabled sensor).
-
-### 6.3 External State Management
-
-For applications requiring system-deployment mappings, the association can be maintained client-side:
-
-- Store `{deploymentId, systemId, role}` tuples in a local database
-- Populate during ingestion/bootstrap
-- Accept that the mapping is not accessible through the standard API
-
-This is the approach we currently use in CSAPI Explorer's bootstrap scripts, but it breaks the standard's principle of API-discoverable relationships.
+This is semantically imprecise (subsystems are permanent components, not deployment-scoped) but useful for display purposes.
 
 ---
 
@@ -355,81 +304,113 @@ This is the approach we currently use in CSAPI Explorer's bootstrap scripts, but
 
 ### 7.1 For the OSH SensorHub Team
 
-1. **Implement the `/deployments/{id}/deployedSystems` endpoint** — This is a Required association per the standard. The endpoint should return a System resources collection with GeoJSON format support.
+1. **Persist and return `deployedSystems@link`** — When a Deployment is created or replaced with a `deployedSystems@link` array in the GeoJSON payload, the server should store the array of links and include them in subsequent GET responses, just as it does for `platform@link`.
 
-2. **Store and return `deployedSystems@link`** — When a Deployment is created or replaced with a `deployedSystems@link` array, persist the links and include them in subsequent GET responses.
+2. **Implement the `/systems/{sysId}/deployments` endpoint** (Req 17) — This is an explicitly required endpoint when both System and Deployment features are supported.
 
-3. **Implement the `/systems/{id}/deployments` endpoint** — The reverse navigation endpoint for System → Deployments.
-
-4. **Update conformance claims** — If implementation is deferred, the `/conf/deployment` conformance claim should be qualified or removed until the full requirements class is implemented.
+3. **Clarify array `@link` property handling** — The issue may be a general parser limitation with array-valued `@link` properties. If so, other array `@link` properties (e.g., links to features of interest) may be affected too.
 
 ### 7.2 For CSAPI Explorer / Client Developers
 
-1. **Use `platform@link` as a fallback** — When `deployedSystems` is empty, display the platform link as a related system with a note that full deployed system enumeration is not available.
+1. **Read from inline properties first** — For `deployedSystems`, read `properties['deployedSystems@link']` from the already-fetched deployment resource rather than hitting a sub-resource endpoint. The standard defines this as inline data.
 
-2. **Detect and surface the gap** — Show a user-visible indicator (e.g., "Server does not support deployedSystems") rather than just showing "0 — None found".
+2. **Fall back to `platform@link`** — When `deployedSystems@link` is absent, resolve `platform@link` and display it with a note about the data source.
 
-3. **Implement subsystem inference** — As a best-effort, resolve `platform@link` → subsystems to populate the deployed systems panel.
+3. **Note the standard ambiguity** — The conformance test procedures reference `/deployedSystems` URLs that the encoding requirements don't define. Client libraries should be prepared for both inline-property and endpoint-based patterns.
 
 ### 7.3 For the OGC CSAPI Standard
 
-1. **Consider a dedicated conformance class** for `deployedSystems` — Currently, it is bundled into the Deployment Features requirements class. Since it involves a cross-resource-type relationship (Deployment ↔ System) that is significantly more complex to implement than simple deployment CRUD, a separate conformance class (similar to how `subsystems` are separated from `system`) would allow servers to declare partial compliance more honestly.
+1. **Resolve the encoding-vs-test inconsistency** — The normative encoding requirements (Tables 43, 52) define `deployedSystems` as inline data, but conformance test procedures (Annex A.6, A.10) reference `{deploymentCanonicalUrl}/deployedSystems?recursive=true` as a fetchable endpoint. The standard should clarify whether there is also a sub-resource endpoint, or the test procedures should be updated to read from inline properties.
 
-2. **Add conformance test for `deployedSystems@link` persistence** — The Abstract Test Suite (Annex A.5) tests the deployment endpoint and GeoJSON schema, but does not explicitly test that `deployedSystems@link` round-trips through a PUT/GET cycle.
+2. **Add a `deployedSystems@link` round-trip conformance test** — The current test suite validates the GeoJSON schema structure but does not explicitly test that `deployedSystems@link` survives a PUT/GET cycle. Adding such a test would catch the exact gap we observed.
 
 ---
 
-## 8. Comparison with Working Associations
+## 8. Comparison: `deployedSystems@link` vs Other Inline Properties
 
-| Association | Write Support | Read Support | Endpoint | Status |
+| Property | Write (PUT/POST) | Read (GET) | Type | Status |
 |---|---|---|---|---|
-| `subsystems` | ✅ POST to parent | ✅ HATEOAS link | `/systems/{id}/subsystems` | **Working** |
-| `subdeployments` | ✅ POST to parent | ✅ HATEOAS link | `/deployments/{id}/subdeployments` | **Working** |
-| `platform@link` | ✅ PUT preserves | ✅ Returned in JSON | inline property | **Working** |
-| `systemKind@link` | ✅ PUT preserves | ✅ Returned in JSON | inline property | **Working** |
-| `samplingFeatures` | ✅ POST to parent | ✅ HATEOAS link | `/systems/{id}/samplingFeatures` | **Working** |
-| `datastreams` | ✅ POST to parent | ✅ HATEOAS link | `/systems/{id}/datastreams` | **Working** |
-| **`deployedSystems`** | ❌ Silently stripped | ❌ Never returned | ❌ 302 redirect | **NOT IMPLEMENTED** |
-| **`deployments` (from System)** | ❌ N/A | ❌ No link | ❌ 302 redirect | **NOT IMPLEMENTED** |
+| `platform@link` | ✅ Persisted | ✅ Returned | Single object | **Working** |
+| `systemKind@link` | ✅ Persisted | ✅ Returned | Single object | **Working** |
+| `sampledFeature@link` | ✅ Persisted | ✅ Returned | Single object | **Working** |
+| **`deployedSystems@link`** | ❌ Silently stripped | ❌ Never returned | **Array of objects** | **NOT WORKING** |
 
-The pattern is clear: sub-resource relationships that use the **parent/child creation pattern** (POST to `/{parentId}/{childType}`) work correctly. The `deployedSystems` relationship is different — it's a **many-to-many association** between two independent resource types (Deployments and Systems) that both exist at the top level. This cross-cutting association pattern appears to be the one the server has not yet implemented.
+The pattern suggests a systematic issue with **array-valued** `@link` properties in the server's GeoJSON parser.
 
 ---
 
-## 9. Conclusion
+## 9. Comparison: Endpoint-Based vs Inline Associations
 
-The missing `deployedSystems` support is the **most significant conformance gap** we have identified in OSH SensorHub's CSAPI implementation. Unlike the ghost resource bug (a data integrity issue) or the cascade delete quirks (edge-case behavior), this gap removes an entire semantic relationship from the API surface. The `sosa:deployedSystem` relationship is central to the SOSA/SSN ontology's deployment model — it is the mechanism by which the physical world (sensors deployed at locations) connects to the observation data model. Without it, deployments are metadata islands: they have names, descriptions, locations, and hierarchy, but they cannot answer the question they exist to answer — *"What systems are deployed here?"*
+| Association | Standard Mechanism | Server Support | Notes |
+|---|---|---|---|
+| `subsystems` | Sub-resource endpoint (`/systems/{id}/subsystems`) | ✅ Working | Parent/child pattern |
+| `subdeployments` | Sub-resource endpoint (`/deployments/{id}/subdeployments`) | ✅ Working | Parent/child pattern |
+| `datastreams` | Sub-resource endpoint (`/systems/{id}/datastreams`) | ✅ Working | Parent/child pattern |
+| `samplingFeatures` | Sub-resource endpoint (`/systems/{id}/samplingFeatures`) | ✅ Working | Parent/child pattern |
+| `platform@link` | Inline property | ✅ Working | Single object link |
+| **`deployedSystems@link`** | **Inline property** | ❌ Stripped | **Array of object links** |
+| `/systems/{id}/deployments` | Nested endpoint (Req 17) | ❌ 302 redirect | Cross-resource association |
 
-This gap should be prioritized as a **blocking issue** for any application that needs to model real-world sensor deployment scenarios through the standard API.
+---
+
+## 10. Conclusion
+
+The `deployedSystems@link` gap is a significant conformance issue, though narrower than initially reported. The standard defines `deployedSystems` as an **inline GeoJSON property** (like `platform@link`), not as a sub-resource endpoint. The server's failure to persist and return this inline property means the core `sosa:deployedSystem` relationship is invisible through the API.
+
+Combined with the non-functional `/systems/{sysId}/deployments` reverse endpoint, the Deployment ↔ System relationship is completely severed in both directions. Clients cannot discover which systems participate in which deployments through any standard mechanism.
+
+The `platform@link` property provides a partial workaround (identifying the platform hosting a deployment), but it is semantically different from `deployedSystems` and insufficient for deployments involving multiple independent systems.
+
+We also identified an **inconsistency in the OGC standard** between the encoding requirements (which define `deployedSystems` as inline) and the conformance test procedures (which reference it as an endpoint URL). Clarification from the CSAPI working group would benefit both server implementors and client developers.
 
 ---
 
 ## Appendix A: Test Commands
 
 ```bash
-# Test deployedSystems endpoint (all return HTTP 302)
-curl -s -u ogc:ogc -v "http://45.55.99.236:8080/sensorhub/api/deployments/0480/deployedSystems" 2>&1 | grep "HTTP/"
-curl -s -u ogc:ogc -v "http://45.55.99.236:8080/sensorhub/api/deployments/048g/deployedSystems" 2>&1 | grep "HTTP/"
-curl -s -u ogc:ogc -v "http://45.55.99.236:8080/sensorhub/api/deployments/049g/deployedSystems" 2>&1 | grep "HTTP/"
+# Verify deployedSystems@link is stripped on write
+curl -s -u ogc:ogc -X PUT "http://45.55.99.236:8080/sensorhub/api/deployments/049g" \
+  -H "Content-Type: application/geo+json" \
+  -d '{
+    "type": "Feature", "id": "049g",
+    "properties": {
+      "uid": "urn:x-odas:deployment:office-array-001",
+      "featureType": "http://www.w3.org/ns/sosa/Deployment",
+      "name": "Conference Room 3A — Single Array Deployment",
+      "validTime": ["2026-02-01T00:00:00Z", "2027-02-01T00:00:00Z"],
+      "platform@link": {
+        "href": "http://45.55.99.236:8080/sensorhub/api/systems/04fg",
+        "uid": "urn:x-odas:platform:xcore-mic-board-001"
+      },
+      "deployedSystems@link": [
+        {"href": "http://45.55.99.236:8080/sensorhub/api/systems/04fg", "title": "Test"}
+      ]
+    }
+  }'
+# → HTTP 204 (accepted)
 
-# Test reverse navigation (System → Deployments, also returns 302)
+# Verify it was stripped
+curl -s -u ogc:ogc "http://45.55.99.236:8080/sensorhub/api/deployments/049g" | python -m json.tool
+# → platform@link present, deployedSystems@link absent
+
+# Test reverse navigation (Req 17 — returns 302)
 curl -s -u ogc:ogc -v "http://45.55.99.236:8080/sensorhub/api/systems/04fg/deployments" 2>&1 | grep "HTTP/"
+# → HTTP/1.1 302 Found
 
-# Verify platform@link IS returned (works correctly)
+# Verify platform@link IS returned
 curl -s -u ogc:ogc "http://45.55.99.236:8080/sensorhub/api/deployments/049g" | python -m json.tool | grep -A3 "platform@link"
-
-# Check server conformance claims
-curl -s -u ogc:ogc "http://45.55.99.236:8080/sensorhub/api/conformance" | python -m json.tool | grep deployment
 ```
 
 ## Appendix B: Relevant Standard Sections
 
-| Section | Topic | URL |
+| Section | Topic | Key Finding |
 |---|---|---|
-| Clause 11.2.2 | Deployment Associations (Table 11) | [23-001 §11.2.2](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-resource) |
-| Clause 11.4.3 | Nested Deployment Endpoint (System→Deployments) | [23-001 §11.4.3](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-resources-endpoint) |
-| Clause 12.6 | Recursive Deployment Associations (Table 13) | [23-001 §12.6](https://docs.ogc.org/is/23-001/23-001.html#clause-subdeployments) |
-| Clause 16.6.3 | Deployed System Filter | [23-001 §16.6.3](https://docs.ogc.org/is/23-001/23-001.html) |
-| Clause 19.1.6 | GeoJSON Deployment Encoding (Table 43) | [23-001 §19.1.6](https://docs.ogc.org/is/23-001/23-001.html) |
-| Annex A.5 | Deployment Features Conformance Tests | [23-001 Annex A.5](https://docs.ogc.org/is/23-001/23-001.html) |
-| Annex A.6 | Subdeployment Conformance Tests | [23-001 Annex A.6](https://docs.ogc.org/is/23-001/23-001.html) |
+| Clause 11.2.2, Table 11 | Deployment Associations | `deployedSystems` = Required, target = list of Systems |
+| Clause 11.4 | Deployment Endpoints | Only 3 endpoints defined — no `/deployedSystems` sub-resource |
+| Clause 11.4.3, Req 17 | System → Deployments | `{api_root}/systems/{sysId}/deployments` SHALL be supported (conditional) |
+| Clause 12.6, Table 13 | Recursive Associations | `deployedSystems` aggregated across subdeployments |
+| Clause 19.1.6, Table 43 | GeoJSON Encoding | `deployedSystems` → `properties/deployedSystems@link` (inline array) |
+| Clause 19.2.6, Table 52 | SensorML Encoding | `deployedSystems` → inline `deployedSystems` array |
+| Table 3 | Link Relations | No `ogc-rel:deployedSystems` — confirms not a HATEOAS link |
+| Annex A.6 | Subdeployment Tests | References "link with relation type deployedSystems" (inconsistency) |
+| Annex A.10 | Advanced Filtering Tests | References `{url}/deployedSystems?recursive=true` (inconsistency) |
