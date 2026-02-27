@@ -117,7 +117,7 @@ MIC_ARRAY_PHOTO = {
     "role": "http://dbpedia.org/resource/Photograph",
     "name": "Microphone Array Photo",
     "description": "XMOS xCore 7-microphone array PCB with labeled mic positions (1-7).",
-    "link": {"href": "https://img.youtube.com/vi/n7y2rLAnd5I/maxresdefault.jpg", "type": "image/jpeg"},
+    "link": {"href": "https://raw.githubusercontent.com/OS4CSAPI/csapi-explorer/demo/acoustic-cuas-targeting/demo/public/xmos-7mic-array.jpg", "type": "image/jpeg"},
 }
 
 ODAS_WEB_GUI = {
