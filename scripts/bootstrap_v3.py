@@ -101,15 +101,19 @@ def convert_valid_time(data: dict) -> dict:
     return data
 
 
-def strip_nav_links(data: dict) -> dict:
+def prepare_deployment(data: dict, id_map: Dict[str, str]) -> dict:
     """
-    Remove navigational @link fields from deployment properties.
-    Hierarchy is established by the POST URL (nested endpoint),
-    not by partOf@link in the body.
+    Prepare a deployment GeoJSON for POST to /deployments.
+    - Strips subdeployments@link (navigational, server-generated)
+    - Rewrites partOf@link href using id_map (establishes hierarchy)
+    - Converts validTime to OSH format
     """
+    data = convert_valid_time(data)
     props = data.get("properties", {})
-    props.pop("partOf@link", None)
+    # subdeployments@link is navigational — remove it
     props.pop("subdeployments@link", None)
+    # partOf@link stays — rewrite href to server IDs
+    data = rewrite_links(data, id_map)
     return data
 
 
@@ -250,8 +254,8 @@ class BootstrapV3:
         return None
 
     def _delete_resource(self, collection: str, server_id: str, label: str) -> bool:
-        """Delete a resource by server ID."""
-        url = f"{self.server}/{collection}/{server_id}"
+        """Delete a resource by server ID. Tries force=true for cascade."""
+        url = f"{self.server}/{collection}/{server_id}?force=true"
         if self.dry_run:
             print(f"  [DRY-RUN] DELETE {collection}/{server_id} ({label})")
             return True
@@ -261,6 +265,15 @@ class BootstrapV3:
                 print(f"  🗑 Deleted {label} ({server_id})")
                 self.stats["deleted"] += 1
                 return True
+            elif resp.status_code == 400:
+                # Try without force
+                resp2 = self.session.delete(f"{self.server}/{collection}/{server_id}")
+                if resp2.status_code in (200, 204):
+                    print(f"  🗑 Deleted {label} ({server_id})")
+                    self.stats["deleted"] += 1
+                    return True
+                print(f"  ⚠ Delete failed for {label}: {resp2.status_code} — {resp2.text[:200]}")
+                return False
             else:
                 print(f"  ⚠ Delete failed for {label}: {resp.status_code} — {resp.text[:200]}")
                 return False
@@ -290,7 +303,7 @@ class BootstrapV3:
             else:
                 print(f"  · {dep_id} not found (already clean)")
 
-        # 2. Delete systems
+        # 2. Delete systems (and their datastreams via cascade)
         print("  ── Systems ──")
         for sys_id in SYSTEMS:
             f = SYSTEMS_DIR / f"{sys_id}.geojson"
@@ -302,11 +315,31 @@ class BootstrapV3:
                 continue
             server_id = self._find_resource_by_uid("systems", uid)
             if server_id:
+                # Delete child datastreams first (in case cascade fails)
+                self._delete_child_datastreams(server_id, sys_id)
                 self._delete_resource("systems", server_id, sys_id)
             else:
                 print(f"  · {sys_id} not found (already clean)")
 
         print(f"  Pre-clean complete: {self.stats['deleted']} resources deleted")
+
+    def _delete_child_datastreams(self, sys_server_id: str, sys_label: str):
+        """Delete all datastreams under a system."""
+        url = f"{self.server}/systems/{sys_server_id}/datastreams"
+        try:
+            resp = self.session.get(url, headers={"Accept": "application/json"})
+            if resp.status_code == 200:
+                items = resp.json().get("items", [])
+                for ds in items:
+                    ds_id = ds.get("id")
+                    if ds_id:
+                        self._delete_resource(
+                            f"systems/{sys_server_id}/datastreams",
+                            ds_id,
+                            f"{sys_label}/ds-{ds_id}",
+                        )
+        except requests.RequestException:
+            pass
 
     # ── Phase 1a: Deployments ────────────────────────────────────
 
@@ -322,20 +355,17 @@ class BootstrapV3:
                 continue
 
             data = json.loads(f.read_text(encoding="utf-8"))
-            data = convert_valid_time(data)
-            data = strip_nav_links(data)
+            data = prepare_deployment(data, self.id_map)
 
-            # Determine endpoint
-            if parent_id is None:
-                # Top-level
-                endpoint = "deployments"
-            else:
-                parent_server_id = self.id_map.get(parent_id)
-                if not parent_server_id:
-                    print(f"  ✗ Parent {parent_id} not in id_map — cannot create {dep_id}")
-                    self.stats["failed"] += 1
-                    continue
-                endpoint = f"deployments/{parent_server_id}/deployments"
+            # If this deployment has a parent, verify parent was created
+            if parent_id is not None and parent_id not in self.id_map:
+                print(f"  ✗ Parent {parent_id} not in id_map — cannot create {dep_id}")
+                self.stats["failed"] += 1
+                continue
+
+            # All deployments POST to /deployments (flat)
+            # partOf@link in body establishes hierarchy
+            endpoint = "deployments"
 
             server_id = self.post_resource(
                 endpoint, data, "application/geo+json", dep_id
@@ -370,33 +400,25 @@ class BootstrapV3:
     # ── Phase 1c: Deployed-system links ──────────────────────────
 
     def create_deployed_system_links(self):
-        """Create 3 deployed-system associations."""
+        """Create deployed-system associations.
+
+        NOTE: OSH SensorHub on Oracle does not currently support the
+        /deployments/{id}/deployedSystems endpoint (returns 400).
+        The /deployments/{id}/members endpoint creates duplicates.
+        Deployed-system links are recorded in id_map for reference
+        but creation is deferred until endpoint support is confirmed.
+        """
         print(f"\n{'═' * 3} Phase 1c: Deployed-System Links (3) {'═' * 3}")
+        print("  ⚠ DEFERRED: OSH server does not support /deployedSystems endpoint")
+        print("    Associations recorded in id_map for future use.")
+        print("    Hierarchy is established via partOf@link on deployments.")
 
+        # Record the intended associations in id_map for reference
         for dep_logical_id, filename in DEPLOYED_SYSTEM_LINKS:
-            f = DEPLOYED_SYS_DIR / filename
-            if not f.exists():
-                print(f"  ✗ File not found: {filename}")
-                self.stats["failed"] += 1
-                continue
-
-            data = json.loads(f.read_text(encoding="utf-8"))
-            data = rewrite_links(data, self.id_map)
-
-            dep_server_id = self.id_map.get(dep_logical_id)
-            if not dep_server_id:
-                print(f"  ✗ Deployment {dep_logical_id} not in id_map — skipping")
-                self.stats["failed"] += 1
-                continue
-
-            endpoint = f"deployments/{dep_server_id}/deployedSystems"
             label = filename.replace("deployedSystem_", "").replace(".json", "")
-
-            server_id = self.post_resource(endpoint, data, "application/json", label)
-            if server_id:
-                link_key = f"LINK-{label}"
-                self.id_map[link_key] = server_id
-                print(f"  ✓ {label} → {server_id}")
+            link_key = f"LINK-{label}"
+            self.id_map[link_key] = f"deferred:{dep_logical_id}"
+            print(f"  · {label} → deferred")
 
     # ── Phase 1d: SENREP datastream ──────────────────────────────
 
