@@ -1,10 +1,12 @@
 # AZ-MA-1 Migration Feasibility Report: DO → Oracle OSH
 
-> **Date:** 2026-03-01  
+> **Date:** 2026-03-01 (Revised)  
 > **Author:** CSAPI Explorer Research Agent  
 > **Status:** Research Complete — Migration Approved  
 > **Source Server:** DigitalOcean OSH (`http://45.55.99.236:8080/sensorhub/api`)  
 > **Target Server:** Oracle OSH (`https://os4csapi-osh.duckdns.org/sensorhub/api`)
+>
+> **Revision Note (2026-03-01):** Updated Section 3.3 to adopt a dual-write strategy (`deployedSystems@link` + `platform@link`) based on review feedback. Added Section 3.4 documenting the `sosa:Platform` vs `sosa:System` semantic decision for existing Oracle systems. Updated Phase 7 and risk table accordingly.
 
 ---
 
@@ -171,21 +173,104 @@ After migration, Oracle will have:
 - **4 control streams** on ACTUATOR subsystem
 - **12 observations** across 4 datastreams
 
-### 3.3 System-to-Deployment Link
+### 3.3 System-to-Deployment Link Strategy (Dual-Write)
 
-The DO server uses `platform@link` in deployment properties to connect a deployment to a system. We will PUT an updated Sensor String Alpha (`0430`) deployment adding:
+> **Design Decision (2026-03-01):** We adopt a **dual-write strategy** for the deployment↔system association. The migration script will write both `deployedSystems@link` (the correct OGC standard mechanism) and `platform@link` (the OSH-compatible fallback) in the same PUT payload.
+
+#### Background
+
+The OGC Connected Systems standard (23-001, Table 11) defines `deployedSystems` as a **Required** association on Deployment resources, encoded as an inline GeoJSON property `properties/deployedSystems@link` — a JSON array of links to System resources (Table 43). This is the architecturally correct, scalable mechanism: it supports many-to-one (multiple systems per deployment), which is essential for v3.0 where Sensor String Alpha will eventually host MA-1, MA-2, and MA-3.
+
+However, OSH SensorHub **silently strips `deployedSystems@link` on write** and never returns it on read. This is a documented conformance gap (see [OSH_DeployedSystems_Conformance_Gap.md](./OSH_DeployedSystems_Conformance_Gap.md)). The server only persists single-object `@link` properties like `platform@link`.
+
+#### Dual-Write Payload
+
+The Phase 7 PUT to Sensor String Alpha (`0430`) will include **both** properties:
 
 ```json
 {
-  "platform@link": {
-    "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/{new-ma1-id}",
-    "rel": "platform",
-    "title": "AZ-MA-1"
+  "type": "Feature",
+  "id": "0430",
+  "properties": {
+    "uid": "urn:os4csapi:deployment:string:ft-huachuca:001",
+    "featureType": "sosa:Deployment",
+    "name": "Sensor String Alpha (line-of-emplacement)",
+    "validTime": ["2026-02-27T00:00:00Z", ".."],
+
+    "deployedSystems@link": [
+      {
+        "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/{new-ma1-id}",
+        "uid": "urn:os4csapi:system:odas:az-ma-1",
+        "title": "ODAS Mic Array Node AZ-MA-1"
+      }
+    ],
+
+    "platform@link": {
+      "href": "https://os4csapi-osh.duckdns.org/sensorhub/api/systems/{new-ma1-id}",
+      "rel": "platform",
+      "title": "AZ-MA-1"
+    }
   }
 }
 ```
 
-This is the same pattern successfully used on the DO server (verified: Deployment AZ-MA-1 `04dg` links to system `04ng` via `platform@link`).
+#### What Happens Today vs Future
+
+| Property | OSH Behavior Today | When OSH Fixes Gap |
+|---|---|---|
+| `deployedSystems@link` | **Silently stripped** — no effect | Will be persisted and returned; becomes the primary association |
+| `platform@link` | **Persisted and returned** — working fallback | Becomes secondary/optional; retained for "physical host" semantics |
+
+#### Why Not `platform@link` Alone?
+
+`platform@link` is semantically different from `deployedSystems@link`:
+
+- **`sosa:deployedOnPlatform`** (platform@link) = "the physical thing the deployment sits on" — 1:1, single object
+- **`sosa:deployedSystem`** (deployedSystems@link) = "the systems participating in this deployment" — 1:many, array
+
+Using `platform@link` alone works for a single sensor, but breaks when String Alpha hosts MA-1 + MA-2 + MA-3 — `platform@link` can only reference one system. The dual-write approach ensures:
+
+1. The correct standard association is always **in the payload** (even if OSH strips it today)
+2. The `platform@link` fallback keeps the association visible to clients today
+3. When OSH eventually persists `deployedSystems@link`, the data is already correct — no migration needed
+
+#### CSAPI Explorer Client Compatibility
+
+The Explorer codebase already implements the correct fallback chain in `DataModelDiagram.vue`:
+
+1. Try `deployedSystems@link` (standard mechanism)
+2. Fall back to `platform@link` (OSH workaround)
+3. Fall back to `deployedSystemUIDs` (legacy string-based)
+
+This means the client is already future-proof for the day OSH fixes the conformance gap.
+
+### 3.4 featureType Semantics: `sosa:Platform` vs `sosa:System`
+
+> **Design Decision (2026-03-01):** After review, the existing Oracle systems use a mix of `sosa:Platform` that warrants partial correction for v3.0 consistency.
+
+#### The Debate
+
+The three existing systems on Oracle were all bootstrapped with `featureType: sosa:Platform`. An external review flagged this as a semantic inconsistency with the v3.0 scenario pack direction, which models these as Systems with "platform-ness" handled via metadata or decomposition. The question: should these be `sosa:System` or `sosa:Platform`?
+
+#### SOSA/SSN Semantics
+
+In the SOSA/SSN ontology:
+- **`sosa:Platform`** — "An entity that hosts other entities, particularly Sensors, Actuators, Samplers, and other Platforms." It's fundamentally about **physical hosting** — the thing other things are mounted on or deployed to.
+- **`sosa:System`** — "A System is a unit of abstraction for pieces of infrastructure that implement Procedures." It's about **functional composition** — a logical unit that may contain sensors, platforms, and other subsystems.
+
+#### Per-System Analysis and Decision
+
+| System | Current | Decision | Rationale |
+|---|---|---|---|
+| **SET-A** (Sensor Employment Team) | `sosa:Platform` | **Change to `sosa:System`** | SET-A is an organizational/operational unit (a team of people + equipment). It doesn't physically "host" sensors — it *employs* them. `sosa:System` correctly models it as a functional composite. |
+| **Monitoring Site Node 1** | `sosa:Platform` | **Keep as `sosa:Platform`** | MonSite is a physical location/installation where sensors are mounted. It literally hosts other entities (tripods, arrays, relays). `sosa:Platform` is semantically correct per the SOSA definition. |
+| **Relay / Repeater 001** | `sosa:Platform` | **Keep as `sosa:Platform`** | The relay is physical communications infrastructure that hosts antennas and radios. It's a platform in the SOSA sense — other things are deployed on it. |
+
+#### Action
+
+The SET-A `featureType` correction (`sosa:Platform` → `sosa:System`) will be applied in the next bootstrap revision. It is **not a migration blocker** — it's a pre-existing issue unrelated to the AZ-MA-1 migration itself.
+
+The AZ-MA-1 system being migrated uses `sosa:System`, which is correct and consistent with v3.0 direction.
 
 ---
 
@@ -223,8 +308,8 @@ POST each control stream to `/systems/{actuator-id}/controlstreams`. Each needs:
 #### Phase 6: Observations (12 POSTs)
 POST observations to the 4 datastreams that have data (Track Updates, Classification, Health, Scene Summary × 3 each). Each observation includes `phenomenonTime`, `resultTime`, and the full result record.
 
-#### Phase 7: Deployment Link (1 GET+PUT)
-GET Sensor String Alpha (`0430`) from Oracle, add `platform@link` pointing to the newly-created AZ-MA-1 system ID, strip `links`, PUT back. Same proven pattern used for geometry updates.
+#### Phase 7: Deployment Link — Dual-Write (1 GET+PUT)
+GET Sensor String Alpha (`0430`) from Oracle, add both `deployedSystems@link` (standard, array) and `platform@link` (OSH fallback, single object) pointing to the newly-created AZ-MA-1 system ID, strip `links`, PUT back. OSH will silently strip `deployedSystems@link` today but preserve `platform@link`. See Section 3.3 for full rationale.
 
 ---
 
@@ -457,12 +542,13 @@ These contain the full SensorML payloads ready for POST (type `PhysicalSystem`).
 | Risk | Severity | Mitigation |
 |---|---|---|
 | Oracle server returned 500 on `GET /deployments/0430?f=sml3` | Low | Use GeoJSON format for deployment PUT (same proven pattern as geometry updates) |
-| `deployedSystems` endpoint returned 400 "Invalid resource name" | Low | Use `platform@link` property instead (verified on DO server) |
+| `deployedSystems@link` silently stripped by OSH | **Known** | Dual-write strategy: include both `deployedSystems@link` and `platform@link` in PUT payload. OSH preserves `platform@link` as fallback; `deployedSystems@link` will activate when OSH fixes the conformance gap. See [OSH_DeployedSystems_Conformance_Gap.md](./OSH_DeployedSystems_Conformance_Gap.md). |
+| `platform@link` limited to 1:1 (single system per deployment) | Medium | Acceptable for initial MA-1 migration. When MA-2/MA-3 are added, `deployedSystems@link` must be working or an alternative approach (e.g., multiple `platform@link`-bearing subdeployments) will be needed. |
 | UID collisions if UIDs already exist on Oracle | Low | Oracle has zero ODAS content; all UIDs are unique to this migration |
 | Observation `phenomenonTime` range must match exactly | Low | Replicate exact timestamps from source server |
 | Server may reject SensorML POST for procedures | Medium | Fall back to simpler JSON format if needed; test with one procedure first |
 | New system ID unknown until POST response | Low | Script captures Location header from POST response to chain subsequent calls |
-| Oracle server `platform@link` format may differ from DO | Medium | GET deployment first, inspect existing property format, then PUT matching structure |
+| SET-A `featureType` is `sosa:Platform` instead of `sosa:System` | Low | Pre-existing issue, not a migration blocker. Will be corrected in next bootstrap revision. See Section 3.4. |
 
 ---
 
