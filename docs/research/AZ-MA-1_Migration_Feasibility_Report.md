@@ -7,12 +7,14 @@
 > **Target Server:** Oracle OSH (`https://os4csapi-osh.duckdns.org/sensorhub/api`)
 >
 > **Revision Note (2026-03-01):** Updated Section 3.3 to adopt a dual-write strategy (`deployedSystems@link` + `platform@link`) based on review feedback. Added Section 3.4 documenting the `sosa:Platform` vs `sosa:System` semantic decision for existing Oracle systems. Updated Phase 7 and risk table accordingly.
+>
+> **Revision Note (2026-03-01, v2):** Corrected observation counts from 3 per datastream (12 total) to actual counts totaling ~7,465. Updated total API call count from ~47 to ~7,500. Corrected procedure references on datastreams. Dry-run POST test validated on Oracle (201 Created + 204 Deleted). Migration script written and validated.
 
 ---
 
 ## 1. Executive Summary
 
-**Verdict: YES, fully possible.** Every artifact comprising the ODAS Mic Array Node AZ-MA-1 system can be recreated on the Oracle OSH server via standard OGC Connected Systems API POST/PUT operations. The migration involves ~47 API calls across 7 deterministic phases.
+**Verdict: YES, fully possible.** Every artifact comprising the ODAS Mic Array Node AZ-MA-1 system can be recreated on the Oracle OSH server via standard OGC Connected Systems API POST/PUT operations. The migration involves ~7,500 API calls across 7 deterministic phases.
 
 ### Key Structural Changes
 
@@ -72,12 +74,12 @@ All subsystems share the same Point geometry `[-110.272897, 31.663006]` and `val
 | `07fg2` | SSL Potential Sources | 0 | DataRecord → DataArray of `{x, y, z, E}` direction cosines |
 | `07g02` | SST Tracked Sources | 0 | DataRecord → DataArray of `{id, tag, x, y, z, activity}` |
 | `07gg2` | LOB | 0 | `{timestamp, trackId, bearingTrue, bearingStdDev, sensorLat, sensorLon}` |
-| `07h02` | Track Updates | **3** | `{timestamp, odasTimeStamp, id, tag, x, y, z, activity, bearingTrue, elevation, bearingStdDev, classLabel, classConfidence}` |
-| `07hg2` | Classification Probabilities | **3** | `{timestamp, trackId, p_uas, p_vehicle, p_footsteps, p_impulsive, p_unknown}` |
-| `07i02` | Health | **3** | `{timestamp, cpuLoad, memUsedMB, tempC, latencyMs, uptimeS}` |
-| `07ig2` | Scene Summary | **3** | `{timestamp, odasTimeStamp, trackCount, activityLevel}` |
+| `07h02` | Track Updates | **1,864** | `{timestamp, odasTimeStamp, id, tag, x, y, z, activity, bearingTrue, elevation, bearingStdDev, classLabel, classConfidence}` |
+| `07hg2` | Classification Probabilities | **1,868** | `{timestamp, trackId, p_uas, p_vehicle, p_footsteps, p_impulsive, p_unknown}` |
+| `07i02` | Health | **1,867** | `{timestamp, cpuLoad, memUsedMB, tempC, latencyMs, uptimeS}` |
+| `07ig2` | Scene Summary | **1,866** | `{timestamp, odasTimeStamp, trackCount, activityLevel}` |
 
-**Important:** No datastreams reference procedures (`proc=` is empty on all 7). This simplifies migration — no procedure-to-datastream linking needed.
+**Important:** All 7 datastreams have `procedure@link` references: 5 datastreams (`07fg2`, `07g02`, `07gg2`, `07h02`, `07ig2`) reference procedure `04c0` (ODAS Processing Chain), 1 (`07hg2`) references `04hg` (classification procedure, shared with AZ-MA-NET), and 1 (`07i02`) references `04bg` (Health Proc). The migration script preserves these procedure-to-datastream links by remapping DO procedure IDs to their Oracle equivalents.
 
 **Observation time range (where present):** `2026-02-27T17:41:21Z` to `2026-02-27T18:16:16Z`
 
@@ -171,7 +173,7 @@ After migration, Oracle will have:
 - **9 procedures** (first procedures on Oracle)
 - **7 datastreams** with full SWE Common schemas
 - **4 control streams** on ACTUATOR subsystem
-- **12 observations** across 4 datastreams
+- **~7,465 observations** across 4 datastreams
 
 ### 3.3 System-to-Deployment Link Strategy (Dual-Write)
 
@@ -283,10 +285,10 @@ The AZ-MA-1 system being migrated uses `sosa:System`, which is correct and consi
 | **3** | Create subsystems | `POST` × 13 | `/systems/{ma1}/subsystems` | 13 |
 | **4** | Create datastreams | `POST` × 7 | `/systems/{ma1}/datastreams` | 7 |
 | **5** | Create control streams | `POST` × 4 | `/systems/{actuator}/controlstreams` | 4 |
-| **6** | Create observations | `POST` × 12 | `/datastreams/{ds}/observations` | 12 |
+| **6** | Create observations | `POST` × ~7,465 | `/datastreams/{ds}/observations` | ~7,465 |
 | **7** | Link to String Alpha | `GET+PUT` × 1 | `/deployments/0430` | 1 |
 
-**Total: ~47 API calls**
+**Total: ~7,500 API calls**
 
 ### Phase Details
 
@@ -305,8 +307,8 @@ POST each datastream to `/systems/{ma1-id}/datastreams`. Each needs: `name`, `ou
 #### Phase 5: Control Streams (4 POSTs)
 POST each control stream to `/systems/{actuator-id}/controlstreams`. Each needs: `name`, `inputName`, `controlledProperties`, `validTime`, and `parametersSchema`.
 
-#### Phase 6: Observations (12 POSTs)
-POST observations to the 4 datastreams that have data (Track Updates, Classification, Health, Scene Summary × 3 each). Each observation includes `phenomenonTime`, `resultTime`, and the full result record.
+#### Phase 6: Observations (~7,465 POSTs)
+POST observations to the 4 datastreams that have data: Track Updates (1,864), Classification Probabilities (1,868), Health (1,867), Scene Summary (1,866). Each observation includes `phenomenonTime`, `resultTime`, and the full result record. Observations are posted one-at-a-time with progress logging every 500 and a small throttle delay every 100 to avoid overwhelming the server.
 
 #### Phase 7: Deployment Link — Dual-Write (1 GET+PUT)
 GET Sensor String Alpha (`0430`) from Oracle, add both `deployedSystems@link` (standard, array) and `platform@link` (OSH fallback, single object) pointing to the newly-created AZ-MA-1 system ID, strip `links`, PUT back. OSH will silently strip `deployedSystems@link` today but preserve `platform@link`. See Section 3.3 for full rationale.
@@ -572,8 +574,8 @@ These contain the full SensorML payloads ready for POST (type `PhysicalSystem`).
 
 | Metric | Value |
 |---|---|
-| **Total API calls** | ~47 |
-| **Resources created** | 46 (9 procedures + 1 system + 13 subsystems + 7 datastreams + 4 control streams + 12 observations) |
+| **Total API calls** | ~7,500 |
+| **Resources created** | ~7,499 (9 procedures + 1 system + 13 subsystems + 7 datastreams + 4 control streams + ~7,465 observations) |
 | **Resources updated** | 1 (String Alpha deployment) |
 | **SensorML backup files available** | 14 (system + 13 subsystems) |
 | **Datastream schemas captured** | 7 (full SWE Common DataRecord definitions) |
