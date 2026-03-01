@@ -32,14 +32,16 @@ import json
 import sys
 import os
 import time
+import socket
 import urllib.request
 import urllib.error
 import base64
 import ssl
 
-# -- Configuration -----------------------------------------------------
+# ── Configuration ─────────────────────────────────────────────────────
 ORACLE_BASE = "https://os4csapi-osh.duckdns.org/sensorhub/api"
 ORACLE_AUTH = base64.b64encode(b"os4csapi:ogc134mm").decode()
+ORACLE_IP = "129.80.248.53"  # Direct IP when DuckDNS is flaky
 
 DO_BASE = "http://45.55.99.236:8080/sensorhub/api"
 DO_AUTH = base64.b64encode(b"ogc:ogc").decode()
@@ -53,13 +55,43 @@ BACKUP_DIR = os.path.join(SCRIPT_DIR, "migration_backup")
 # SSL context that trusts the Oracle cert
 SSL_CTX = ssl.create_default_context()
 
-# -- Tracking ----------------------------------------------------------
+# ── Process-level DNS override (acts like a hosts-file entry) ─────────
+# DuckDNS resolution is unreliable; resolve the hostname to the known IP
+# directly inside this process.  SNI and cert validation still use the
+# hostname, so TLS works correctly.
+_orig_getaddrinfo = socket.getaddrinfo
+
+def _patched_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    if host == "os4csapi-osh.duckdns.org":
+        return _orig_getaddrinfo(ORACLE_IP, port, family, type, proto, flags)
+    return _orig_getaddrinfo(host, port, family, type, proto, flags)
+
+socket.getaddrinfo = _patched_getaddrinfo
+
+# ── Tee stdout to a log file so output is captured regardless of shell ─
+LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "migration_log.txt")
+class _Tee:
+    def __init__(self, *streams):
+        self.streams = streams
+    def write(self, data):
+        for s in self.streams:
+            s.write(data)
+            s.flush()
+    def flush(self):
+        for s in self.streams:
+            s.flush()
+
+_log_file = open(LOG_PATH, "w", encoding="utf-8")
+sys.stdout = _Tee(sys.__stdout__, _log_file)
+sys.stderr = _Tee(sys.__stderr__, _log_file)
+
+# ── Tracking ──────────────────────────────────────────────────────────
 created = []
 skipped = []
 failed = []
 id_map_do_to_oracle = {}  # DO_id -> Oracle_id
 
-# -- Subsystem order (parent -> child nesting) -------------------------
+# ── Subsystem order (parent -> child nesting) ─────────────────────────
 # These are the 13 subsystems in the order they should be posted
 # as members of the AZ-MA-1 system (id 04ng on DO).
 SUBSYSTEM_FILES = [
@@ -109,7 +141,7 @@ PROCEDURE_FILES = [
 ]
 
 # Datastream files and their parent system UIDs
-# All 7 datastreams belong to parent system AZ-MA-1
+# All 7 datastreams belong to parent system AZ-MA-1 (urn:os4csapi:system:odas:az-ma-1)
 DATASTREAM_FILES = [
     "ds_07fg2.json",
     "ds_07g02.json",
@@ -139,22 +171,21 @@ OBS_FILES = [
 ]
 
 # Procedure DO-ID -> Oracle procedure mapping
-# Populated dynamically during Phase 1.
+# These will be populated dynamically during Phase 1.
 PROC_DO_TO_ORACLE = {}
 
 # Deployment UID for String Alpha (already exists on Oracle from bootstrap)
-STRING_ALPHA_UID = "urn:os4csapi:deployment:string:alpha:ft-huachuca:001"
+STRING_ALPHA_UID = "urn:os4csapi:deployment:string:ft-huachuca:001"
 
-# -- Observation batch size --------------------------------------------
-OBS_BATCH_SIZE = 50
+# ── Observation batch size ────────────────────────────────────────────
+OBS_BATCH_SIZE = 50  # POST observations in batches of 50
 
-
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 #  API HELPERS
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 
 def reorder_type_first(obj):
-    """Recursively ensure 'type' is the first key in all dicts (OSH quirk)."""
+    """Recursively ensure 'type' is the first key in all dicts (OSH SensorML quirk)."""
     if isinstance(obj, dict):
         result = {}
         if "type" in obj:
@@ -168,46 +199,63 @@ def reorder_type_first(obj):
     return obj
 
 
+MAX_RETRIES = 3
+RETRY_BACKOFF = [2, 5, 15]  # seconds between retries
+
+
 def oracle_api(method, path, body=None, content_type="application/geo+json"):
-    """Call Oracle OSH API.  Returns (status, data|error_text)."""
+    """Call Oracle OSH API with retry on connection errors.
+
+    Returns (status, data|error_text).
+    Retries up to MAX_RETRIES times on connection/timeout errors.
+    """
     url = f"{ORACLE_BASE}/{path}" if not path.startswith("http") else path
     data_bytes = json.dumps(body).encode() if body else None
-    req = urllib.request.Request(url, data=data_bytes, method=method)
-    req.add_header("Authorization", f"Basic {ORACLE_AUTH}")
-    req.add_header("Accept", "application/json")
-    if body:
-        req.add_header("Content-Type", content_type)
 
-    class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
-        def redirect_request(self, req, fp, code, msg, headers, newurl):
-            return None
-    opener = urllib.request.build_opener(
-        NoRedirectHandler,
-        urllib.request.HTTPSHandler(context=SSL_CTX)
-    )
+    for attempt in range(MAX_RETRIES + 1):
+        req = urllib.request.Request(url, data=data_bytes, method=method)
+        req.add_header("Authorization", f"Basic {ORACLE_AUTH}")
+        req.add_header("Accept", "application/json")
+        if body:
+            req.add_header("Content-Type", content_type)
 
-    try:
-        resp = opener.open(req)
-        status = resp.status
-        loc = resp.headers.get("Location", "")
-        if loc and status in (201,):
-            rid = loc.rstrip("/").split("/")[-1]
-            return status, {"id": rid, "Location": loc}
+        class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+        opener = urllib.request.build_opener(
+            NoRedirectHandler,
+            urllib.request.HTTPSHandler(context=SSL_CTX)
+        )
+
         try:
-            rdata = json.loads(resp.read())
-        except Exception:
-            rdata = None
-        return status, rdata
-    except urllib.error.HTTPError as e:
-        body_text = ""
-        try:
-            body_text = e.read().decode()[:500]
-        except Exception:
-            pass
-        if e.code == 302:
-            loc = e.headers.get("Location", "")
-            return 302, f"REDIRECT -> {loc} (payload rejected)"
-        return e.code, body_text
+            resp = opener.open(req, timeout=30)
+            status = resp.status
+            loc = resp.headers.get("Location", "")
+            if loc and status in (201,):
+                rid = loc.rstrip("/").split("/")[-1]
+                return status, {"id": rid, "Location": loc}
+            try:
+                rdata = json.loads(resp.read())
+            except Exception:
+                rdata = None
+            return status, rdata
+        except urllib.error.HTTPError as e:
+            body_text = ""
+            try:
+                body_text = e.read().decode()[:500]
+            except Exception:
+                pass
+            if e.code == 302:
+                loc = e.headers.get("Location", "")
+                return 302, f"REDIRECT -> {loc} (payload rejected)"
+            return e.code, body_text
+        except (urllib.error.URLError, TimeoutError, OSError, ConnectionError) as e:
+            if attempt < MAX_RETRIES:
+                wait = RETRY_BACKOFF[attempt]
+                print(f"    RETRY ({attempt+1}/{MAX_RETRIES}): connection error, waiting {wait}s: {e}")
+                time.sleep(wait)
+            else:
+                return 0, f"CONNECTION_ERROR after {MAX_RETRIES} retries: {e}"
 
 
 def find_on_oracle(collection, uid):
@@ -217,6 +265,29 @@ def find_on_oracle(collection, uid):
         items = data.get("items", [])
         if items:
             return items[0]
+    return None
+
+
+def find_deployment_recursive(uid, path="deployments"):
+    """Recursively search the deployment tree for a UID.
+
+    The OSH /deployments endpoint only returns top-level deployments.
+    Sub-deployments live under deployments/{id}/subdeployments, so we
+    must walk the tree.
+    """
+    status, data = oracle_api("GET", path)
+    if status != 200 or not isinstance(data, dict):
+        return None
+    for item in data.get("items", []):
+        item_uid = item.get("properties", {}).get("uid", "")
+        if item_uid == uid:
+            return item
+        # Recurse into subdeployments
+        dep_id = item.get("id", "")
+        if dep_id:
+            found = find_deployment_recursive(uid, f"deployments/{dep_id}/subdeployments")
+            if found:
+                return found
     return None
 
 
@@ -246,9 +317,11 @@ def load_backup(subdir, filename):
 def strip_server_fields(obj):
     """Remove server-generated fields that shouldn't be in a POST payload."""
     if isinstance(obj, dict):
+        # Remove fields that are generated server-side
         for key in ["id", "links", "system@id", "system@link",
                      "phenomenonTime", "resultTime", "formats"]:
             obj.pop(key, None)
+        # Recursively process nested dicts
         for k, v in obj.items():
             strip_server_fields(v)
     elif isinstance(obj, list):
@@ -258,7 +331,8 @@ def strip_server_fields(obj):
 
 
 def strip_self_links(obj):
-    """Remove only self/canonical links from link arrays."""
+    """Remove only self/canonical links from link arrays.
+    Keep cross-reference links (procedure@link, deployment@link, etc.)."""
     if isinstance(obj, dict):
         if "links" in obj and isinstance(obj["links"], list):
             obj["links"] = [
@@ -272,9 +346,9 @@ def strip_self_links(obj):
     return obj
 
 
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 #  PHASE 1: MIGRATE PROCEDURES
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 def phase1_procedures():
     print("\n" + "=" * 70)
     print("PHASE 1: Migrate 9 Procedures (GeoJSON)")
@@ -286,6 +360,7 @@ def phase1_procedures():
         uid = proc.get("properties", {}).get("uid", "")
         label = proc.get("properties", {}).get("name", fname)
 
+        # Check if already exists on Oracle
         existing = find_on_oracle("procedures", uid)
         if existing:
             oracle_id = existing.get("id", "?")
@@ -295,6 +370,7 @@ def phase1_procedures():
             PROC_DO_TO_ORACLE[do_id] = oracle_id
             continue
 
+        # Strip server-generated fields
         payload = {
             "type": "Feature",
             "geometry": proc.get("geometry"),
@@ -302,6 +378,7 @@ def phase1_procedures():
                 k: v for k, v in proc.get("properties", {}).items()
             }
         }
+        # Remove DO-specific links
         payload.get("properties", {}).pop("links", None)
 
         if DRY_RUN:
@@ -322,9 +399,9 @@ def phase1_procedures():
             failed.append(f"proc:{label} -> HTTP {status}")
 
 
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 #  PHASE 2: MIGRATE AZ-MA-1 TOP-LEVEL SYSTEM
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 def phase2_toplevel_system():
     print("\n" + "=" * 70)
     print("PHASE 2: Migrate AZ-MA-1 Top-Level System (SensorML)")
@@ -343,6 +420,7 @@ def phase2_toplevel_system():
         id_map_do_to_oracle[f"sys_{do_id}"] = oracle_id
         return oracle_id
 
+    # Build POST payload -- strip server 'id' field
     payload = reorder_type_first(sml)
     payload.pop("id", None)
 
@@ -364,19 +442,21 @@ def phase2_toplevel_system():
         return None
 
 
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 #  PHASE 3: MIGRATE 13 SUBSYSTEMS AS NESTED MEMBERS
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 def phase3_subsystems(parent_oracle_id):
     print("\n" + "=" * 70)
     print("PHASE 3: Migrate 13 Subsystems as Nested Members (SensorML)")
     print("=" * 70)
 
     if not parent_oracle_id or parent_oracle_id == "DRY":
+        # If parent wasn't created, try to find it
         existing = find_on_oracle("systems", "urn:os4csapi:system:odas:az-ma-1")
         if existing:
             parent_oracle_id = existing.get("id")
         elif DRY_RUN:
+            # In dry-run mode, show what we would do
             for fn in SUBSYSTEM_FILES:
                 s = load_backup(None, fn)
                 print(f"  DRY-RUN: would POST subsystem: {s.get('label', fn)} -> systems/<parent>/members")
@@ -393,6 +473,7 @@ def phase3_subsystems(parent_oracle_id):
         label = sml.get("label", fname)
         do_id = SUBSYSTEM_DO_IDS.get(fname, sml.get("id", ""))
 
+        # Check if already nested under parent
         existing = find_nested_on_oracle("systems", parent_oracle_id, "members", uid)
         if existing:
             oracle_id = existing.get("id", "?")
@@ -419,6 +500,7 @@ def phase3_subsystems(parent_oracle_id):
         else:
             print(f"  FAIL {label} -> HTTP {status}: {data}")
             failed.append(f"sub:{label} -> HTTP {status}")
+            # Retry with fallback content-type
             if status == 400:
                 print(f"    Retrying with application/json ...")
                 status2, data2 = oracle_api("POST", path, payload, content_type="application/json")
@@ -426,18 +508,19 @@ def phase3_subsystems(parent_oracle_id):
                     oracle_id = data2.get("id", "") if isinstance(data2, dict) else ""
                     print(f"    RETRY OK {label} -> HTTP {status2} (oracle id={oracle_id})")
                     created.append(f"sub:{label} (retry)")
-                    failed.pop()
+                    failed.pop()  # Remove the earlier failure
                     id_map_do_to_oracle[f"sys_{do_id}"] = oracle_id
 
 
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 #  PHASE 4: MIGRATE 7 DATASTREAMS
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 def phase4_datastreams():
     print("\n" + "=" * 70)
     print("PHASE 4: Migrate 7 Datastreams (JSON)")
     print("=" * 70)
 
+    # Find the AZ-MA-1 system on Oracle
     parent = find_on_oracle("systems", DS_PARENT_UID)
     if not parent:
         if DRY_RUN:
@@ -459,6 +542,7 @@ def phase4_datastreams():
         output_name = ds.get("outputName", "")
         label = ds_name or fname
 
+        # Check if already exists under parent
         existing_path = f"systems/{parent_id}/datastreams?limit=50"
         status, data = oracle_api("GET", existing_path)
         already_exists = False
@@ -474,6 +558,7 @@ def phase4_datastreams():
         if already_exists:
             continue
 
+        # Load the schema for this datastream
         schema_fname = f"schema_{do_id}.json"
         try:
             schema = load_backup("datastreams", schema_fname)
@@ -481,11 +566,14 @@ def phase4_datastreams():
             print(f"  WARN: no schema file for {label}, posting without schema")
             schema = None
 
+        # Build the POST payload
+        # Key fields: name, outputName, schema (obsFormat + resultSchema)
         payload = {
             "name": ds_name,
             "outputName": output_name,
         }
 
+        # Add optional fields
         if ds.get("description"):
             payload["description"] = ds["description"]
         if ds.get("validTime"):
@@ -493,7 +581,8 @@ def phase4_datastreams():
         if ds.get("observedProperties"):
             payload["observedProperties"] = ds["observedProperties"]
 
-        # Re-map procedure@link DO ID -> Oracle ID
+        # Re-map cross-reference links using Oracle IDs
+        # procedure@link -- remap DO procedure ID to Oracle
         if ds.get("procedure@link"):
             proc_href = ds["procedure@link"].get("href", "")
             do_proc_id = proc_href.rstrip("/").split("/")[-1]
@@ -505,8 +594,11 @@ def phase4_datastreams():
                     "type": "application/geo+json"
                 }
 
-        # deployment@link -> String Alpha on Oracle
-        string_dep = find_on_oracle("deployments", STRING_ALPHA_UID)
+        # deployment@link -- find String Alpha on Oracle and use leaf deployment
+        # The DO server used AZ-DEP-AZ-MA-1 (a deployment specific to AZ-MA-1).
+        # On Oracle, AZ-MA-1 doesn't have its own deployment yet.
+        # We'll link to String Alpha which is the parent deployment context.
+        string_dep = find_deployment_recursive(STRING_ALPHA_UID)
         if string_dep:
             dep_id = string_dep.get("id", "")
             payload["deployment@link"] = {
@@ -515,6 +607,7 @@ def phase4_datastreams():
                 "type": "application/geo+json"
             }
 
+        # Schema must be included for datastream creation
         if schema:
             payload["schema"] = reorder_type_first(schema)
 
@@ -535,14 +628,15 @@ def phase4_datastreams():
             failed.append(f"ds:{label} -> HTTP {status}")
 
 
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 #  PHASE 5: MIGRATE 4 CONTROL STREAMS
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 def phase5_controlstreams():
     print("\n" + "=" * 70)
     print("PHASE 5: Migrate 4 Control Streams (JSON)")
     print("=" * 70)
 
+    # Find the ACTUATOR subsystem on Oracle
     parent = find_on_oracle("systems", CS_PARENT_UID)
     if not parent:
         if DRY_RUN:
@@ -564,6 +658,7 @@ def phase5_controlstreams():
         input_name = cs.get("inputName", "")
         label = cs_name or fname
 
+        # Check if already exists under parent
         existing_path = f"systems/{parent_id}/controlstreams?limit=50"
         status, data = oracle_api("GET", existing_path)
         already_exists = False
@@ -579,12 +674,14 @@ def phase5_controlstreams():
         if already_exists:
             continue
 
+        # Load the schema
         schema_fname = f"schema_{do_id}.json"
         try:
             schema = load_backup("controlstreams", schema_fname)
         except FileNotFoundError:
             schema = None
 
+        # Build POST payload
         payload = {
             "name": cs_name,
             "inputName": input_name,
@@ -613,9 +710,9 @@ def phase5_controlstreams():
             failed.append(f"cs:{label} -> HTTP {status}")
 
 
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 #  PHASE 6: MIGRATE OBSERVATIONS (Bulk)
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 def phase6_observations():
     print("\n" + "=" * 70)
     print("PHASE 6: Migrate ~7,465 Observations in Batches")
@@ -629,12 +726,15 @@ def phase6_observations():
     total_failed = 0
 
     for obs_fname in OBS_FILES:
+        # Extract DO datastream ID from filename
         do_ds_id = obs_fname.replace("obs_", "").replace(".json", "")
         oracle_ds_id = id_map_do_to_oracle.get(f"ds_{do_ds_id}")
 
         if not oracle_ds_id or oracle_ds_id == "DRY":
+            # Try to find datastream on Oracle by looking up name
             ds_meta = load_backup("datastreams", f"ds_{do_ds_id}.json")
             ds_name = ds_meta.get("name", "")
+            # Find parent system, then find datastream
             parent = find_on_oracle("systems", DS_PARENT_UID)
             if parent:
                 parent_id = parent.get("id")
@@ -649,6 +749,7 @@ def phase6_observations():
             print(f"  SKIP obs for DO ds {do_ds_id} -- Oracle datastream not found")
             continue
 
+        # Load observations
         obs_data = load_backup("observations", obs_fname)
         items = obs_data.get("items", [])
         print(f"\n  Datastream {do_ds_id} -> Oracle {oracle_ds_id}: {len(items)} observations")
@@ -657,22 +758,26 @@ def phase6_observations():
             print(f"    DRY-RUN: would POST {len(items)} observations")
             continue
 
+        # Check if there are already observations on Oracle for this datastream
         st, existing_obs = oracle_api("GET", f"datastreams/{oracle_ds_id}/observations?limit=1")
         if st == 200 and isinstance(existing_obs, dict):
             existing_count = len(existing_obs.get("items", []))
             if existing_count > 0:
-                print(f"    WARN: Oracle datastream already has observations")
+                print(f"    WARN: Oracle datastream already has observations -- posting anyway (idempotent by phenomenonTime)")
 
+        # POST observations one at a time (OSH doesn't support batch POST for observations)
         batch_ok = 0
         batch_fail = 0
         path = f"datastreams/{oracle_ds_id}/observations"
 
         for i, obs in enumerate(items):
+            # Strip server-generated fields from observation
             obs_payload = {
                 "phenomenonTime": obs.get("phenomenonTime"),
                 "resultTime": obs.get("resultTime"),
                 "result": obs.get("result"),
             }
+            # Include optional fields
             if obs.get("featureOfInterest@id"):
                 obs_payload["featureOfInterest@id"] = obs["featureOfInterest@id"]
 
@@ -686,11 +791,15 @@ def phase6_observations():
                 elif batch_fail == 4:
                     print(f"    ... suppressing further failure messages")
 
+            # Progress indicator
             if (i + 1) % 500 == 0:
                 print(f"    Progress: {i+1}/{len(items)} (ok={batch_ok}, fail={batch_fail})")
 
-            if (i + 1) % 100 == 0:
-                time.sleep(0.1)
+            # Throttle to avoid overwhelming the server
+            # 50ms per request + 2s pause every 200 requests
+            time.sleep(0.05)
+            if (i + 1) % 200 == 0:
+                time.sleep(2)
 
         print(f"    Done: {batch_ok} created, {batch_fail} failed")
         total_posted += batch_ok
@@ -702,15 +811,16 @@ def phase6_observations():
     print(f"\n  TOTAL observations: {total_posted} created, {total_failed} failed")
 
 
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 #  PHASE 7: LINK AZ-MA-1 TO STRING ALPHA DEPLOYMENT (Dual-Write)
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 def phase7_deployment_link():
     print("\n" + "=" * 70)
     print("PHASE 7: Link AZ-MA-1 -> String Alpha Deployment (dual-write)")
     print("=" * 70)
 
-    string_dep = find_on_oracle("deployments", STRING_ALPHA_UID)
+    # Find String Alpha deployment on Oracle
+    string_dep = find_deployment_recursive(STRING_ALPHA_UID)
     if not string_dep:
         if DRY_RUN:
             print("  DRY-RUN: would PUT deployment String Alpha with dual-write links")
@@ -721,6 +831,7 @@ def phase7_deployment_link():
     dep_id = string_dep.get("id")
     print(f"  String Alpha deployment: id={dep_id}")
 
+    # Find AZ-MA-1 system on Oracle
     az_system = find_on_oracle("systems", DS_PARENT_UID)
     if not az_system:
         print("  ABORT -- AZ-MA-1 system not found on Oracle")
@@ -730,14 +841,18 @@ def phase7_deployment_link():
     sys_uid = DS_PARENT_UID
     print(f"  AZ-MA-1 system: id={sys_id}")
 
+    # GET current deployment payload
     status, dep_data = oracle_api("GET", f"deployments/{dep_id}")
     if status != 200 or not dep_data:
         print(f"  FAIL -- cannot GET deployment: HTTP {status}")
         return
 
+    # Build dual-write PUT payload
+    # Strategy: include BOTH deployedSystems@link (OGC standard) and
+    # platform@link (OSH-compatible fallback)
     put_payload = dep_data
 
-    # platform@link (OSH understands this today)
+    # Add platform@link (OSH understands this today)
     put_payload["properties"]["platform@link"] = {
         "href": f"/sensorhub/api/systems/{sys_id}",
         "uid": sys_uid,
@@ -745,7 +860,8 @@ def phase7_deployment_link():
         "type": "application/geo+json"
     }
 
-    # deployedSystems@link (OGC standard -- OSH currently strips it)
+    # Add deployedSystems@link (OGC standard -- OSH currently strips it,
+    # but we write it so it activates when the conformance gap is fixed)
     put_payload["properties"]["deployedSystems@link"] = [
         {
             "href": f"/sensorhub/api/systems/{sys_id}",
@@ -767,7 +883,7 @@ def phase7_deployment_link():
         print(f"  FAIL deployment link -> HTTP {status}: {data}")
         failed.append(f"deployment-link -> HTTP {status}")
 
-    # Verify
+    # Verify the link was saved
     time.sleep(0.5)
     status, verify = oracle_api("GET", f"deployments/{dep_id}")
     if status == 200 and isinstance(verify, dict):
@@ -778,9 +894,9 @@ def phase7_deployment_link():
               f"deployedSystems@link={'YES' if has_deployed else 'NO (expected -- OSH strips it)'}")
 
 
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 #  MAIN
-# ======================================================================
+# ══════════════════════════════════════════════════════════════════════
 def main():
     print("=" * 70)
     print("AZ-MA-1 MIGRATION: DO -> Oracle OSH")
@@ -792,6 +908,7 @@ def main():
         print("  MODE: Skipping observations")
     print("=" * 70)
 
+    # Validate Oracle connectivity
     print("\nValidating Oracle connectivity...")
     status, _ = oracle_api("GET", "")
     if status != 200:
@@ -799,6 +916,7 @@ def main():
         sys.exit(1)
     print("  Oracle API OK")
 
+    # Run phases
     t0 = time.time()
 
     phase1_procedures()
@@ -811,11 +929,13 @@ def main():
 
     elapsed = time.time() - t0
 
+    # Save ID map
     map_path = os.path.join(BACKUP_DIR, "migration_id_map.json")
     with open(map_path, "w", encoding="utf-8") as f:
         json.dump(id_map_do_to_oracle, f, indent=2)
     print(f"\n  ID map saved to {map_path}")
 
+    # ── Summary ───────────────────────────────────────────────────────
     print("\n" + "=" * 70)
     print(f"MIGRATION COMPLETE -- {elapsed:.1f}s")
     print(f"  Created:  {len(created)}")
