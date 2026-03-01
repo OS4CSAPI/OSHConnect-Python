@@ -1,0 +1,53 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-SNET-001",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -110.277897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.649006
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:snet:ft-huachuca:001",
+    "name": "Sensor Network/Net Deployment",
+    "description": "Integrated sensor network (strings + relays + monitoring site) operating over AOI. (v3.0 Part 1 doctrinal-aligned refactor; sensors added in Part 2)",
+    "validTime": {
+      "begin": "2026-02-27T00:00:00Z",
+      "end": null
+    },
+    "partOf@link": {
+      "href": "/sensorhub/api/deployments/AZ-DEP-SSO-001",
+      "title": "Sensor Surveillance Operation",
+      "type": "application/geo+json"
+    },
+    "subdeployments@link": [
+      {
+        "href": "/sensorhub/api/deployments/AZ-DEP-FIELD-001",
+        "title": "Sensor Field 001",
+        "type": "application/geo+json"
+      }
+    ]
+  }
+}

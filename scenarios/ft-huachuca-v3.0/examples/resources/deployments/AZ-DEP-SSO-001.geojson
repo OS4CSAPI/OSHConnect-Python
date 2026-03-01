@@ -1,0 +1,71 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-SSO-001",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -110.277897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.649006
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:sso:ft-huachuca:001",
+    "name": "Sensor Surveillance Operation (derived from SSP)",
+    "description": "Sensor Surveillance Operation context for remote sensors (SSP execution context). (v3.0 Part 1 doctrinal-aligned refactor; sensors added in Part 2)",
+    "validTime": {
+      "begin": "2026-02-27T00:00:00Z",
+      "end": null
+    },
+    "partOf@link": {
+      "href": "/sensorhub/api/deployments/AZ-DEP-RSO-001",
+      "title": "R&S Operation",
+      "type": "application/geo+json"
+    },
+    "documentation@link": [
+      {
+        "href": "urn:os4csapi:doc:sso:opord",
+        "title": "SSO OPORD/OPLAN reference"
+      },
+      {
+        "href": "urn:os4csapi:doc:sso:annex-b",
+        "title": "SSO Annex B (Intelligence) reference"
+      },
+      {
+        "href": "urn:os4csapi:doc:sso:rs-plan",
+        "title": "SSO R&S Plan reference"
+      },
+      {
+        "href": "urn:os4csapi:doc:sso:ssp",
+        "title": "SSO Sensor Surveillance Plan reference"
+      }
+    ],
+    "subdeployments@link": [
+      {
+        "href": "/sensorhub/api/deployments/AZ-DEP-SNET-001",
+        "title": "Sensor Network/Net",
+        "type": "application/geo+json"
+      }
+    ]
+  }
+}

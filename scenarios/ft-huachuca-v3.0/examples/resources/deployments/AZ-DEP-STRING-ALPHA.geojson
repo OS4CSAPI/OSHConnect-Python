@@ -1,0 +1,38 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-STRING-ALPHA",
+  "geometry": {
+    "type": "LineString",
+    "coordinates": [
+      [
+        -110.272897,
+        31.663006
+      ],
+      [
+        -110.257897,
+        31.655006
+      ],
+      [
+        -110.269897,
+        31.650006
+      ]
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:string:alpha:ft-huachuca:001",
+    "name": "Sensor String Alpha (line-of-emplacement)",
+    "description": "Sensor string emplaced along a line to cover a target route/NAI. Physical geometry constraint + target-focused grouping. (v3.0 Part 1 doctrinal-aligned refactor; sensors added in Part 2)",
+    "validTime": {
+      "begin": "2026-02-27T00:00:00Z",
+      "end": null
+    },
+    "partOf@link": {
+      "href": "/sensorhub/api/deployments/AZ-DEP-FIELD-001",
+      "title": "Sensor Field 001",
+      "type": "application/geo+json"
+    },
+    "stringStatus": "Planned",
+    "stringNo": "AZ-STRING-ALPHA"
+  }
+}

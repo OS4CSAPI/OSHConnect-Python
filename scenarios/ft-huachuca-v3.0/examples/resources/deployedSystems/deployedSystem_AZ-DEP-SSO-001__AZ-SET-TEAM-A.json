@@ -1,0 +1,11 @@
+{
+  "system": {
+    "href": "/sensorhub/api/systems/AZ-SET-TEAM-A",
+    "title": "AZ-SET-TEAM-A",
+    "type": "application/geo+json"
+  },
+  "description": "SET executes SSO and produces SENREP datastream.",
+  "configuration": {
+    "setValues": []
+  }
+}

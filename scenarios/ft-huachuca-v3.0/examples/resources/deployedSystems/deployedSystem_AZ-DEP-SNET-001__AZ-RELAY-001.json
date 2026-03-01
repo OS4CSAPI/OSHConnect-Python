@@ -1,0 +1,11 @@
+{
+  "system": {
+    "href": "/sensorhub/api/systems/AZ-RELAY-001",
+    "title": "AZ-RELAY-001",
+    "type": "application/geo+json"
+  },
+  "description": "Relay system within SNET.",
+  "configuration": {
+    "setValues": []
+  }
+}

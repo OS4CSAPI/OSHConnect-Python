@@ -1,0 +1,28 @@
+{
+  "type": "DataRecord",
+  "definition": "https://os4csapi.org/def/csapi/senrepRecordOSH",
+  "label": "SENREP (Sensor Report)",
+  "description": "Doctrinal SENREP-style report fields.",
+  "fields": [
+    { "name": "timestamp", "type": "Time", "definition": "https://os4csapi.org/def/odas/time/epochSeconds", "label": "Epoch seconds", "uom": { "code": "s", "label": "seconds" }, "referenceTime": "1970-01-01T00:00:00Z" },
+    { "name": "title", "type": "Text", "definition": "https://os4csapi.org/def/csapi/reportTitle", "label": "Title" },
+    { "name": "senderId", "type": "Text", "definition": "https://os4csapi.org/def/csapi/senderId", "label": "Sender ID" },
+    { "name": "seqNo", "type": "Count", "definition": "https://os4csapi.org/def/csapi/seqNo", "label": "Sequence number" },
+    { "name": "classification", "type": "Text", "definition": "https://os4csapi.org/def/csapi/classification", "label": "Classification" },
+    { "name": "releasably", "type": "Text", "definition": "https://os4csapi.org/def/csapi/releasably", "label": "Releasability" },
+    { "name": "dor", "type": "Text", "definition": "https://os4csapi.org/def/csapi/dateOfReport", "label": "Date of report" },
+    { "name": "envirOpName", "type": "Text", "definition": "https://os4csapi.org/def/csapi/envirOpName", "label": "Environment/OpName" },
+    { "name": "strNo", "type": "Text", "definition": "https://os4csapi.org/def/csapi/strNo", "label": "Sensor string number" },
+    { "name": "detectTimeZ", "type": "Text", "definition": "https://os4csapi.org/def/csapi/detectTimeZ", "label": "Detection time (Z)" },
+    { "name": "qty", "type": "Count", "definition": "https://os4csapi.org/def/csapi/qty", "label": "Quantity" },
+    { "name": "tgtTyp", "type": "Category", "definition": "https://os4csapi.org/def/csapi/tgtTyp", "label": "Target type", "constraint": { "type": "AllowedTokens", "values": ["VEHICL","UAS","PERS","UNKN"] } },
+    { "name": "subTyp", "type": "Text", "definition": "https://os4csapi.org/def/csapi/subTyp", "label": "Subtype" },
+    { "name": "spd", "type": "Quantity", "definition": "https://os4csapi.org/def/csapi/spd", "label": "Speed", "uom": { "code": "km/h" } },
+    { "name": "dirCardinal", "type": "Category", "definition": "https://os4csapi.org/def/csapi/dirCardinal", "label": "Direction (cardinal)", "constraint": { "type": "AllowedTokens", "values": ["N","NE","E","SE","S","SW","W","NW"] } },
+    { "name": "colLengthM", "type": "Quantity", "definition": "https://os4csapi.org/def/csapi/colLengthM", "label": "Column length", "uom": { "code": "m" } },
+    { "name": "etaLat", "type": "Quantity", "definition": "https://os4csapi.org/def/csapi/etaLat", "label": "ETA lat", "uom": { "code": "deg" }, "constraint": { "type": "AllowedValues", "intervals": [[-90, 90]] } },
+    { "name": "etaLon", "type": "Quantity", "definition": "https://os4csapi.org/def/csapi/etaLon", "label": "ETA lon", "uom": { "code": "deg" }, "constraint": { "type": "AllowedValues", "intervals": [[-180, 180]] } },
+    { "name": "etaTimeZ", "type": "Text", "definition": "https://os4csapi.org/def/csapi/etaTimeZ", "label": "ETA time (Z)" },
+    { "name": "comments", "type": "Text", "definition": "https://os4csapi.org/def/csapi/comments", "label": "Comments" }
+  ]
+}

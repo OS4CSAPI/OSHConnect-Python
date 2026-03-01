@@ -1,0 +1,11 @@
+{
+  "system": {
+    "href": "/sensorhub/api/systems/AZ-MON-SITE-1",
+    "title": "AZ-MON-SITE-1",
+    "type": "application/geo+json"
+  },
+  "description": "Monitoring Site Node within SNET.",
+  "configuration": {
+    "setValues": []
+  }
+}

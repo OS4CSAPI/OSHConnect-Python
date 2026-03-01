@@ -1,0 +1,17 @@
+{
+  "type": "Feature",
+  "id": "AZ-MON-SITE-1",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.264897,
+      31.661006
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:System",
+    "uid": "urn:os4csapi:system:monitoring-site-node:ft-huachuca:001",
+    "name": "Monitoring Site Node 1",
+    "description": "Operational monitoring node (equipment + comms) that enables SET data reception and processing."
+  }
+}

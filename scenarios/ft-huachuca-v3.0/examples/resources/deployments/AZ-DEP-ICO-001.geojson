@@ -1,0 +1,66 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-ICO-001",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -110.277897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.649006
+        ],
+        [
+          -110.253897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.667006
+        ],
+        [
+          -110.277897,
+          31.649006
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:ico:ft-huachuca:001",
+    "name": "Intelligence Collection Operation (derived from ICP)",
+    "description": "Top-level intelligence collection operation context derived from the intelligence collection plan (ICP). (v3.0 Part 1 doctrinal-aligned refactor; sensors added in Part 2)",
+    "validTime": {
+      "begin": "2026-02-27T00:00:00Z",
+      "end": null
+    },
+    "documentation@link": [
+      {
+        "href": "urn:os4csapi:doc:ico:opord",
+        "title": "ICO OPORD/OPLAN reference"
+      },
+      {
+        "href": "urn:os4csapi:doc:ico:annex-b",
+        "title": "ICO Annex B (Intelligence) reference"
+      },
+      {
+        "href": "urn:os4csapi:doc:ico:rs-plan",
+        "title": "ICO R&S Plan reference"
+      },
+      {
+        "href": "urn:os4csapi:doc:ico:ssp",
+        "title": "ICO Sensor Surveillance Plan reference"
+      }
+    ],
+    "subdeployments@link": [
+      {
+        "href": "/sensorhub/api/deployments/AZ-DEP-RSO-001",
+        "title": "Reconnaissance & Surveillance Operation",
+        "type": "application/geo+json"
+      }
+    ]
+  }
+}

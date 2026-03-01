@@ -1,0 +1,53 @@
+{
+  "type": "Feature",
+  "id": "AZ-DEP-FIELD-001",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -110.273897,
+          31.654006
+        ],
+        [
+          -110.255897,
+          31.654006
+        ],
+        [
+          -110.255897,
+          31.665006
+        ],
+        [
+          -110.273897,
+          31.665006
+        ],
+        [
+          -110.273897,
+          31.654006
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:Deployment",
+    "uid": "urn:os4csapi:deployment:field:ft-huachuca:001",
+    "name": "Sensor Field 001",
+    "description": "Geographic grouping of sensor strings in a sub-area of the AOI. (v3.0 Part 1 doctrinal-aligned refactor; sensors added in Part 2)",
+    "validTime": {
+      "begin": "2026-02-27T00:00:00Z",
+      "end": null
+    },
+    "partOf@link": {
+      "href": "/sensorhub/api/deployments/AZ-DEP-SNET-001",
+      "title": "Sensor Network/Net",
+      "type": "application/geo+json"
+    },
+    "subdeployments@link": [
+      {
+        "href": "/sensorhub/api/deployments/AZ-DEP-STRING-ALPHA",
+        "title": "Sensor String Alpha",
+        "type": "application/geo+json"
+      }
+    ]
+  }
+}

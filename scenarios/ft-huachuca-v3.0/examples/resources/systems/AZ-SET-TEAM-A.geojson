@@ -1,0 +1,17 @@
+{
+  "type": "Feature",
+  "id": "AZ-SET-TEAM-A",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.264897,
+      31.661006
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:System",
+    "uid": "urn:os4csapi:system:set:ft-huachuca:001",
+    "name": "Sensor Employment Team (SET-A)",
+    "description": "SET responsible for receiving sensor data, conducting analysis, and generating SENREP reports."
+  }
+}

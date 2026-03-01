@@ -1,0 +1,17 @@
+{
+  "type": "Feature",
+  "id": "AZ-RELAY-001",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -110.2625,
+      31.6585
+    ]
+  },
+  "properties": {
+    "featureType": "sosa:System",
+    "uid": "urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001",
+    "name": "Relay / Repeater 001",
+    "description": "VHF radio repeater forwarding sensor transmissions to the monitoring site."
+  }
+}

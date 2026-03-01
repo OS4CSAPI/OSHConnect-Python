@@ -1,0 +1,4 @@
+deploymentId,systemId,file
+AZ-DEP-SSO-001,AZ-SET-TEAM-A,deployedSystem_AZ-DEP-SSO-001__AZ-SET-TEAM-A.json
+AZ-DEP-SNET-001,AZ-MON-SITE-1,deployedSystem_AZ-DEP-SNET-001__AZ-MON-SITE-1.json
+AZ-DEP-SNET-001,AZ-RELAY-001,deployedSystem_AZ-DEP-SNET-001__AZ-RELAY-001.json
