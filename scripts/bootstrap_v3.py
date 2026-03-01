@@ -6,9 +6,10 @@ Creates the doctrine-aligned operational hierarchy and monitoring/reporting
 layer from the v3.0 scenario pack (scenarios/ft-huachuca-v3.0/).
 
 Resources created (in dependency order):
-  1. Deployments (6)            — ICO > RSO > SSO > SNET > SFIELD > STRING
-  2. Systems (3)                — SET-A, Monitoring Site Node 1, Relay 001
+  1. Systems (3)                — SET-A, Monitoring Site Node 1, Relay 001
+  2. Deployments (6)            — ICO > RSO > SSO > SNET > SFIELD > STRING
   3. Deployed-system links (3)  — SSO→SET, SNET→MonSite, SNET→Relay
+                                  (via PUT-update with deployedSystems@link)
   4. SENREP datastream (1)      — on SET-A (schema from scenario pack)
 
 The resulting id_map (logical_id → server_id) is saved to id_map_v3.json
@@ -341,11 +342,11 @@ class BootstrapV3:
         except requests.RequestException:
             pass
 
-    # ── Phase 1a: Deployments ────────────────────────────────────
+    # ── Phase 1b: Deployments ────────────────────────────────────
 
     def create_deployments(self):
         """Create 6 deployments in doctrine hierarchy order."""
-        print(f"\n{'═' * 3} Phase 1a: Deployments (6) {'═' * 3}")
+        print(f"\n{'═' * 3} Phase 1b: Deployments (6) {'═' * 3}")
 
         for dep_id, parent_id in DEPLOYMENT_HIERARCHY:
             f = DEPLOYMENTS_DIR / f"{dep_id}.geojson"
@@ -374,11 +375,11 @@ class BootstrapV3:
                 self.id_map[dep_id] = server_id
                 print(f"  ✓ {dep_id} → {server_id}")
 
-    # ── Phase 1b: Systems ────────────────────────────────────────
+    # ── Phase 1a: Systems ────────────────────────────────────────
 
     def create_systems(self):
         """Create 3 systems (all top-level)."""
-        print(f"\n{'═' * 3} Phase 1b: Systems (3) {'═' * 3}")
+        print(f"\n{'═' * 3} Phase 1a: Systems (3) {'═' * 3}")
 
         for sys_id in SYSTEMS:
             f = SYSTEMS_DIR / f"{sys_id}.geojson"
@@ -397,28 +398,152 @@ class BootstrapV3:
                 self.id_map[sys_id] = server_id
                 print(f"  ✓ {sys_id} → {server_id}")
 
+    # ── HTTP PUT helper ───────────────────────────────────────────
+
+    def put_resource(
+        self,
+        endpoint: str,
+        data: dict,
+        content_type: str = "application/geo+json",
+        logical_id: str = "",
+    ) -> bool:
+        """PUT (replace) a resource. Returns True on success."""
+        url = f"{self.server}/{endpoint}"
+
+        if self.dry_run:
+            print(f"  [DRY-RUN] PUT {endpoint} → {logical_id}")
+            return True
+
+        try:
+            resp = self.session.put(
+                url,
+                data=json.dumps(data),
+                headers={"Content-Type": content_type, "Accept": "application/json"},
+            )
+        except requests.RequestException as e:
+            print(f"  ✗ PUT ERROR: {logical_id} — {e}")
+            return False
+
+        if resp.status_code in (200, 204):
+            return True
+        else:
+            body = resp.text[:400]
+            print(f"  ✗ PUT FAILED ({resp.status_code}): {logical_id}")
+            print(f"    {body}")
+            return False
+
     # ── Phase 1c: Deployed-system links ──────────────────────────
 
     def create_deployed_system_links(self):
-        """Create deployed-system associations.
+        """Associate systems with deployments via SML-format PUT-update.
 
-        NOTE: OSH SensorHub on Oracle does not currently support the
-        /deployments/{id}/deployedSystems endpoint (returns 400).
-        The /deployments/{id}/members endpoint creates duplicates.
-        Deployed-system links are recorded in id_map for reference
-        but creation is deferred until endpoint support is confirmed.
+        Per OGC CSAPI Part 1 (Clause 19.2.6, Table 52), the deployedSystems
+        association in SensorML JSON is encoded as a `deployedSystems` array
+        of DeployedSystem objects, each containing a `system` link.
+
+        The GeoJSON format (`deployedSystems@link`) is silently stripped by
+        OSH SensorHub on both POST and PUT. The SML JSON format works: the
+        server resolves UIDs to server URLs and persists the association.
+
+        Approach:
+          1. Read the deployed-system link files to build a map:
+             deployment → list of system UIDs
+          2. For each deployment with linked systems, GET the current resource
+             (GeoJSON), build an SML body with `deployedSystems`, and PUT it
+             with Content-Type `application/sml+json`.
         """
         print(f"\n{'═' * 3} Phase 1c: Deployed-System Links (3) {'═' * 3}")
-        print("  ⚠ DEFERRED: OSH server does not support /deployedSystems endpoint")
-        print("    Associations recorded in id_map for future use.")
-        print("    Hierarchy is established via partOf@link on deployments.")
 
-        # Record the intended associations in id_map for reference
+        # Build deployment → system links map
+        dep_sys_map: Dict[str, List[dict]] = {}  # dep_logical_id → list of link objects
+
         for dep_logical_id, filename in DEPLOYED_SYSTEM_LINKS:
-            label = filename.replace("deployedSystem_", "").replace(".json", "")
-            link_key = f"LINK-{label}"
-            self.id_map[link_key] = f"deferred:{dep_logical_id}"
-            print(f"  · {label} → deferred")
+            f = DEPLOYED_SYS_DIR / filename
+            if not f.exists():
+                print(f"  ✗ File not found: {filename}")
+                self.stats["failed"] += 1
+                continue
+
+            ds_data = json.loads(f.read_text(encoding="utf-8"))
+            sys_ref = ds_data.get("system", {})
+            # Extract system logical ID from href (e.g., "/sensorhub/api/systems/AZ-SET-TEAM-A")
+            sys_logical_id = sys_ref.get("href", "").rstrip("/").split("/")[-1]
+
+            # Look up system UID from scenario pack file
+            sys_file = SYSTEMS_DIR / f"{sys_logical_id}.geojson"
+            if sys_file.exists():
+                sys_data = json.loads(sys_file.read_text(encoding="utf-8"))
+                sys_uid = sys_data.get("properties", {}).get("uid", "")
+            else:
+                sys_uid = ""
+
+            if not sys_uid:
+                print(f"  ✗ Cannot resolve UID for system {sys_logical_id}")
+                self.stats["failed"] += 1
+                continue
+
+            # SML DeployedSystem object (per spec Table 52)
+            deployed_sys_obj = {
+                "system": {
+                    "href": sys_uid,
+                    "title": sys_ref.get("title", sys_logical_id),
+                }
+            }
+
+            dep_sys_map.setdefault(dep_logical_id, []).append(deployed_sys_obj)
+
+        # PUT-update each deployment using SML format
+        for dep_logical_id, deployed_systems in dep_sys_map.items():
+            dep_server_id = self.id_map.get(dep_logical_id)
+            if not dep_server_id:
+                print(f"  ✗ Deployment {dep_logical_id} not in id_map")
+                self.stats["failed"] += 1
+                continue
+
+            # GET current deployment resource (GeoJSON) to extract metadata
+            get_url = f"{self.server}/deployments/{dep_server_id}"
+            try:
+                resp = self.session.get(
+                    get_url, headers={"Accept": "application/geo+json"}
+                )
+                if resp.status_code != 200:
+                    print(f"  ✗ Cannot GET {dep_logical_id}: {resp.status_code}")
+                    self.stats["failed"] += 1
+                    continue
+                dep_geo = resp.json()
+            except requests.RequestException as e:
+                print(f"  ✗ GET error for {dep_logical_id}: {e}")
+                self.stats["failed"] += 1
+                continue
+
+            # Build SML JSON body from the GeoJSON properties
+            props = dep_geo.get("properties", {})
+            sml_body: Dict[str, Any] = {
+                "type": "Deployment",
+                "definition": "http://www.w3.org/ns/sosa/Deployment",
+                "uniqueId": props.get("uid", ""),
+                "label": props.get("name", ""),
+                "description": props.get("description", ""),
+                "validTime": props.get("validTime", []),
+                "deployedSystems": deployed_systems,
+            }
+
+            system_names = ", ".join(
+                ds["system"]["title"] for ds in deployed_systems
+            )
+            ok = self.put_resource(
+                f"deployments/{dep_server_id}",
+                sml_body,
+                "application/sml+json",
+                dep_logical_id,
+            )
+            if ok:
+                link_key = f"LINK-{dep_logical_id}"
+                self.id_map[link_key] = f"linked:{system_names}"
+                self.stats["created"] += 1
+                print(f"  ✓ {dep_logical_id} ← [{system_names}]")
+            else:
+                self.stats["failed"] += 1
 
     # ── Phase 1d: SENREP datastream ──────────────────────────────
 
@@ -493,8 +618,9 @@ class BootstrapV3:
         if clean_first:
             self.clean()
 
-        self.create_deployments()
+        # Systems first so UIDs exist on server before deployment links
         self.create_systems()
+        self.create_deployments()
         self.create_deployed_system_links()
         self.create_senrep_datastream()
 
