@@ -2,6 +2,7 @@
 
 > **Supersedes:** Section 5 (Execution Model) of [LOB_Triangulation_Implementation_Spec.md](LOB_Triangulation_Implementation_Spec.md)  
 > **Date:** 2026-03-03  
+> **Updated:** 2026-03-03 — LOB schema corrected to 7 fields; DS IDs updated; cross-references aligned  
 > **Status:** Architectural decision record  
 > **Decision:** The localizer MUST be a standalone CSAPI consumer/producer, NOT embedded in the simulator.
 
@@ -75,33 +76,67 @@ The localizer discovers its inputs and outputs by querying the server. It has no
 
 ## 3. Localizer as a Standalone Process
 
-### 3.1 Execution Loop
+### 3.1 LOB Input Schema (7 fields)
+
+The localizer consumes LOB observations from 3 datastreams. Each LOB observation contains 7 fields:
+
+| # | Field | Type | Description |
+|---|-------|------|-------------|
+| 1 | `timestamp` | Time | Epoch seconds |
+| 2 | `trackId` | Count | Track ID |
+| 3 | `bearingTrue` | Quantity (deg) | Bearing from sensor to target, 0–360° |
+| 4 | `bearingStdDev` | Quantity (deg) | Bearing uncertainty |
+| 5 | `sensorLat` | Quantity (deg) | Sensor latitude |
+| 6 | `sensorLon` | Quantity (deg) | Sensor longitude |
+| 7 | `classification` | Text | Target classification (e.g. "UAS") |
+
+> **Authoritative schema source:** [`scripts/bootstrap_v4.py` line 536](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/bootstrap_v4.py#L536) in the csapi-explorer repo.
+
+**Current LOB datastream IDs:**
+
+| Node | DS ID | System ID |
+|------|-------|-----------|
+| AZ-MA-1 | `04c0` | `0420` |
+| AZ-MA-2 | `04cg` | `0490` |
+| AZ-MA-3 | `04d0` | `049g` |
+
+> These IDs changed from `0420`/`0460`/`049g` after the schema was corrected (DELETE + POST with `classification` field added). The simulator discovers IDs dynamically by `outputName`.
+
+### 3.2 Execution Loop
 
 ```python
 # localizer.py — independent process
 
+LOB_DATASTREAMS = {
+    "AZ-MA-1": "04c0",
+    "AZ-MA-2": "04cg",
+    "AZ-MA-3": "04d0",
+}
+
 while running:
     # 1. CONSUME: Read latest LOBs from the CSAPI server
-    lob_ma1 = GET(f"/datastreams/{MA1_LOB_DS}/observations?resultTime=latest")
-    lob_ma2 = GET(f"/datastreams/{MA2_LOB_DS}/observations?resultTime=latest")
-    lob_ma3 = GET(f"/datastreams/{MA3_LOB_DS}/observations?resultTime=latest")
+    lobs = []
+    for name, ds_id in LOB_DATASTREAMS.items():
+        obs = GET(f"/datastreams/{ds_id}/observations?resultTime=latest")
+        if obs and not already_processed(obs):
+            lobs.append({**obs["result"], "name": name})
 
-    # 2. CORRELATE: Group by time window
-    recent_lobs = [lob for lob in [lob_ma1, lob_ma2, lob_ma3]
-                   if lob and abs(lob.phenomenonTime - now) < TIME_WINDOW]
+    # 2. CORRELATE: Group by time window + classification
+    by_class = group_by(lobs, key=lambda l: l.get("classification", "UAS"))
 
-    # 3. COMPUTE: Triangulate if 2+ LOBs
-    if len(recent_lobs) >= 2:
-        estimate = wls_bearing_intersection(recent_lobs)
+    for cls, group in by_class.items():
+        # 3. COMPUTE: Triangulate if 2+ LOBs
+        if len(group) >= 2:
+            estimate = wls_bearing_intersection(group)
 
-        # 4. PRODUCE: Publish result back to the CSAPI server
-        if estimate and estimate.residual_m <= RESIDUAL_CAP:
-            POST(f"/datastreams/{LOCALIZER_DS}/observations", estimate)
+            # 4. PRODUCE: Publish result back to the CSAPI server
+            if estimate and estimate["residual_m"] <= RESIDUAL_CAP:
+                POST(f"/datastreams/{LOCALIZER_DS}/observations", estimate)
 
     sleep(POLL_INTERVAL)
 ```
 
-### 3.2 Key Design Properties
+### 3.3 Key Design Properties
 
 | Property | Value | Rationale |
 |----------|-------|-----------|
@@ -110,9 +145,10 @@ while running:
 | **Minimum LOBs** | 2 | Need at least 2 bearings for a fix |
 | **Residual cap** | 500 m | Rejects near-parallel bearing pairs with divergent intersections |
 | **Deduplication** | Track `phenomenonTime` of last-processed LOBs | Avoid re-triangulating stale data |
+| **Classification gate** | Group LOBs by `classification` field value | Only fuse same-type detections; classification now in LOB observation data |
 | **No simulator dependency** | Discovers datastreams via server API | Works with real hardware, replay, or any producer |
 
-### 3.3 What the Localizer Does NOT Know
+### 3.4 What the Localizer Does NOT Know
 
 - The simulator's tick rate, route, or internal state
 - Whether the data comes from real hardware or a simulator
@@ -170,7 +206,7 @@ POST /systems/{localizer_system_id}/datastreams
 }
 ```
 
-Schema unchanged from the original spec (Section 2.2): 9 fields — timestamp, trackId, estimatedLat, estimatedLon, cep50_m, classification, numContributingLobs, contributingSensors, residual_m.
+Schema: 9 fields — timestamp, trackId, estimatedLat, estimatedLon, cep50_m, classification, numContributingLobs, contributingSensors, residual_m. Full schema definition in [LOB_Triangulation_Implementation_Spec.md §2.2](LOB_Triangulation_Implementation_Spec.md).
 
 ---
 
@@ -227,21 +263,19 @@ The new `urn:os4csapi:procedure:lob-wls-triangulation:v1` will be the 10th. Proc
 
 ---
 
-## 8. Relationship to Previous Spec
+## 8. Relationship to Implementation Spec
 
-Everything in the original [LOB_Triangulation_Implementation_Spec.md](LOB_Triangulation_Implementation_Spec.md) remains valid **except Section 5 (Execution Model)**:
+Everything in the [LOB_Triangulation_Implementation_Spec.md](LOB_Triangulation_Implementation_Spec.md) has been updated to reflect the corrected architecture and schema:
 
 | Original Spec Section | Status |
 |----------------------|--------|
-| §1 Current State | ✅ Unchanged |
-| §2 Server Resources | ✅ Unchanged (schema, system, datastream definitions) |
+| §1 Current State | ✅ **Updated** — LOB schema now 7 fields (classification added); DS IDs updated to `04c0`/`04cg`/`04d0` |
+| §2 Server Resources | ✅ Unchanged (Location Estimate output schema, system registration) |
 | §3 Algorithm (WLS) | ✅ Unchanged |
-| §4 Correlation Gate | ✅ Unchanged (thresholds apply to standalone mode too) |
-| §5 Execution Model | ❌ **Superseded by this document** |
-| §6 Python Implementation | ✅ Functions unchanged; calling context changes |
+| §4 Correlation Gate | ✅ **Updated** — classification gate now reads from observation data, not hardcoded |
+| §5 Execution Model | ✅ **Superseded** — now references this document; standalone model is primary |
+| §6 Python Implementation | ✅ **Updated** — §6.3 replaced with standalone localizer loop |
 | §7 Bootstrapping | ✅ Unchanged |
-
-The `wls_bearing_intersection()` function, the observation builder, the schema, the correlation gate — all of that carries forward. The only change is **where and how** they're called: from a standalone process that reads inputs from and writes outputs to the CSAPI server.
 
 ---
 
