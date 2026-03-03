@@ -4,6 +4,7 @@
 > Fills the gaps identified in review: concrete schemas, algorithm, timing, and OSH constraints.
 
 **Date:** 2026-03-03  
+**Updated:** 2026-03-03 — LOB schema corrected to 7 fields (added classification); datastream IDs updated after delete/recreate  
 **Status:** Draft specification  
 **Scope:** Bearing-only UAS geolocation for the OS4CSAPI AZ-String-Alpha sensor string
 
@@ -13,7 +14,9 @@
 
 ### 1.1 LOB Datastream Schema (actual, from server)
 
-Each MA node has one LOB datastream. Schema is identical across all three, e.g. datastream `0420` (AZ-MA-1 LOB):
+Each MA node has one LOB datastream. Schema is identical across all three. The authoritative source for this schema is [`scripts/bootstrap_v4.py` (line 536)](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/bootstrap_v4.py#L536) in the csapi-explorer repo.
+
+Example: datastream `04c0` (AZ-MA-1 LOB):
 
 ```json
 {
@@ -24,28 +27,33 @@ Each MA node has one LOB datastream. Schema is identical across all three, e.g. 
     "definition": "https://os4csapi.org/def/odas/track/lobRecordOSH",
     "label": "LOB",
     "fields": [
-      { "type": "Time",     "name": "timestamp",     "label": "Epoch seconds",   "uom": { "code": "s" } },
-      { "type": "Count",    "name": "trackId",        "label": "Track ID" },
-      { "type": "Quantity", "name": "bearingTrue",    "label": "Bearing true",    "uom": { "code": "deg" }, "constraint": { "intervals": [[0.0, 360.0]] } },
-      { "type": "Quantity", "name": "bearingStdDev",  "label": "Bearing std dev", "uom": { "code": "deg" } },
-      { "type": "Quantity", "name": "sensorLat",      "label": "Sensor lat",      "uom": { "code": "deg" }, "constraint": { "intervals": [[-90.0, 90.0]] } },
-      { "type": "Quantity", "name": "sensorLon",      "label": "Sensor lon",      "uom": { "code": "deg" }, "constraint": { "intervals": [[-180.0, 180.0]] } }
+      { "type": "Time",     "name": "timestamp",       "label": "Epoch seconds",    "uom": { "code": "s" } },
+      { "type": "Count",    "name": "trackId",          "label": "Track ID" },
+      { "type": "Quantity", "name": "bearingTrue",      "label": "Bearing true",     "uom": { "code": "deg" }, "constraint": { "intervals": [[0.0, 360.0]] } },
+      { "type": "Quantity", "name": "bearingStdDev",    "label": "Bearing std dev",  "uom": { "code": "deg" } },
+      { "type": "Quantity", "name": "sensorLat",        "label": "Sensor lat",       "uom": { "code": "deg" }, "constraint": { "intervals": [[-90.0, 90.0]] } },
+      { "type": "Quantity", "name": "sensorLon",        "label": "Sensor lon",       "uom": { "code": "deg" }, "constraint": { "intervals": [[-180.0, 180.0]] } },
+      { "type": "Text",     "name": "classification",   "label": "Classification",   "definition": "https://os4csapi.org/def/odas/classification" }
     ]
   }
 }
 ```
+
+**7 fields.** The `classification` field was added by deleting the original 6-field LOB datastreams and recreating them with the corrected schema. OSH does not support PUT on `/datastreams/{id}/schema` (HTTP 405), but DELETE + POST works when the datastream has no observations.
 
 ### 1.2 Server Inventory
 
 | Resource | ID | UID |
 |----------|----|-----|
 | Deployment (ICO) | `040g` | `urn:os4csapi:deployment:ico:ft-huachuca:001` |
-| System AZ-MA-1 | (dynamic) | `urn:os4csapi:system:odas:az-ma-1` |
-| System AZ-MA-2 | (dynamic) | `urn:os4csapi:system:odas:az-ma-2` |
-| System AZ-MA-3 | (dynamic) | `urn:os4csapi:system:odas:az-ma-3` |
-| LOB DS — MA-1 | `0420` | — |
-| LOB DS — MA-2 | `0460` | — |
-| LOB DS — MA-3 | `049g` | — |
+| System AZ-MA-1 | `0420` | `urn:os4csapi:system:odas:az-ma-1` |
+| System AZ-MA-2 | `0490` | `urn:os4csapi:system:odas:az-ma-2` |
+| System AZ-MA-3 | `049g` | `urn:os4csapi:system:odas:az-ma-3` |
+| LOB DS — MA-1 | **`04c0`** | — |
+| LOB DS — MA-2 | **`04cg`** | — |
+| LOB DS — MA-3 | **`04d0`** | — |
+
+> **Note:** LOB datastream IDs changed from `0420`/`0460`/`049g` to `04c0`/`04cg`/`04d0` after the schema fix. The simulator and webapp discover datastreams dynamically by `outputName`, so no hardcoded references break.
 
 ### 1.3 Node Positions (fixed, from bootstrap)
 
@@ -57,7 +65,7 @@ Each MA node has one LOB datastream. Schema is identical across all three, e.g. 
 
 ### 1.4 OSH Constraints
 
-- **Schema is STRICT.** PUT on `/datastreams/{id}/schema` returns HTTP 405. POST with extra fields returns HTTP 400. New datastreams must have their schema set at creation time.
+- **Schema is STRICT.** PUT on `/datastreams/{id}/schema` returns HTTP 405. POST with extra fields returns HTTP 400. New datastreams must have their schema set at creation time. **Workaround:** DELETE the datastream (if empty) and POST a new one with the corrected schema.
 - **`deployedSystems` not persisted.** OSH does not store deployment-to-system linkages server-side. The webapp maintains this relationship via `platform@link` on deployments.
 - **STRING deployment not on server.** The SNET deployment was reparented previously but the server currently has only the top-level ICO deployment (`040g`). Subdeployments exist in the bootstrap script.
 
@@ -265,62 +273,48 @@ Before running triangulation, determine which LOBs to fuse.
 | Criterion | Threshold | Rationale |
 |-----------|-----------|-----------|
 | **Time window** | $\|t_i - t_j\| \leq 2.0$ s | LOBs from the same simulator tick land within ~1s |
-| **Classification match** | Same `classification` value | Only fuse same-type detections |
+| **Classification match** | Same `classification` value | Only fuse same-type detections (field now in LOB schema) |
 | **Range plausibility** | Intersection point within `detection_max_m` of all contributing sensors | Rejects phantom intersections outside detection envelopes |
 | **Residual cap** | Mean residual $\leq 500$ m | Rejects near-parallel bearing pairs with wildly divergent intersection |
 | **Minimum LOBs** | $N \geq 2$ | Need at least 2 bearings for a fix |
 
-### 4.2 Implementation in the Simulator
+### 4.2 Classification Gate Note
 
-The simulator controls the clock, so correlation is trivial: all LOBs from the same tick share the same `phenomenonTime`. Gate step:
+With the corrected LOB schema, the `classification` field is now carried **in the observation data itself** (e.g. `"classification": "UAS"`), not hardcoded on the frontend. This means the localizer can read classification directly from the LOB observations it consumes via CSAPI, enabling proper heterogeneous target filtering in the future.
 
-1. Collect LOBs generated this tick
-2. If `len(lobs) >= 2`: run WLS, check residual cap, publish location estimate
-3. If `len(lobs) < 2`: no estimate this tick
+### 4.3 Implementation for the Standalone Localizer
 
-### 4.3 Implementation for Live / Real-Time Data
-
-A real fusion processor (not the simulator) would:
+The localizer is a standalone process (see [LOB_Localizer_Architecture_Correction.md](LOB_Localizer_Architecture_Correction.md)):
 
 1. Poll each LOB datastream for latest observation (`resultTime=latest`)
 2. Collect all LOBs where `|phenomenonTime - now| ≤ Δt`
-3. Group by `classification`
+3. Group by `classification` value from the observation result
 4. For each group with $N \geq 2$: run WLS, apply residual gate, publish
 
 ---
 
 ## 5. Execution Model
 
-### 5.1 Timing: Synchronous with Simulator Tick
+> **⚠️ This section is superseded by [LOB_Localizer_Architecture_Correction.md](LOB_Localizer_Architecture_Correction.md).**
+>
+> The localizer MUST be a **standalone CSAPI consumer/producer**, NOT embedded in the simulator. See the architecture correction document for the full rationale and corrected design.
 
-The localizer runs **inside the simulator's tick loop**, not as a separate process. This is the simplest correct approach.
+### 5.1 Summary of Corrected Model
 
-```
-for each tick:
-    1. compute UAV position
-    2. for each detecting node: build & POST LOB observation
-    3. collect this tick's LOBs (already in memory)
-    4. if len(lobs) >= 2:
-         run WLS triangulation
-         POST location estimate observation
-```
+The localizer runs as an independent process that:
+1. **Consumes** LOB observations from the 3 MA datastreams via `GET /datastreams/{id}/observations`
+2. **Correlates** by time window and classification
+3. **Computes** WLS bearing intersection
+4. **Produces** location estimates via `POST /datastreams/{localizer_ds}/observations`
 
-**Rationale:** The simulator already knows which LOBs exist this tick — no need to query the server. This avoids race conditions, API round-trips, and timing ambiguity.
+It has zero coupling to the simulator — no shared memory, no import paths, no function calls. All communication flows through the CSAPI server.
 
-### 5.2 Future: Standalone Fusion Processor
+### 5.2 Why Not Embedded
 
-When decoupling from the simulator:
-
-```
-every 5 seconds:
-    1. GET /datastreams/{ma1_lob}/observations?resultTime=latest
-    2. GET /datastreams/{ma2_lob}/observations?resultTime=latest
-    3. GET /datastreams/{ma3_lob}/observations?resultTime=latest
-    4. correlate by time window + classification
-    5. if match: triangulate → POST to localizer datastream
-```
-
-This can run as a separate Python script, a FastAPI background task in the existing simulator service, or an OGC API Processes job.
+Running the localizer inside the simulator:
+- Bypasses the CSAPI standard (uses in-memory data instead of API)
+- Defeats the demo narrative (one process doing everything ≠ interoperability)
+- Cannot generalize to real hardware (depends on simulator internal state)
 
 ---
 
@@ -337,7 +331,7 @@ def wls_bearing_intersection(lobs: list[dict], lat_ref: float = 31.655) -> dict:
     """
     Weighted least-squares bearing intersection.
     
-    Each lob: { sensorLat, sensorLon, bearingTrue, bearingStdDev, name }
+    Each lob: { sensorLat, sensorLon, bearingTrue, bearingStdDev, classification, name }
     Returns: { estimatedLat, estimatedLon, cep50_m, residual_m, n }
     """
     cos_ref = math.cos(math.radians(lat_ref))
@@ -425,33 +419,45 @@ def build_location_estimate_observation(
     }
 ```
 
-### 6.3 Simulator Tick Integration
+### 6.3 Standalone Localizer Loop
 
 ```python
-# Inside the main simulation loop, after LOB generation:
+# localizer.py — standalone CSAPI consumer/producer (see Architecture Correction)
 
-if len(detecting_nodes) >= 2:
-    # Build LOB dicts for WLS
-    lob_inputs = []
-    for node, dist in detecting_nodes:
-        obs = built_lob_observations[node["uid"]]  # already built above
-        lob_inputs.append({
-            "sensorLat": node["lat"],
-            "sensorLon": node["lon"],
-            "bearingTrue": obs["result"]["bearingTrue"],
-            "bearingStdDev": obs["result"]["bearingStdDev"],
-            "name": node["name"],
-        })
-    
-    wls = wls_bearing_intersection(lob_inputs)
-    
-    if wls and wls["residual_m"] <= 500:
-        loc_obs = build_location_estimate_observation(
-            wls,
-            contributing_sensors=[n["name"] for n, _ in detecting_nodes],
-        )
-        if not dry_run:
-            api_post(f"datastreams/{localizer_ds_id}/observations", loc_obs)
+LOB_DATASTREAMS = {
+    "AZ-MA-1": "04c0",
+    "AZ-MA-2": "04cg",
+    "AZ-MA-3": "04d0",
+}
+LOCALIZER_DS = "<created at bootstrap>"
+POLL_INTERVAL = 5  # seconds
+TIME_WINDOW = 10   # seconds
+RESIDUAL_CAP = 500 # metres
+
+last_processed_times = {}
+
+while running:
+    lobs = []
+    for name, ds_id in LOB_DATASTREAMS.items():
+        obs = GET(f"datastreams/{ds_id}/observations?resultTime=latest&limit=1")
+        if obs and obs not already processed:
+            lobs.append({**obs["result"], "name": name})
+
+    # Group by classification
+    by_class = group_by(lobs, key=lambda l: l.get("classification", "UAS"))
+
+    for cls, group in by_class.items():
+        if len(group) >= 2:
+            wls = wls_bearing_intersection(group)
+            if wls and wls["residual_m"] <= RESIDUAL_CAP:
+                loc_obs = build_location_estimate_observation(
+                    wls,
+                    contributing_sensors=[l["name"] for l in group],
+                    classification=cls,
+                )
+                POST(f"datastreams/{LOCALIZER_DS}/observations", loc_obs)
+
+    sleep(POLL_INTERVAL)
 ```
 
 ---
@@ -498,55 +504,3 @@ POST /procedures
   }
 }
 ```
-
-### Step 4: Add to bootstrap_v4.py
-
-All three steps should be added to the authoritative bootstrap script so the full server state is reproducible.
-
----
-
-## 8. Webapp Visualization
-
-### 8.1 Location Estimate Rendering
-
-On the map, each Location Estimate observation should render as:
-
-- **A point marker** at (`estimatedLat`, `estimatedLon`)
-- **An uncertainty circle** with radius `cep50_m`
-- **Color coding**: 3-LOB fixes in solid green, 2-LOB fixes in yellow
-- **Tooltip**: `UAS Fix — CEP50: {cep50_m}m — Sensors: {contributingSensors}`
-
-### 8.2 Datastream Discovery
-
-The webapp should discover the localizer's datastream the same way it discovers LOB datastreams: by querying `/systems/{localizer_id}/datastreams` and matching on `outputName` containing `location_estimate`.
-
-### 8.3 Live Mode Integration
-
-Location estimates follow the same Live Mode polling pattern as LOBs:
-- `resultTime=latest` → 5-min window → `.slice(-obsLimit)`
-- Render alongside (not instead of) bearing lines
-
----
-
-## 9. What This Doesn't Cover (Future Work)
-
-| Topic | Why Deferred |
-|-------|-------------|
-| **SamplingFeature for track identity** | OSH's SamplingFeature support needs probing first. Add when track persistence is needed. |
-| **Multi-target tracking** | Current simulator has one UAV. Multi-target requires `trackId` disambiguation logic. |
-| **OGC API Processes wrapper** | On-demand triangulation over a time window. Add when batch analysis is needed. |
-| **Bearing-only tracking (Kalman filter)** | Full BOT filter for track smoothing. Overkill for the current 3-sensor demo. |
-| **Deployment-level association** | Blocked by OSH not persisting `deployedSystems`. Revisit when OSH supports it. |
-
----
-
-## 10. Summary of Deliverables
-
-| # | Deliverable | Where |
-|---|------------|-------|
-| 1 | `wls_bearing_intersection()` function | `simulator/engine.py` or `scripts/simulate_scenario.py` |
-| 2 | Location Estimate DataStream schema | Bootstrap script → server |
-| 3 | String Localizer System registration | Bootstrap script → server |
-| 4 | Simulator tick integration (LOB → fuse → POST estimate) | `scripts/simulate_scenario.py` |
-| 5 | Webapp rendering of location estimate markers + uncertainty circles | `demo/src/pages/MapViewPage.vue` |
-| 6 | FastAPI `/status` extension to report triangulation stats | `simulator/main.py` |
