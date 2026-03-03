@@ -2,7 +2,7 @@
 
 > **Supersedes:** Section 5 (Execution Model) of [LOB_Triangulation_Implementation_Spec.md](LOB_Triangulation_Implementation_Spec.md)  
 > **Date:** 2026-03-03  
-> **Updated:** 2026-03-03 — LOB schema corrected to 7 fields; DS IDs updated; cross-references aligned  
+> **Updated:** 2026-03-03 — §3.2 rewritten with dynamic discovery + explicit Δt staleness gate; portability note added  
 > **Status:** Architectural decision record  
 > **Decision:** The localizer MUST be a standalone CSAPI consumer/producer, NOT embedded in the simulator.
 
@@ -106,30 +106,75 @@ The localizer consumes LOB observations from 3 datastreams. Each LOB observation
 
 ```python
 # localizer.py — independent process
+# ─────────────────────────────────────────────────────
+# ZERO hardcoded datastream IDs.
+# At startup, discover LOB inputs by querying each
+# system's datastreams for the matching outputName.
+# This is the same pattern the simulator uses
+# (see engine.py → find_datastream_id()).
+# ─────────────────────────────────────────────────────
 
-LOB_DATASTREAMS = {
-    "AZ-MA-1": "04c0",
-    "AZ-MA-2": "04cg",
-    "AZ-MA-3": "04d0",
-}
+# ── Configuration ────────────────────────────────────
+SYSTEM_IDS      = ["0420", "0490", "049g"]   # MA-1, MA-2, MA-3
+LOB_OUTPUT_NAME = "lob_bearing"              # outputName on the DS
+POLL_INTERVAL   = 5                          # seconds — matches simulator tick
+MAX_LOB_AGE_S   = 15                         # Δt staleness gate (see §3.3)
+RESIDUAL_CAP    = 500                        # metres
 
+# ── Startup: discover LOB datastream IDs ─────────────
+def discover_lob_datastreams(system_ids, output_name):
+    """Query the server for each system's LOB datastream ID.
+       Returns {system_id: ds_id} or raises if any are missing."""
+    lob_ds = {}
+    for sys_id in system_ids:
+        items = GET(f"/systems/{sys_id}/datastreams")["items"]
+        match = [ds for ds in items if ds["outputName"] == output_name]
+        if not match:
+            raise RuntimeError(f"System {sys_id}: no DS with outputName={output_name}")
+        lob_ds[sys_id] = match[0]["id"]
+    return lob_ds
+
+lob_datastreams = discover_lob_datastreams(SYSTEM_IDS, LOB_OUTPUT_NAME)
+#   e.g.  {"0420": "04c0", "0490": "04cg", "049g": "04d0"}
+
+# ── Main loop ────────────────────────────────────────
 while running:
-    # 1. CONSUME: Read latest LOBs from the CSAPI server
-    lobs = []
-    for name, ds_id in LOB_DATASTREAMS.items():
-        obs = GET(f"/datastreams/{ds_id}/observations?resultTime=latest")
-        if obs and not already_processed(obs):
-            lobs.append({**obs["result"], "name": name})
+    now = time.time()
 
-    # 2. CORRELATE: Group by time window + classification
-    by_class = group_by(lobs, key=lambda l: l.get("classification", "UAS"))
+    # 1. CONSUME: Read latest LOB from each MA node
+    #
+    #    Portability note: `resultTime=latest` is an OSH Node
+    #    convenience parameter.  For strict OGC-API compliance,
+    #    the portable equivalent is:
+    #        ?resultTime=../{now_iso}&limit=1
+    #    which returns the most recent observation up to `now`.
+    #    Both return the same single observation.
+    lobs = []
+    for sys_id, ds_id in lob_datastreams.items():
+        obs = GET(f"/datastreams/{ds_id}/observations?resultTime=latest")
+        if not obs or already_processed(obs):
+            continue
+
+        result = obs["result"]
+        obs_time = result["timestamp"]           # epoch seconds
+
+        # 2. STALENESS GATE: reject observations older than MAX_LOB_AGE_S
+        #    This prevents stale data from contaminating a fix when a
+        #    sensor goes offline or the simulator is paused/stopped.
+        if abs(now - obs_time) > MAX_LOB_AGE_S:
+            continue                              # stale — skip
+
+        lobs.append({**result, "sys_id": sys_id})
+
+    # 3. CORRELATE: Group by classification
+    by_class = group_by(lobs, key=lambda l: l.get("classification", "UNKNOWN"))
 
     for cls, group in by_class.items():
-        # 3. COMPUTE: Triangulate if 2+ LOBs
+        # 4. COMPUTE: Triangulate if 2+ LOBs
         if len(group) >= 2:
             estimate = wls_bearing_intersection(group)
 
-            # 4. PRODUCE: Publish result back to the CSAPI server
+            # 5. PRODUCE: Publish result back to the CSAPI server
             if estimate and estimate["residual_m"] <= RESIDUAL_CAP:
                 POST(f"/datastreams/{LOCALIZER_DS}/observations", estimate)
 
@@ -141,12 +186,14 @@ while running:
 | Property | Value | Rationale |
 |----------|-------|-----------|
 | **Poll interval** | 5 seconds | Matches simulator tick rate and webapp Live Mode refresh |
-| **Time window** | 10 seconds | LOBs from same simulator tick land within ~1-2s; generous window handles network jitter |
+| **Staleness gate (Δt)** | 15 seconds (`MAX_LOB_AGE_S`) | Rejects any LOB whose `phenomenonTime` is more than 15 s from wall-clock `now`. Prevents stale data from poisoning a fix when a sensor goes offline, the simulator stops, or network lag is extreme. Set to 3× poll interval by default — tight enough to reject dead data, loose enough to tolerate one missed poll cycle. |
+| **Correlation window** | 10 seconds | LOBs from the same simulator tick land within ~1-2 s. When grouping LOBs into a fix, only LOBs whose timestamps are within 10 s of each other are eligible. This is separate from the staleness gate — staleness rejects old data absolutely; the correlation window rejects data that is fresh but temporally mismatched relative to other LOBs in the same fix. |
 | **Minimum LOBs** | 2 | Need at least 2 bearings for a fix |
 | **Residual cap** | 500 m | Rejects near-parallel bearing pairs with divergent intersections |
 | **Deduplication** | Track `phenomenonTime` of last-processed LOBs | Avoid re-triangulating stale data |
 | **Classification gate** | Group LOBs by `classification` field value | Only fuse same-type detections; classification now in LOB observation data |
-| **No simulator dependency** | Discovers datastreams via server API | Works with real hardware, replay, or any producer |
+| **Dynamic discovery** | DS IDs resolved at startup via `outputName` query | No hardcoded IDs — works unchanged when DS IDs change (e.g. after schema migration). Same pattern as `engine.py → find_datastream_id()`. |
+| **`resultTime=latest` portability** | OSH convenience; portable fallback = `resultTime=../{now}&limit=1` | If porting to a non-OSH server, swap the query parameter. Both return the single most-recent observation. |
 
 ### 3.4 What the Localizer Does NOT Know
 
