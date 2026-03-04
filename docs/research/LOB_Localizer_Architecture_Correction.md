@@ -2,7 +2,7 @@
 
 > **Supersedes:** Section 5 (Execution Model) of [LOB_Triangulation_Implementation_Spec.md](LOB_Triangulation_Implementation_Spec.md)  
 > **Date:** 2026-03-03  
-> **Updated:** 2026-03-03 — §3.2 dynamic discovery + Δt gate; §4.2 typeOf linkage now implemented  
+> **Updated:** 2026-03-03 — §3.2 dynamic discovery + Δt gate; §3.3 dedup fix (obs ID); §4.2 typeOf linkage implemented  
 > **Status:** Architectural decision record  
 > **Decision:** The localizer MUST be a standalone CSAPI consumer/producer, NOT embedded in the simulator.
 
@@ -107,11 +107,13 @@ The localizer consumes LOB observations from 3 datastreams. Each LOB observation
 ```python
 # localizer.py — independent process
 # ─────────────────────────────────────────────────────
-# ZERO hardcoded datastream IDs.
-# At startup, discover LOB inputs by querying each
-# system's datastreams for the matching outputName.
-# This is the same pattern the simulator uses
-# (see engine.py → find_datastream_id()).
+# ✅ REVIEW NOTE (A): Dynamic discovery is implemented.
+#    ZERO hardcoded datastream IDs. At startup, discover
+#    LOB inputs by querying each system's datastreams for
+#    the matching outputName. This is the same pattern the
+#    simulator already uses (engine.py → find_datastream_id()).
+#    IDs changed once already (after LOB schema rebuild);
+#    this pattern survived that migration unchanged.
 # ─────────────────────────────────────────────────────
 
 # ── Configuration ────────────────────────────────────
@@ -120,6 +122,13 @@ LOB_OUTPUT_NAME = "lob_bearing"              # outputName on the DS
 POLL_INTERVAL   = 5                          # seconds — matches simulator tick
 MAX_LOB_AGE_S   = 15                         # Δt staleness gate (see §3.3)
 RESIDUAL_CAP    = 500                        # metres
+
+# ── Dedup state ──────────────────────────────────────
+# ✅ REVIEW NOTE (C): Dedup keys on observation ID from
+#    the envelope, NOT on fields inside `result`. OSH
+#    assigns a unique `id` to every observation; we store
+#    the last-seen ID per datastream to avoid reprocessing.
+last_seen_obs_id: dict[str, str] = {}        # {ds_id: obs_id}
 
 # ── Startup: discover LOB datastream IDs ─────────────
 def discover_lob_datastreams(system_ids, output_name):
@@ -152,12 +161,19 @@ while running:
     lobs = []
     for sys_id, ds_id in lob_datastreams.items():
         obs = GET(f"/datastreams/{ds_id}/observations?resultTime=latest")
-        if not obs or already_processed(obs):
+        if not obs:
             continue
 
-        result = obs["result"]
-        obs_time = result["timestamp"]           # epoch seconds
+        # DEDUP: skip if we already processed this exact observation
+        obs_id = obs["id"]                        # envelope field, not in result
+        if last_seen_obs_id.get(ds_id) == obs_id:
+            continue                              # already processed
+        last_seen_obs_id[ds_id] = obs_id
 
+        result = obs["result"]
+        obs_time = result["timestamp"]            # epoch seconds
+
+        # ✅ REVIEW NOTE (B): Explicit Δt staleness gate is implemented.
         # 2. STALENESS GATE: reject observations older than MAX_LOB_AGE_S
         #    This prevents stale data from contaminating a fix when a
         #    sensor goes offline or the simulator is paused/stopped.
@@ -186,14 +202,16 @@ while running:
 | Property | Value | Rationale |
 |----------|-------|-----------|
 | **Poll interval** | 5 seconds | Matches simulator tick rate and webapp Live Mode refresh |
-| **Staleness gate (Δt)** | 15 seconds (`MAX_LOB_AGE_S`) | Rejects any LOB whose `phenomenonTime` is more than 15 s from wall-clock `now`. Prevents stale data from poisoning a fix when a sensor goes offline, the simulator stops, or network lag is extreme. Set to 3× poll interval by default — tight enough to reject dead data, loose enough to tolerate one missed poll cycle. |
+| **Staleness gate (Δt)** | 15 seconds (`MAX_LOB_AGE_S`) | ✅ **Implemented.** Rejects any LOB whose `timestamp` is more than 15 s from wall-clock `now`. Prevents stale data from poisoning a fix when a sensor goes offline, the simulator stops, or network lag is extreme. Set to 3× poll interval by default — tight enough to reject dead data, loose enough to tolerate one missed poll cycle. |
 | **Correlation window** | 10 seconds | LOBs from the same simulator tick land within ~1-2 s. When grouping LOBs into a fix, only LOBs whose timestamps are within 10 s of each other are eligible. This is separate from the staleness gate — staleness rejects old data absolutely; the correlation window rejects data that is fresh but temporally mismatched relative to other LOBs in the same fix. |
 | **Minimum LOBs** | 2 | Need at least 2 bearings for a fix |
 | **Residual cap** | 500 m | Rejects near-parallel bearing pairs with divergent intersections |
-| **Deduplication** | Track `phenomenonTime` of last-processed LOBs | Avoid re-triangulating stale data |
+| **Deduplication** | Track observation `id` per datastream (envelope field) | ✅ **Fixed.** Previous version incorrectly stated dedup on `phenomenonTime` from `result`. The correct key is the observation `id` from the response envelope (e.g. `obs["id"]`), which is unique per observation and guaranteed by OSH. This avoids both reprocessing (same ID seen twice) and the mismatch risk of keying on a field that may not exist in the `result` payload. |
 | **Classification gate** | Group LOBs by `classification` field value | Only fuse same-type detections; classification now in LOB observation data |
-| **Dynamic discovery** | DS IDs resolved at startup via `outputName` query | No hardcoded IDs — works unchanged when DS IDs change (e.g. after schema migration). Same pattern as `engine.py → find_datastream_id()`. |
-| **`resultTime=latest` portability** | OSH convenience; portable fallback = `resultTime=../{now}&limit=1` | If porting to a non-OSH server, swap the query parameter. Both return the single most-recent observation. |
+| **Dynamic discovery** | DS IDs resolved at startup via `outputName` query | ✅ **Implemented.** No hardcoded IDs — works unchanged when DS IDs change (e.g. after schema migration). Same pattern as `engine.py → find_datastream_id()`. Already survived one DS ID change (LOB schema rebuild). |
+| **`resultTime=latest` portability** | OSH convenience; portable fallback = `resultTime=../{now}&limit=1` | ✅ **Documented.** If porting to a non-OSH server, swap the query parameter. Both return the single most-recent observation. |
+
+> **Review traceability:** Items A (dynamic discovery), B (explicit Δt gate), and C (dedup fix) correspond to recommendations from the external review of this document. A and B were already implemented in the previous revision; C (dedup keying) was a valid catch and is fixed above.
 
 ### 3.4 What the Localizer Does NOT Know
 
