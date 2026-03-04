@@ -2,7 +2,7 @@
 
 > **Supersedes:** Section 5 (Execution Model) of [LOB_Triangulation_Implementation_Spec.md](LOB_Triangulation_Implementation_Spec.md)  
 > **Date:** 2026-03-03  
-> **Updated:** 2026-03-03 — §3.2 dynamic discovery + Δt gate; §3.3 dedup fix (obs ID); §4.2 typeOf linkage implemented  
+> **Updated:** 2026-03-03 — §3.2 dynamic discovery + Δt gate; §3.3 dedup fix (obs ID), correlation window enforced; §4.2 typeOf linkage implemented  
 > **Status:** Architectural decision record  
 > **Decision:** The localizer MUST be a standalone CSAPI consumer/producer, NOT embedded in the simulator.
 
@@ -117,11 +117,12 @@ The localizer consumes LOB observations from 3 datastreams. Each LOB observation
 # ─────────────────────────────────────────────────────
 
 # ── Configuration ────────────────────────────────────
-SYSTEM_IDS      = ["0420", "0490", "049g"]   # MA-1, MA-2, MA-3
-LOB_OUTPUT_NAME = "lob_bearing"              # outputName on the DS
-POLL_INTERVAL   = 5                          # seconds — matches simulator tick
-MAX_LOB_AGE_S   = 15                         # Δt staleness gate (see §3.3)
-RESIDUAL_CAP    = 500                        # metres
+SYSTEM_IDS         = ["0420", "0490", "049g"]   # MA-1, MA-2, MA-3
+LOB_OUTPUT_NAME    = "lob_bearing"              # outputName on the DS
+POLL_INTERVAL      = 5                          # seconds — matches simulator tick
+MAX_LOB_AGE_S      = 15                         # Δt staleness gate (see §3.3)
+CORRELATION_WINDOW = 10                         # seconds — max spread within a fix
+RESIDUAL_CAP       = 500                        # metres
 
 # ── Dedup state ──────────────────────────────────────
 # ✅ REVIEW NOTE (C): Dedup keys on observation ID from
@@ -186,6 +187,14 @@ while running:
     by_class = group_by(lobs, key=lambda l: l.get("classification", "UNKNOWN"))
 
     for cls, group in by_class.items():
+        # ✅ REVIEW NOTE (v3-2): Correlation window is enforced.
+        #    Staleness gate (step 2) filters vs wall-clock `now`.
+        #    This filters LOBs vs *each other* within a fusion group.
+        # 3a. TEMPORAL CORRELATION: reject groups with excessive time spread
+        timestamps = [l["timestamp"] for l in group]
+        if max(timestamps) - min(timestamps) > CORRELATION_WINDOW:
+            continue                              # LOBs too far apart — skip
+
         # 4. COMPUTE: Triangulate if 2+ LOBs
         if len(group) >= 2:
             estimate = wls_bearing_intersection(group)
@@ -203,7 +212,7 @@ while running:
 |----------|-------|-----------|
 | **Poll interval** | 5 seconds | Matches simulator tick rate and webapp Live Mode refresh |
 | **Staleness gate (Δt)** | 15 seconds (`MAX_LOB_AGE_S`) | ✅ **Implemented.** Rejects any LOB whose `timestamp` is more than 15 s from wall-clock `now`. Prevents stale data from poisoning a fix when a sensor goes offline, the simulator stops, or network lag is extreme. Set to 3× poll interval by default — tight enough to reject dead data, loose enough to tolerate one missed poll cycle. |
-| **Correlation window** | 10 seconds | LOBs from the same simulator tick land within ~1-2 s. When grouping LOBs into a fix, only LOBs whose timestamps are within 10 s of each other are eligible. This is separate from the staleness gate — staleness rejects old data absolutely; the correlation window rejects data that is fresh but temporally mismatched relative to other LOBs in the same fix. |
+| **Correlation window** | 10 seconds (`CORRELATION_WINDOW`) | ✅ **Implemented.** After grouping by classification, checks `max(timestamp) - min(timestamp) <= 10` within each fusion group. LOBs from the same simulator tick land within ~1–2 s; 10 s tolerates one missed cycle. This is separate from the staleness gate — staleness rejects old data vs `now`; the correlation window rejects data that is fresh but temporally mismatched relative to *each other*. |
 | **Minimum LOBs** | 2 | Need at least 2 bearings for a fix |
 | **Residual cap** | 500 m | Rejects near-parallel bearing pairs with divergent intersections |
 | **Deduplication** | Track observation `id` per datastream (envelope field) | ✅ **Fixed.** Previous version incorrectly stated dedup on `phenomenonTime` from `result`. The correct key is the observation `id` from the response envelope (e.g. `obs["id"]`), which is unique per observation and guaranteed by OSH. This avoids both reprocessing (same ID seen twice) and the mismatch risk of keying on a field that may not exist in the `result` payload. |
@@ -211,7 +220,7 @@ while running:
 | **Dynamic discovery** | DS IDs resolved at startup via `outputName` query | ✅ **Implemented.** No hardcoded IDs — works unchanged when DS IDs change (e.g. after schema migration). Same pattern as `engine.py → find_datastream_id()`. Already survived one DS ID change (LOB schema rebuild). |
 | **`resultTime=latest` portability** | OSH convenience; portable fallback = `resultTime=../{now}&limit=1` | ✅ **Documented.** If porting to a non-OSH server, swap the query parameter. Both return the single most-recent observation. |
 
-> **Review traceability:** Items A (dynamic discovery), B (explicit Δt gate), and C (dedup fix) correspond to recommendations from the external review of this document. A and B were already implemented in the previous revision; C (dedup keying) was a valid catch and is fixed above.
+> **Review traceability:** Items A (dynamic discovery), B (explicit Δt gate), and C (dedup fix) correspond to recommendations from the external review of this document. A and B were already implemented in the previous revision; C (dedup keying) was a valid catch and is fixed above. Correlation window enforcement (v3 review item 2) was described in the table but missing from the pseudocode — now added as step 3a.
 
 ### 3.4 What the Localizer Does NOT Know
 
