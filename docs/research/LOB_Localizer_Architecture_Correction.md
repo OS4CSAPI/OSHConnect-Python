@@ -2,7 +2,7 @@
 
 > **Supersedes:** Section 5 (Execution Model) of [LOB_Triangulation_Implementation_Spec.md](LOB_Triangulation_Implementation_Spec.md)  
 > **Date:** 2026-03-03  
-> **Updated:** 2026-03-03 — §3.2 rewritten with dynamic discovery + explicit Δt staleness gate; portability note added  
+> **Updated:** 2026-03-03 — §3.2 dynamic discovery + Δt gate; §4.2 typeOf linkage now implemented  
 > **Status:** Architectural decision record  
 > **Decision:** The localizer MUST be a standalone CSAPI consumer/producer, NOT embedded in the simulator.
 
@@ -226,7 +226,7 @@ POST /procedures
 
 **Note:** This procedure joins the 9 procedures already on the server (see Section 7 below). It describes the *method* — it doesn't execute anything.
 
-### 4.2 Register the System
+### 4.2 Register the System (with typeOf linkage)
 
 ```
 POST /systems
@@ -240,6 +240,10 @@ POST /systems
   }
 }
 ```
+
+> **`typeOf` linkage:** The `typeOf` property is the SOSA/CSAPI-standard way to declare "this system implements that procedure." SensorHub OSH Node accepts `typeOf` on both POST (create) and PUT (update) — verified 2026-03-03. The value is a procedure UID (URN string); SensorHub resolves it to the internal procedure reference automatically.
+>
+> All 42 existing systems/subsystems on the server now have `typeOf` linkages (where applicable). See [System_Procedure_Linkage_Migration.md](System_Procedure_Linkage_Migration.md) for the full migration report. Infrastructure subsystems (tripod, comms, power) are intentionally unlinked — they are platforms, not instruments.
 
 ### 4.3 Create the Location Estimate DataStream
 
@@ -290,23 +294,26 @@ This is a fundamentally different story than "we built a monolithic simulator th
 
 ---
 
-## 7. Existing Server Procedures (Verified)
+## 7. Existing Server Procedures (Verified) + typeOf Linkages
 
-Probed `GET /procedures?limit=50` on the live server. Nine procedures already exist:
+Probed `GET /procedures?limit=50` on the live server. Nine procedures exist, all now linked to their implementing systems via `typeOf`:
 
-| ID | UID | Description |
-|----|-----|-------------|
-| `040g` | `urn:x-odas:procedure:pdm-mems-audio-capture` | PDM microphone sampling |
-| `0410` | `urn:x-odas:procedure:srp-phat-beamforming` | SRP-PHAT angle-of-arrival |
-| `041g` | `urn:x-odas:procedure:particle-filter-tracking` | Particle filter source tracking |
-| `0420` | `urn:x-odas:procedure:ray-to-ray-triangulation` | Ray-to-ray intersection |
-| `042g` | `urn:x-odas:procedure:odas-config-actuation` | ODAS configuration control |
-| `0430` | `urn:os4csapi:procedure:odas:az-ma-1:calibration:v1` | AZ-MA-1 calibration |
-| `043g` | `urn:os4csapi:procedure:odas:az-ma-1:health-monitor:v1` | AZ-MA-1 health monitor |
-| `0440` | `urn:os4csapi:procedure:odas:az-ma-1:processing-chain:v1` | AZ-MA-1 processing chain |
-| `044g` | `urn:os4csapi:procedure:odas:az-ma-1:frame-transform:v1` | AZ-MA-1 frame transform |
+| ID | UID | Description | Linked Systems |
+|----|-----|-------------|---------------|
+| `040g` | `urn:x-odas:procedure:pdm-mems-audio-capture` | PDM microphone sampling | 24 (3 micarrays + 21 mics) |
+| `0410` | `urn:x-odas:procedure:srp-phat-beamforming` | SRP-PHAT angle-of-arrival | 0* |
+| `041g` | `urn:x-odas:procedure:particle-filter-tracking` | Particle filter source tracking | 0* |
+| `0420` | `urn:x-odas:procedure:ray-to-ray-triangulation` | Ray-to-ray intersection | 0* |
+| `042g` | `urn:x-odas:procedure:odas-config-actuation` | ODAS configuration control | 3 (actuators) |
+| `0430` | `urn:os4csapi:procedure:odas:az-ma-1:calibration:v1` | AZ-MA-1 calibration | 0† |
+| `043g` | `urn:os4csapi:procedure:odas:az-ma-1:health-monitor:v1` | AZ-MA-1 health monitor | 0† |
+| `0440` | `urn:os4csapi:procedure:odas:az-ma-1:processing-chain:v1` | AZ-MA-1 processing chain | 6 (3 MA + 3 edges) |
+| `044g` | `urn:os4csapi:procedure:odas:az-ma-1:frame-transform:v1` | AZ-MA-1 frame transform | 0† |
 
-The new `urn:os4csapi:procedure:lob-wls-triangulation:v1` will be the 10th. Procedures in CSAPI/SOSA are **metadata describing how a system works** — they don't execute anything. They provide provenance and traceability: "this location estimate was produced by the WLS triangulation method."
+\* No dedicated SSL/SST/triangulation subsystems registered yet — these procedures describe pipeline stages internal to the EDGE processor.  
+† Calibration, health monitoring, and frame transforms are cross-cutting processes, not primary system functions.
+
+The new `urn:os4csapi:procedure:lob-wls-triangulation:v1` will be the 10th — linked to the localizer system via `typeOf` at bootstrap time.
 
 ---
 
