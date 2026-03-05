@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-05  
 **Status:** Research — refined after weigh-in  
-**Revision:** 3 (added deployment decision: systemd on Oracle VM)
+**Revision:** 4 (added orbit track geometry section)
 
 ---
 
@@ -86,9 +86,50 @@ Option C can be layered on later if smooth visual presentation matters for demos
 | **System** | `ISS (ZARYA)` (NORAD 25544) |
 | **Procedure** | `sgp4-propagation` — metadata: source=CelesTrak, last element epoch, propagation model |
 | **DataStream** | `position` — SWE record with `timestamp`, `lat`, `lon`, `alt_km` |
-| **Observation frequency** | Publish every 30 seconds |
+| **SamplingFeature** | `ISS Orbit Track` — LineString geometry representing one full orbit (~92 min), updated every 5–10 minutes |
+| **Observation frequency** | Point positions published every 30 seconds |
 
 Could expand later to multiple satellites (Starlink, GPS constellation, LASP missions like CUTE, IMAP).
+
+---
+
+## Orbit Track Geometry
+
+SGP4 propagation works for **any timestamp** — past, present, or future. Given a time, it returns a position. This enables computing full orbit ground tracks, not just the current point.
+
+### What gets rendered
+
+- **Past track** (e.g., last 45 minutes) — where the ISS has been since the previous half-orbit
+- **Current position** — the live dot (published as an Observation every 30s)
+- **Predicted track** (e.g., next 45 minutes) — where it's headed for the rest of this orbit
+
+This is exactly what the LASP lobby display does — a dashed arc ahead of each satellite for the predicted ground track, and a solid arc behind for the past trail.
+
+### CSAPI implementation: SamplingFeature with LineString
+
+The publisher will periodically compute a full orbit's worth of positions and publish it as a CSAPI **SamplingFeature** with a LineString geometry:
+
+1. Propagate 180 positions across 90 minutes (one every 30 seconds) — centered on the current time (45 min past + 45 min future)
+2. POST as a SamplingFeature with a GeoJSON LineString
+3. Update every 5–10 minutes (the track shifts slowly; frequent updates aren't needed)
+
+This is approximately 10 extra lines in the publisher script — the same SGP4 call, just at different timestamps.
+
+### Why this is a good CSAPI pattern
+
+This is a textbook CSAPI modeling approach:
+
+- The **SamplingFeature** represents the spatial footprint of the observation campaign (the orbit arc)
+- The **Observations** are the time-stamped positions along it (the live dots)
+- Any CSAPI client that supports SamplingFeatures with LineString geometry will render the orbit track automatically — no satellite-specific code needed
+
+### Client rendering (no changes needed)
+
+The Explorer's Map page already supports:
+- **Point** features — the live position shows as a dot (from Observations)
+- **LineString** features — the orbit arc renders as a line (from the SamplingFeature)
+
+Both appear automatically when the ISS system and its resources are discovered. The map view zooms to include all features, so the orbit track will be visible at whatever zoom level encompasses the arc.
 
 ---
 
@@ -147,8 +188,8 @@ The publisher will be a Python script deployed as a systemd service on the Oracl
 
 1. Fetches ISS OMM elements from CelesTrak `gp.php` (cached, refreshed every 6–12 hours)
 2. Propagates to current time using SGP4 (Python `sgp4` package)
-3. POSTs a CSAPI observation to `localhost:8181` (OSH server datastream endpoint)
-4. Sleeps 30 seconds, repeats
+3. POSTs a CSAPI **Observation** (point position) to the datastream endpoint every 30 seconds
+4. Every 5–10 minutes, computes a full-orbit LineString (180 points across 90 minutes) and updates the **SamplingFeature**
 5. Managed by systemd — starts on boot, restarts on failure
 
 No implementation yet — this document is research only.
