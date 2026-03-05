@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-05  
 **Status:** Research — refined after weigh-in  
-**Revision:** 2 (incorporated CelesTrak format recommendations, drift corrections, architecture refinement)
+**Revision:** 3 (added deployment decision: systemd on Oracle VM)
 
 ---
 
@@ -86,9 +86,43 @@ Option C can be layered on later if smooth visual presentation matters for demos
 | **System** | `ISS (ZARYA)` (NORAD 25544) |
 | **Procedure** | `sgp4-propagation` — metadata: source=CelesTrak, last element epoch, propagation model |
 | **DataStream** | `position` — SWE record with `timestamp`, `lat`, `lon`, `alt_km` |
-| **Observation frequency** | Publish every 30–60 seconds |
+| **Observation frequency** | Publish every 30 seconds |
 
 Could expand later to multiple satellites (Starlink, GPS constellation, LASP missions like CUTE, IMAP).
+
+---
+
+## Deployment Decision: systemd Service on Oracle VM
+
+Two runtime options were evaluated for the publisher:
+
+### Option 1: Cloudflare Worker Cron Trigger
+
+- Define `crons = ["* * * * *"]` → fires every minute
+- Worker fetches cached OMM from KV, propagates, POSTs to OSH
+- Free tier: 100K invocations/day (1,440/day needed)
+- **Limitation:** Free tier minimum interval is 1 minute. Paid ($5/mo) allows sub-minute.
+
+### Option 2: systemd service on the Oracle VM ← **Selected**
+
+- Simple Python script in a `while True` loop with `time.sleep(30)`
+- `systemctl enable iss-publisher` → starts on boot, runs forever
+- Uses the Python `sgp4` package (reference SGP4 implementation)
+- POSTs to `localhost:8181` — no network round-trip, no CORS, no proxy
+
+### Why Option 2
+
+1. **30-second cadence** — The ISS moves ~230 km per minute. At 60s intervals (Cloudflare free tier), the positions look choppy on a map. At 30s you get a smooth ground track that looks convincingly "live."
+
+2. **Same box as OSH** — The publisher POSTs to `localhost:8181`, simplest possible integration. No external network dependencies for the publish step.
+
+3. **Python + sgp4** — Clean, well-understood stack. The `sgp4` package is the reference implementation. Python is already installed on the VM. The script is approximately 50 lines.
+
+4. **Zero additional cost** — The Oracle Cloud VM is running 24/7 regardless.
+
+5. **Best demo narrative** — "A Python service on the same server publishes ISS positions as CSAPI observations every 30 seconds. Any CSAPI client — the Explorer, QGIS, a Jupyter notebook — discovers and displays it automatically with zero custom code." This is the cleanest interoperability story.
+
+The Cloudflare Worker is a fine architecture in general, but for this use case it adds deployment complexity (KV cache for OMM, Worker scripts, wrangler config) for no real benefit over a simple systemd service colocated with the server.
 
 ---
 
@@ -109,11 +143,12 @@ For satellites, the GP elements → SGP4 approach is the industry standard and t
 
 ## Publisher Implementation (not yet built)
 
-The publisher would be a lightweight script (Python or Cloudflare Worker cron) that:
+The publisher will be a Python script deployed as a systemd service on the Oracle VM:
 
-1. Fetches ISS OMM elements from CelesTrak gp.php (cached, refreshed every 6–12 hours)
-2. Propagates to current time using SGP4 (satellite.js or sgp4 Python package)
-3. POSTs a CSAPI observation to the OSH server's datastream endpoint
-4. Runs on a 30–60 second interval
+1. Fetches ISS OMM elements from CelesTrak `gp.php` (cached, refreshed every 6–12 hours)
+2. Propagates to current time using SGP4 (Python `sgp4` package)
+3. POSTs a CSAPI observation to `localhost:8181` (OSH server datastream endpoint)
+4. Sleeps 30 seconds, repeats
+5. Managed by systemd — starts on boot, restarts on failure
 
 No implementation yet — this document is research only.
