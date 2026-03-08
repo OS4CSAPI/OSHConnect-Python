@@ -1,7 +1,7 @@
 # Bootstrap & Metadata Restoration Plan
 
 **Date:** March 8, 2026  
-**Status:** Planning  
+**Status:** Active (WI-3 complete, UAS pack ingested)  
 **Server:** `https://os4csapi-osh.duckdns.org/sensorhub/api`  
 **Repos:**  
 - Explorer & Bootstrap Scripts: [OS4CSAPI/ogc-csapi-explorer](https://github.com/OS4CSAPI/ogc-csapi-explorer)  
@@ -63,13 +63,13 @@ There are **three independent bootstrap pathways**, each owning a distinct set o
 |---|---|---|---|---|
 | 1 | [`bootstrap_v4.py`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/bootstrap_v4.py) | UAS/LOB Demo Simulator | 6 systems, 39 subsystems, 25 datastreams, 9 control streams, 13 deployments | **No** — bare GeoJSON only |
 | 2 | [`bootstrap_localizer.py`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/bootstrap_localizer.py) | LOB Triangulator (Localizer) | 1 system, 1 procedure, 1 datastream | **No** — bare GeoJSON only |
-| 3 | *(none — created manually)* | ISS Tracker | 1 system, 1 procedure, 1 datastream, 2 deployments | **No** — bare GeoJSON only |
+| 3 | [`bootstrap_iss.py`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/bootstrap_iss.py) | ISS Tracker | 2 procedures, 2 systems, 2 datastreams, 5 deployments | **Yes** — full SensorML via POST+PUT (WI-3 COMPLETE) |
 
 ### Runtime Services (consumers, not bootstrappers)
 
 | Service | Script | Depends On | Self-Bootstraps? |
 |---|---|---|---|
-| ISS Publisher | [`iss_publisher_v2.py`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/iss_publisher_v2.py) | ISS Tracker system + datastream pre-existing | **No** — discovers by UID |
+| ISS Publisher | [`iss_publisher_v3.py`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/iss_publisher_v3.py) | ISS Tracker systems + datastreams pre-existing | **No** — discovers by UID (dual-product: position 30s + orbit track 5min) |
 | LOB Localizer | [`localizer.py`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/localizer.py) | Localizer system + datastream pre-existing | **No** — errors with "Run bootstrap_localizer.py first" |
 | UAS Simulator | [`simulator/main.py`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/simulator/main.py) | All MA systems + datastreams pre-existing | **No** — writes to existing datastreams |
 
@@ -281,9 +281,9 @@ The backup SML files in [`scripts/migration_backup/`](https://github.com/OS4CSAP
 - [ ] GET each procedure by UID returns content matching backup JSON
 - [ ] Bootstrap emits clear log for each procedure created/updated
 
-### WI-3: Create `bootstrap_iss.py` — ISS Tracker Bootstrap
+### WI-3: Create `bootstrap_iss.py` — ISS Tracker Bootstrap ✅ COMPLETE
 
-**Priority: Critical**  
+**Priority: Critical** — **DONE** (commit `a3b0644`, 2026-03-08)  
 **Scope:** The ISS Tracker is the only system on the server with **no creation script**. Write a bootstrap that creates:
 
 - 2 procedures (SGP4 Propagation + Orbit Track Generation)
@@ -305,17 +305,25 @@ The backup SML files in [`scripts/migration_backup/`](https://github.com/OS4CSAP
 This script should also create a new SensorML backup file for the ISS Tracker system.
 
 **Acceptance Criteria:**
-- [ ] `bootstrap_iss.py` exists and runs end-to-end on a clean server
-- [ ] Creates procedure, system, datastream, and deployment hierarchy
-- [ ] System SensorML includes keywords, identifiers, classifiers, characteristics, capabilities, contacts, documents
-- [ ] `iss_publisher_v2.py` discovers all resources by UID after a fresh bootstrap (no manual ID fixups)
+- [x] `bootstrap_iss.py` exists and runs end-to-end on a clean server
+- [x] Creates procedure, system, datastream, and deployment hierarchy
+- [x] System SensorML includes keywords, identifiers, classifiers, characteristics, capabilities, contacts, documents
+- [x] `iss_publisher_v3.py` discovers all resources by UID after a fresh bootstrap (no manual ID fixups)
 - [ ] SML template file saved to `scripts/migration_backup/` (or equivalent ISS directory)
 - [ ] Existing legacy resources (`04ng`, `045g`, `04fg`, `048g`, `0490`) retired after validation
+
+> **Implementation Report:** See [ISS_Bootstrap_Implementation_Report.md](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/ISS_Bootstrap_Implementation_Report.md) for full details on resources created, issues resolved (Time field compatibility, systemd quoting), and verification results.
 
 ### WI-4: Enrich `bootstrap_localizer.py` — Rich SensorML
 
 **Priority: High**  
 **Scope:** The localizer bootstrap currently creates bare GeoJSON. Enhance it to POST `application/sml+json` with keywords, identifiers, classifiers, characteristics, capabilities, contacts, and documents for both the procedure and the system.
+
+**Design Reference:** The [UAS/Localizer/SENREP Implementation Ready Pack v2](https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/uas-localizer-senrep-pack) provides enriched system/procedure templates, datastream schemas, deployment leaf template, and doctrinal context. Key templates:
+- [`system_localizer_enriched.json`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/system_localizer_enriched.json) — localizer system with fusion role, method refs, staleness/correlation params
+- [`procedure_lob_wls_triangulation_v1.json`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/procedure_lob_wls_triangulation_v1.json) — WLS procedure with inputs/outputs/assumptions
+- [`datastream_location_estimate.json`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/datastream_location_estimate.json) — enriched location estimate schema
+- [`deployment_localizer_feed_leaf.json`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/deployment_localizer_feed_leaf.json) — new String Alpha Localizer Feed deployment leaf
 
 This should also produce a backup SML file (e.g., `LOB_Triangulator_sml.json`) for consistency with the migration_backup pattern.
 
@@ -332,6 +340,14 @@ This should also produce a backup SML file (e.g., `LOB_Triangulator_sml.json`) f
 
 - SensorML backup files created (with keywords, identifiers, classifiers, descriptions of their military role)
 - `bootstrap_v5.py` updated to POST them as `sml+json`
+
+**Design Reference:** The [UAS/Localizer/SENREP Implementation Ready Pack v2](https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/uas-localizer-senrep-pack) provides enriched system templates:
+- [`system_set_a_enriched.json`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/system_set_a_enriched.json) — SET-A as reporting-tier team with SENREP authority
+- [`system_monitoring_site_enriched.json`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/system_monitoring_site_enriched.json) — Monitoring Site with dissemination role
+- [`procedure_senrep_sop_v1.json`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/procedure_senrep_sop_v1.json) — SENREP SOP procedure
+- [`datastream_senrep_v1_1.json`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/datastream_senrep_v1_1.json) — enriched SENREP schema with provenance/join fields
+
+> **Note:** These templates are in simplified JSON format, not yet SensorML. They must be converted to proper `application/sml+json` (PhysicalSystem) format before POSTing, following the same pattern used in `bootstrap_iss.py` (POST geo+json stub → PUT SML body). See the pack's [audit findings](#uas-pack-audit-findings) for details.
 
 **Acceptance Criteria:**
 - [ ] Backup SML files exist for SET-A, MonSite, and Relay
@@ -553,7 +569,9 @@ For the 42 MA system/subsystem SML files and 9 procedure files, an automated tes
 | `bootstrap_v25.py` | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/bootstrap_v25.py) |
 | `bootstrap_v3.1.py` | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/bootstrap_v3.1.py) |
 | `bootstrap_localizer.py` | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/bootstrap_localizer.py) |
+| `bootstrap_iss.py` | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/bootstrap_iss.py) |
 | `localizer.py` | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/localizer.py) |
+| `iss_publisher_v3.py` | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/iss_publisher_v3.py) |
 | `iss_publisher_v2.py` | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/iss_publisher_v2.py) |
 | `iss_publisher.py` | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/iss_publisher.py) |
 | `simulator/main.py` | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/simulator/main.py) |
@@ -582,3 +600,98 @@ For the 42 MA system/subsystem SML files and 9 procedure files, an automated tes
 | `observation_orbittrack_example.json` | Example observation (orbit track) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/observation_orbittrack_example.json) |
 | `iss_publisher_v3.py` | Dual-product publisher (position + orbit track) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/iss_publisher_v3.py) |
 | Planning docs (12 files) | Markdown/CSV | [directory](https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/iss-enrichment-pack) |
+
+### UAS/Localizer/SENREP Implementation Ready Pack v2 (12 JSON templates + 14 planning docs + 3 SVG diagrams)
+
+| File | Type | GitHub URL |
+|---|---|---|
+| `system_localizer_enriched.json` | System template (simplified JSON — needs SML conversion) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/system_localizer_enriched.json) |
+| `system_set_a_enriched.json` | System template (simplified JSON — needs SML conversion) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/system_set_a_enriched.json) |
+| `system_monitoring_site_enriched.json` | System template (simplified JSON — needs SML conversion) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/system_monitoring_site_enriched.json) |
+| `procedure_lob_wls_triangulation_v1.json` | Procedure template (simplified JSON — needs geo+json Feature conversion) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/procedure_lob_wls_triangulation_v1.json) |
+| `procedure_senrep_sop_v1.json` | Procedure template (simplified JSON — needs geo+json Feature conversion) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/procedure_senrep_sop_v1.json) |
+| `datastream_location_estimate.json` | Datastream schema (10-field SWE DataRecord) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/datastream_location_estimate.json) |
+| `datastream_senrep_v1_1.json` | Datastream schema (25-field SENREP) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/datastream_senrep_v1_1.json) |
+| `deployment_localizer_feed_leaf.json` | Deployment leaf template (simplified JSON) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/deployment_localizer_feed_leaf.json) |
+| `samplingfeature_track_template.json` | Track SamplingFeature template | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/samplingfeature_track_template.json) |
+| `observation_lob_example.json` | Example LOB observation | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/observation_lob_example.json) |
+| `observation_location_estimate_example.json` | Example location estimate observation | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/observation_location_estimate_example.json) |
+| `observation_senrep_example.json` | Example SENREP observation | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/uas-localizer-senrep-pack/09_JSON_TEMPLATES/observation_senrep_example.json) |
+| Planning docs (14 files) + SVG diagrams (3 files) | Markdown/CSV/SVG | [directory](https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/uas-localizer-senrep-pack) |
+
+---
+
+## UAS Pack Audit Findings
+
+<a id="uas-pack-audit-findings"></a>
+
+The UAS/Localizer/SENREP Implementation Ready Pack v2 was ingested on 2026-03-08 and audited against battle-tested patterns from the ISS bootstrap implementation. Unlike the ISS pack (which had 4 critical issues), **this pack is significantly cleaner** — but has several items that must be addressed before bootstrap implementation.
+
+### Finding U1: System/Procedure Templates Are NOT Valid SensorML or GeoJSON (Same as ISS F1)
+
+**Severity: Must-fix before implementation**
+
+All 3 system templates (`system_localizer_enriched.json`, `system_set_a_enriched.json`, `system_monitoring_site_enriched.json`) and both procedure templates use a simplified JSON format with top-level `uid`, `name`, `description`, `type`, `properties` keys. This is **neither valid SensorML 3.0** (which requires `type: "PhysicalSystem"` with `definition`, `uniqueId`, `keyword`, etc.) **nor GeoJSON Feature** (which requires `type: "Feature"`, `geometry`, `properties`).
+
+**Impact:** Cannot be POSTed directly to the server. Must be converted to:
+- Systems: Two-step POST (geo+json Feature stub) + PUT (SensorML `application/sml+json` body)
+- Procedures: Wrapped in geo+json Feature format for POST to `/procedures`
+
+**Resolution:** Convert during bootstrap script creation, same pattern as `bootstrap_iss.py`. Templates serve as **metadata source** documents, not wire-format files.
+
+### Finding U2: DataStream Time Fields Use Bare `uom: {code: "s"}` — Missing `definition` and `referenceTime`
+
+**Severity: Must-fix before implementation**
+
+Both `datastream_location_estimate.json` and `datastream_senrep_v1_1.json` define their Time field as:
+```json
+{ "type": "Time", "name": "timestamp", "uom": { "code": "s" } }
+```
+
+This is missing the critical `definition` and `referenceTime` fields. Based on the ISS experience:
+- **Must use**: `"definition": "http://sensorml.com/ont/swe/property/SamplingTime"` with `"referenceTime": "1970-01-01T00:00:00Z"`
+- **Must NOT use**: `"definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime"` with ISO-8601 UOM (causes OSH to auto-extract from phenomenonTime → HTTP 400)
+
+Without these fields the server may reject observations or misinterpret the timestamp field.
+
+**Resolution:** Add the correct `definition` and `referenceTime` when building the datastream schema in the bootstrap script. See [ISS Bootstrap Report](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/research/ISS_Bootstrap_Implementation_Report.md#41-datastream-time-field-compatibility-critical) for the exact fix.
+
+### Finding U3: Deployment Template Has Placeholder `platform@link`
+
+**Severity: Low — normal pattern**
+
+`deployment_localizer_feed_leaf.json` contains `"href": "REPLACE_WITH_SYSTEM_URL_OR_ID"` — this is expected and matches the ISS pack pattern. Bootstrap script must resolve this at runtime via `find_by_uid("systems", uid)`.
+
+### Finding U4: No Relay System Template Provided
+
+**Severity: Minor gap**
+
+The pack provides enriched templates for the localizer, SET-A, and monitoring site systems, but **no template for the Relay/Repeater system** (`urn:os4csapi:system:relay:vhf-repeater:ft-huachuca:001`). The enrichment matrix mentions it but no JSON template was included.
+
+**Resolution:** Create a minimal enriched system template during WI-5 implementation. The relay has a simple support role (VHF repeater for sensor-to-monsite comms) and can be modeled after the monitoring site template.
+
+### Finding U5: SENREP Schema Is Significantly Expanded (25 fields vs current 10)
+
+**Severity: Informational — needs careful migration**
+
+The `datastream_senrep_v1_1.json` template defines a 25-field schema, significantly richer than the current server's SENREP schema. This includes doctrinal fields (`dor`, `envirOpName`, `strNo`, `detectTimeZ`, `qty`, `tgtTyp`, `subTyp`, `spd`, `dirCardinal`, `colLengthM`), geospatial fields (`etaLat`, `etaLon`, `posErrorM`, `etaTimeZ`), and provenance fields (`sourceFixObsId`, `sourceLobObsIds`, `confidence`).
+
+**Impact:** Changing a live datastream schema is destructive — existing observations may become incompatible. The update plan's Phase 3 correctly sequences this after structural completion.
+
+**Resolution:** Create the enriched SENREP as a **new datastream** alongside the existing one, migrate the webapp to read from the new one, and only then retire the old schema. Do not modify the existing SENREP datastream in-place.
+
+### Finding U6: Pack References SVG Diagrams via Relative Paths
+
+**Severity: Informational**
+
+Procedure and system templates reference SVG diagrams via `"href": "../14_DIAGRAMS/localizer_wls_flow.svg"`. These relative paths won't work on the server — they should be replaced with absolute URLs (e.g., GitHub raw URLs) or removed when converting to SensorML document references.
+
+### Summary Comparison vs ISS Pack
+
+| Aspect | ISS Pack (9 issues found) | UAS Pack (6 findings) |
+|---|---|---|
+| Template format | 4 critical (wrong format) | 3 system + 2 procedure (wrong format) — same class of issue |
+| Time field | Correct (but used OGC definition) | Missing `definition` + `referenceTime` |
+| Placeholders | 6 REPLACE_WITH_* values | 1 placeholder (platform@link) — much cleaner |
+| Schema expansion | Orbit track was aspirational | SENREP expansion is well-planned but needs migration strategy |
+| Overall quality | Required significant rework | **Good planning quality** — templates need format conversion but content/metadata is solid |
