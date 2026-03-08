@@ -17,6 +17,44 @@ This plan catalogs every bootstrapped resource, maps it to its metadata source f
 
 ---
 
+## Restore Matrix (Top-Level Summary)
+
+| Resource Family | # Resources | Truth Source | Target Bootstrap | Verification Method | Owner |
+|---|---|---|---|---|---|
+| MA Node Systems (AZ-MA-1/2/3) | 3 systems | Backup SML files (`*_sml.json`) | `bootstrap_v5.py` | GET → diff against backup | UAS/LOB Simulator |
+| MA Subsystems (13 × 3) | 39 subsystems | Backup SML files (`*_{SUBSYS}_sml.json`) | `bootstrap_v5.py` | GET → diff against backup | UAS/LOB Simulator |
+| Support Systems (SET-A, MonSite, Relay) | 3 systems | **To be created** (WI-5) | `bootstrap_v5.py` | GET → check rich fields present | UAS/LOB Simulator |
+| Procedures (ODAS demo) | 9 procedures | Backup files (`proc_*.json`) | `bootstrap_v5.py` | GET → diff against backup | UAS/LOB Simulator |
+| Datastreams (ODAS demo) | 25 datastreams | bootstrap_v5.py inline + backup schemas | `bootstrap_v5.py` | GET → verify schema + link metadata | UAS/LOB Simulator |
+| Control Streams (ODAS demo) | 9 control streams | bootstrap_v5.py inline + backup schemas | `bootstrap_v5.py` | GET → verify schema | UAS/LOB Simulator |
+| Deployments (ODAS demo) | 13 deployments | bootstrap_v5.py inline | `bootstrap_v5.py` | GET → verify hierarchy + platform links | UAS/LOB Simulator |
+| ISS Tracker | 1 system, 1 proc, 1 DS, 2 deployments | **Live server** (until SML template created in WI-3) | `bootstrap_iss.py` | GET → check rich fields present | ISS Publisher |
+| LOB Triangulator | 1 system, 1 proc, 1 DS | **Live server** (until SML template created in WI-4) | `bootstrap_localizer.py` | GET → check rich fields present | LOB Localizer |
+
+---
+
+## Source-of-Truth Hierarchy
+
+All bootstrap scripts must respect the following truth precedence:
+
+1. **Backup SML files** (`scripts/migration_backup/`) — authoritative for all 42 MA system/subsystem definitions and 9 procedures. These files represent the hand-curated, field-verified metadata. Bootstrap scripts load and POST these files directly.
+2. **Live server state** — authoritative for ISS Tracker and LOB Triangulator resources *only until* SML template files are created (WI-3, WI-4, WI-10). Once templates exist, they supersede the live state.
+3. **Bootstrap scripts** — authoritative creation path. All resources must be reproducible from these scripts alone, with no manual API calls or one-off fixup scripts required.
+4. **`migration_id_map.json` / `new_id_map.json`** — reference only. Server IDs are ephemeral; bootstrap scripts must discover or create by UID, never by hardcoded ID.
+
+---
+
+## Idempotency Requirement
+
+All bootstrap scripts (v5, ISS, localizer) must be **idempotent** — safe to run repeatedly against either a clean or pre-populated server:
+
+- **Discover by UID first** (GET with `uid` filter). If the resource exists, update it (PUT); if not, create it (POST).
+- **Never duplicate** — running a bootstrap twice must not produce two copies of any resource.
+- **Converge to truth** — if a resource exists but is stale, the bootstrap overwrites it with the canonical SML from the truth source.
+- **Log clearly** — emit `CREATED <name>` or `UPDATED <name> (already existed)` for every resource touched.
+
+---
+
 ## Current Bootstrap Architecture
 
 There are **three independent bootstrap pathways**, each owning a distinct set of server resources:
@@ -204,12 +242,23 @@ The backup SML files in [`scripts/migration_backup/`](https://github.com/OS4CSAP
 
 **Files involved:** All 42 `*_sml.json` files in [`scripts/migration_backup/`](https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/scripts/migration_backup)
 
+**Acceptance Criteria:**
+- [ ] All 6 top-level systems created via `application/sml+json` POST (not `geo+json`)
+- [ ] All 39 subsystems created via `application/sml+json` POST
+- [ ] GET each system by UID returns SensorML with keywords, identifiers, classifiers, etc. matching backup files
+- [ ] Script is idempotent: re-running against an existing server updates rather than duplicates
+
 ### WI-2: `bootstrap_v5.py` — Create Procedures Before Systems
 
 **Priority: Critical**  
 **Scope:** Add a Phase 0 that creates all 9 procedures from backup files before any system references them via `typeOf`.
 
 **Files involved:** All 9 `proc_*.json` files in [`scripts/migration_backup/procedures/`](https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/scripts/migration_backup/procedures)
+
+**Acceptance Criteria:**
+- [ ] All 9 procedures exist on server before any system `typeOf` references them
+- [ ] GET each procedure by UID returns content matching backup JSON
+- [ ] Bootstrap emits clear log for each procedure created/updated
 
 ### WI-3: Create `bootstrap_iss.py` — ISS Tracker Bootstrap
 
@@ -223,12 +272,25 @@ The backup SML files in [`scripts/migration_backup/`](https://github.com/OS4CSAP
 
 This script should also create a new SensorML backup file for the ISS Tracker system.
 
+**Acceptance Criteria:**
+- [ ] `bootstrap_iss.py` exists and runs end-to-end on a clean server
+- [ ] Creates procedure, system, datastream, and 2 deployments
+- [ ] System SensorML includes keywords, identifiers, classifiers, characteristics, capabilities, contacts, documents
+- [ ] `iss_publisher_v2.py` discovers all resources by UID after a fresh bootstrap (no manual ID fixups)
+- [ ] SML template file saved to `scripts/migration_backup/` (or equivalent ISS directory)
+
 ### WI-4: Enrich `bootstrap_localizer.py` — Rich SensorML
 
 **Priority: High**  
 **Scope:** The localizer bootstrap currently creates bare GeoJSON. Enhance it to POST `application/sml+json` with keywords, identifiers, classifiers, characteristics, capabilities, contacts, and documents for both the procedure and the system.
 
 This should also produce a backup SML file (e.g., `LOB_Triangulator_sml.json`) for consistency with the migration_backup pattern.
+
+**Acceptance Criteria:**
+- [ ] `bootstrap_localizer.py` creates system + procedure with `application/sml+json`
+- [ ] GET system by UID returns rich SensorML (keywords, classifiers, characteristics, capabilities)
+- [ ] `localizer.py` runtime discovers all resources by UID after fresh bootstrap
+- [ ] SML template file saved alongside other backups
 
 ### WI-5: Enrich Support Systems — SET-A, MonSite, Relay
 
@@ -237,6 +299,11 @@ This should also produce a backup SML file (e.g., `LOB_Triangulator_sml.json`) f
 
 - SensorML backup files created (with keywords, identifiers, classifiers, descriptions of their military role)
 - `bootstrap_v5.py` updated to POST them as `sml+json`
+
+**Acceptance Criteria:**
+- [ ] Backup SML files exist for SET-A, MonSite, and Relay
+- [ ] Each file contains at minimum: keywords, identifiers, classifiers, description of operational role
+- [ ] `bootstrap_v5.py` POSTs these as `sml+json`
 
 ### WI-6: Enrich Tripod Platform Subsystems
 
@@ -247,34 +314,71 @@ This should also produce a backup SML file (e.g., `LOB_Triangulator_sml.json`) f
 - Manufacturer info
 - Keywords (tripod, field-deployable, survey-grade)
 
+**Acceptance Criteria:**
+- [ ] All 3 Tripod Platform backup files contain physical specs, manufacturer info, and keywords
+- [ ] GET by UID returns non-bare SensorML after bootstrap
+
 ### WI-7: Restore "Calibrate Orientation" Control Stream
 
 **Priority: Medium**  
 **Scope:** The backup contains a 4th control stream (Calibrate Orientation, [`cs_04d0.json`](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/migration_backup/controlstreams/cs_04d0.json)) that `bootstrap_v4.py` does not create. Decide whether to restore it in v5 or archive the backup file.
+
+**Acceptance Criteria:**
+- [ ] Decision documented (restore or archive) with rationale
+- [ ] If restored: control stream exists on server after v5 bootstrap
+- [ ] If archived: backup file moved to `migration_backup/archived/` with README note
 
 ### WI-8: Datastream Link Metadata
 
 **Priority: Medium**  
 **Scope:** Backup datastreams include `procedure@link`, `deployment@link`, `featureOfInterest@link`, and `observedProperties` that v4 does not set. These improve CSAPI navigability. Add them to v5's datastream creation.
 
+**Acceptance Criteria:**
+- [ ] Datastreams created by v5 include `procedure@link`, `deployment@link`, and `observedProperties` where applicable
+- [ ] GET datastream returns link fields matching backup metadata
+
 ### WI-9: Fix Stale Docstring in bootstrap_v4.py
 
 **Priority: Low**  
 **Scope:** The script header says "22 datastreams" but actually creates 25 (Detection Capabilities was added per-node). Fix the count.
+
+**Acceptance Criteria:**
+- [ ] Docstring count matches actual resource creation count
 
 ### WI-10: Create Backup SML Files for ISS Tracker and Localizer
 
 **Priority: Medium**  
 **Scope:** After WI-3 and WI-4 produce enriched SensorML, export the final SML from the server and save as backup files alongside the existing `migration_backup/` files. Ensures future re-bootstraps have a complete backup set.
 
+**Acceptance Criteria:**
+- [ ] ISS Tracker SML template file exists in backup directory
+- [ ] LOB Triangulator SML template file exists in backup directory
+- [ ] Re-running the corresponding bootstrap from these templates reproduces the same server state
+
+---
+
+## Known Intentional Gaps
+
+The following items are **deliberately excluded** from the bootstrap restoration and should not be treated as bugs or missing work:
+
+| Gap | Reason | Status |
+|---|---|---|
+| Tripod Platform SML is bare (no rich fields) | Physical platform with no sensors or processing — metadata would be speculative until field measurements are taken | **Intentional** — will be enriched if/when field data is available (see WI-6 for aspirational enrichment) |
+| "Calibrate Orientation" control stream not in v4 | Dropped during v4 rewrite. Backup file exists (`cs_04d0.json`). Restore decision deferred to WI-7 | **Deferred** — pending WI-7 decision |
+| Detection Capabilities datastream has no backup | Added after the migration that produced the backup files | **Expected** — schema defined inline in bootstrap script |
+| ISS Tracker has no SML backup file | System was created manually via ad-hoc API calls before backup tooling existed | **To be resolved** by WI-3 + WI-10 |
+| LOB Triangulator has no SML backup file | Bare bootstrap existed but never produced rich SML | **To be resolved** by WI-4 + WI-10 |
+| SET-A, MonSite, Relay have no SML backup files | Support/organizational systems with no physical sensor metadata to back up at time of migration | **To be resolved** by WI-5 |
+
 ---
 
 ## Execution Order
 
 ```
-Phase 0 — Bootstrapping prerequisites
-  WI-3  Create bootstrap_iss.py (ISS Tracker has no bootstrap at all)
-  WI-4  Enrich bootstrap_localizer.py with rich SensorML
+Phase 0 — Template creation & standalone bootstraps
+  WI-10 Create SML template files for ISS Tracker and Localizer (captures live server state as truth)
+  WI-3  Create bootstrap_iss.py (ISS Tracker has no bootstrap at all — uses WI-10 template)
+  WI-4  Enrich bootstrap_localizer.py with rich SensorML (uses WI-10 template)
 
 Phase 1 — bootstrap_v5.py (replaces v4)
   WI-2  Procedure creation phase
@@ -285,9 +389,42 @@ Phase 1 — bootstrap_v5.py (replaces v4)
   WI-8  Datastream link metadata
   WI-9  Docstring fix
 
-Phase 2 — Backup completeness
-  WI-10 Export and save SML backups for ISS + Localizer
+Phase 2 — Verification
+  Run post-bootstrap verification (see Verification & Smoke Tests below)
+  Confirm all 3 runtime services start and publish successfully
 ```
+
+---
+
+## Verification & Smoke Tests
+
+### Post-Bootstrap Verifier Script
+
+A `verify_bootstrap.py` script should be created alongside each bootstrap script. It performs read-back verification:
+
+1. **For every system/subsystem:** GET by UID, confirm HTTP 200, check that `keywords`, `identifiers`, and `classifiers` arrays are non-empty (for resources that should have rich SML).
+2. **For every procedure:** GET by UID, confirm HTTP 200, check content matches backup file (byte-level or key-field comparison).
+3. **For every datastream:** GET by system, confirm expected count, verify schema field names match expected set.
+4. **For every deployment:** GET root, walk children, confirm hierarchy depth and platform links.
+5. **Output:** Summary table of PASS/FAIL per resource, exit code 0 only if all pass.
+
+### Runtime Smoke Tests
+
+After bootstrapping, each runtime service should be started and verified:
+
+| Service | Smoke Test | Pass Criteria |
+|---|---|---|
+| UAS Simulator (`simulator/main.py`) | Start → wait 30s → GET latest observation from any MA datastream | Non-empty observation with `resultTime` within last 60s |
+| ISS Publisher (`iss_publisher_v2.py`) | Start → wait 30s → GET latest ISS Position observation | Non-empty observation with valid lat/lon/alt |
+| LOB Localizer (`localizer.py`) | Start w/ simulator running → wait 60s → GET latest UAS Location Estimate | Non-empty observation with trackId and lat/lon |
+
+### Diff-Against-Backup Test
+
+For the 42 MA system/subsystem SML files and 9 procedure files, an automated test should:
+1. GET the resource SML from the server (by UID)
+2. Load the corresponding backup file
+3. Compare key fields (keywords, identifiers, classifiers, characteristics, capabilities, contacts, documents)
+4. Report any drift between server state and backup truth
 
 ---
 
