@@ -189,28 +189,23 @@ Each MA node has the following 13 subsystems. The table shows the AZ-MA-1 file; 
 
 ### 2.2 Target Resource Model (from ISS Enrichment Pack)
 
-The enrichment pack proposes a richer resource family. **Phase 1** implements the position-tracking resources; orbit-track resources are deferred until publisher code is written.
+The enrichment pack proposes a richer resource family. All templates have been converted to proper SensorML/geo+json format and the dual-product publisher (`iss_publisher_v3.py`) implements both position tracking and orbit-track generation.
 
-**Phase 1 (position tracking — implement in WI-3):**
+**Full Target Resource Model (implement in WI-3):**
 
 | Resource Type | Name | Target UID | Source |
 |---|---|---|---|
-| Procedure | SGP4 Propagation v1 | `urn:os4csapi:procedure:sgp4-propagation:v1` | Pack template (needs SensorML conversion) |
-| System | ISS Position Publisher | `urn:os4csapi:system:iss-position-publisher:v1` | Pack template (needs SensorML conversion) |
-| DataStream | ISS Position (SGP4) | `urn:os4csapi:datastream:iss:position:wgs84:v1` | Existing 4-field schema + `velocity_km_s` |
+| Procedure | SGP4 Propagation v1 | `urn:os4csapi:procedure:sgp4-propagation:v1` | Pack template (SML-converted) |
+| Procedure | Orbit Track Generation v1 | `urn:os4csapi:procedure:orbit-track-generation:v1` | Pack template (SML-converted) |
+| System | ISS Position Publisher | `urn:os4csapi:system:iss-position-publisher:v1` | Pack template (SML-converted) |
+| System | ISS Orbit Track Publisher | `urn:os4csapi:system:iss-orbittrack-publisher:v1` | Pack template (SML-converted) |
+| DataStream | ISS Position (SGP4) | `urn:os4csapi:datastream:iss:position:wgs84:v1` | 11-field schema (expanded from 4) |
+| DataStream | ISS Orbit Ground Track | `urn:os4csapi:datastream:iss:orbit-ground-track:v1` | 7-field schema with trackPointsJson |
 | Deployment (root) | Orbital Tracking Demo | `urn:os4csapi:deployment:orbital-tracking-demo:v1` | Pack template |
 | Deployment (L1) | LEO Objects | `urn:os4csapi:deployment:leo-objects:v1` | Pack template |
 | Deployment (L2) | ISS Tracking Role | `urn:os4csapi:deployment:iss-tracking-role:v1` | Pack template |
 | Deployment (leaf) | ISS Position Feed | `urn:os4csapi:deployment:iss-position-feed:v1` | Pack template |
-
-**Deferred (orbit-track — no publisher code exists yet):**
-
-| Resource Type | Name | Target UID |
-|---|---|---|
-| Procedure | Orbit Track Generation v1 | `urn:os4csapi:procedure:orbit-track-generation:v1` |
-| System | ISS Orbit Track Publisher | `urn:os4csapi:system:iss-orbittrack-publisher:v1` |
-| DataStream | ISS Orbit Ground Track | `urn:os4csapi:datastream:iss:orbit-ground-track:v1` |
-| Deployment (leaf) | ISS Orbit Track Feed | `urn:os4csapi:deployment:iss-orbittrack-feed:v1` |
+| Deployment (leaf) | ISS Orbit Track Feed | `urn:os4csapi:deployment:iss-orbittrack-feed:v1` | Pack template |
 
 ### 2.3 Metadata Enrichment Profile
 
@@ -291,20 +286,20 @@ The backup SML files in [`scripts/migration_backup/`](https://github.com/OS4CSAP
 **Priority: Critical**  
 **Scope:** The ISS Tracker is the only system on the server with **no creation script**. Write a bootstrap that creates:
 
-- 1 procedure (SGP4 Propagation — `urn:os4csapi:procedure:sgp4-propagation:v1`)
-- 1 system with rich SensorML (ISS Position Publisher — `urn:os4csapi:system:iss-position-publisher:v1`)
-- 1 datastream (ISS Position with lat/lon/alt/velocity schema)
+- 2 procedures (SGP4 Propagation + Orbit Track Generation)
+- 2 systems with rich SensorML (ISS Position Publisher + ISS Orbit Track Publisher)
+- 2 datastreams (ISS Position — 11-field schema; ISS Orbit Ground Track — 7-field schema)
 - 5 deployment nodes (Orbital Tracking Demo → LEO Objects → ISS Tracking Role → 2 feed leaves)
 
 **Design Reference:** The [ISS Implementation Ready Pack v2](https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/iss-enrichment-pack) provides the target resource model, metadata enrichment profile, deployment hierarchy, and conceptual JSON templates. See detailed audit notes below.
 
-> **ISS Pack Audit Notes (template conversion required):**
-> - **System/Procedure JSONs are NOT valid SensorML** — they use flat `type`/`properties` structure instead of proper `application/sml+json` format (`PhysicalSystem`, `uniqueIdentifier`, `identificationList`, SWE inputs/outputs). Must be converted to SensorML JSON before POST.
-> - **Pack proposes 2 systems + 2 procedures + 2 datastreams (position + orbit-track)**. The orbit-track resources are aspirational — no publisher code exists yet. **Phase 1 scope: position resources only.** Orbit-track resources deferred to a future phase when orbit-track publisher is implemented.
-> - **Datastream schema expansion**: Pack proposes 10 fields (adds `noradId`, `assetName`, `sourceEpoch`, `sourceAgeSec`, `posErrorM`, `method`). Current publisher emits 4 fields (`timestamp`, `lat_deg`, `lon_deg`, `alt_km`). Decision: either expand the publisher or use existing 4-field schema + `velocity_km_s`. Recommend keeping `velocity_km_s` (already in existing DS) and deferring extra fields to a later publisher update.
-> - **Deployment hierarchy**: Pack proposes 5-node tree (root → LEO Objects → ISS Tracking Role → 2 feed leaves). This replaces the current flat 2-node tree. The hierarchy design is sound and should be adopted.
-> - **UIDs**: All follow `urn:os4csapi:*` convention — adopt as-is.
-> - **Placeholders**: 6 `REPLACE_WITH_*` values in templates need to be filled (image URLs, system links).
+> **ISS Pack Status (all issues resolved):**
+> - ~~System/Procedure JSONs are NOT valid SensorML~~ → **FIXED**: All templates converted to proper `application/sml+json` (`PhysicalSystem`) and geo+json Feature format. Verified against working AZ-MA-1 structure.
+> - ~~Orbit-track resources aspirational~~ → **IMPLEMENTED**: `iss_publisher_v3.py` publishes both position (30s cadence, 11 fields) and orbit ground-track predictions (5min cadence, 100 points). See [publisher source](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/iss_publisher_v3.py).
+> - ~~Datastream schema mismatch~~ → **RESOLVED**: Position schema expanded to 11 fields (`timestamp`, `lat_deg`, `lon_deg`, `alt_km`, `velocity_km_s`, `noradId`, `assetName`, `sourceEpoch`, `sourceAgeSec`, `posErrorM`, `method`). Orbit track schema: 7 fields with `trackPointsJson` as serialized JSON string.
+> - **Deployment hierarchy**: 5-node tree adopted (root → LEO Objects → ISS Tracking Role → 2 feed leaves). Consolidated into single `deployment_tree.json` template.
+> - **UIDs**: All follow `urn:os4csapi:*` convention — adopted as-is.
+> - ~~Placeholders~~ → **FILLED**: All 6 `REPLACE_WITH_*` values replaced with real URLs/UIDs.
 > - **Existing resources** (`04ng`, `045g`, `04fg`, `048g`, `0490`) must be retired after new resources are proven working.
 
 This script should also create a new SensorML backup file for the ISS Tracker system.
@@ -576,17 +571,14 @@ For the 42 MA system/subsystem SML files and 9 procedure files, an automated tes
 
 | File | Type | GitHub URL |
 |---|---|---|
-| `system_iss_position_publisher.json` | System template (needs SML conversion) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/system_iss_position_publisher.json) |
-| `system_iss_orbittrack_publisher.json` | System template (deferred — needs SML conversion) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/system_iss_orbittrack_publisher.json) |
-| `procedure_sgp4_propagation_v1.json` | Procedure template (needs SML conversion) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/procedure_sgp4_propagation_v1.json) |
-| `procedure_orbit_track_generation_v1.json` | Procedure template (deferred — needs SML conversion) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/procedure_orbit_track_generation_v1.json) |
-| `datastream_satPositionWGS84.json` | Datastream schema (10-field — needs reconciliation with current 4-field) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/datastream_satPositionWGS84.json) |
-| `datastream_orbitGroundTrack.json` | Datastream schema (deferred — no publisher) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/datastream_orbitGroundTrack.json) |
-| `deployment_root_orbital_tracking_demo.json` | Deployment root | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/deployment_root_orbital_tracking_demo.json) |
-| `deployment_leo_objects.json` | Deployment L1 | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/deployment_leo_objects.json) |
-| `deployment_iss_tracking_role.json` | Deployment L2 | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/deployment_iss_tracking_role.json) |
-| `deployment_iss_position_feed_leaf.json` | Deployment leaf (has placeholder) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/deployment_iss_position_feed_leaf.json) |
-| `deployment_iss_orbit_track_feed_leaf.json` | Deployment leaf (deferred) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/deployment_iss_orbit_track_feed_leaf.json) |
-| `observation_position_example.json` | Example observation | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/observation_position_example.json) |
-| `observation_orbittrack_example.json` | Example observation (deferred) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/observation_orbittrack_example.json) |
+| `system_iss_position_publisher.json` | System template (proper SML `PhysicalSystem`) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/system_iss_position_publisher.json) |
+| `system_iss_orbittrack_publisher.json` | System template (proper SML `PhysicalSystem`) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/system_iss_orbittrack_publisher.json) |
+| `procedure_sgp4_propagation_v1.json` | Procedure template (geo+json Feature) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/procedure_sgp4_propagation_v1.json) |
+| `procedure_orbit_track_generation_v1.json` | Procedure template (geo+json Feature) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/procedure_orbit_track_generation_v1.json) |
+| `datastream_satPositionWGS84.json` | Datastream schema (11-field SWE DataRecord) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/datastream_satPositionWGS84.json) |
+| `datastream_orbitGroundTrack.json` | Datastream schema (7-field, trackPointsJson) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/datastream_orbitGroundTrack.json) |
+| `deployment_tree.json` | Full 5-node deployment hierarchy | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/deployment_tree.json) |
+| `observation_position_example.json` | Example observation (11-field) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/observation_position_example.json) |
+| `observation_orbittrack_example.json` | Example observation (orbit track) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/docs/iss-enrichment-pack/json-templates/observation_orbittrack_example.json) |
+| `iss_publisher_v3.py` | Dual-product publisher (position + orbit track) | [link](https://github.com/OS4CSAPI/ogc-csapi-explorer/blob/main/scripts/iss_publisher_v3.py) |
 | Planning docs (12 files) | Markdown/CSV | [directory](https://github.com/OS4CSAPI/ogc-csapi-explorer/tree/main/docs/iss-enrichment-pack) |
