@@ -1,0 +1,17 @@
+{
+  "id": "42002",
+  "name": "WEST GULF - 207 NM East of Brownsville, TX",
+  "lat": 25.95,
+  "lon": -93.78,
+  "owner": "National Data Buoy Center",
+  "platform_type": "3-meter foam buoy",
+  "payload_type": "SCOOP",
+  "site_elevation_m": 0.0,
+  "air_temp_height_m": 3.7,
+  "anemometer_height_m": 4.1,
+  "barometer_height_m": 2.7,
+  "sea_temp_depth_m": 1.5,
+  "water_depth_m": 3208,
+  "watch_circle_radius_yd": 3138,
+  "has_buoycam": true
+}

@@ -1,0 +1,26 @@
+{
+  "stationId": "42002",
+  "uid": "urn:os4csapi:system:ndbc:42002:v1",
+  "label": "NDBC 42002 \u2014 WEST GULF - 207 NM East of Brownsville, TX",
+  "owner": "National Data Buoy Center",
+  "platform_type": "3-meter foam buoy",
+  "payload_type": "SCOOP",
+  "position": {
+    "lat": 25.95,
+    "lon": -93.78
+  },
+  "site_elevation_m": 0.0,
+  "air_temp_height_m": 3.7,
+  "anemometer_height_m": 4.1,
+  "barometer_height_m": 2.7,
+  "sea_temp_depth_m": 1.5,
+  "water_depth_m": 3208,
+  "watch_circle_radius_yd": 3138,
+  "documentation": {
+    "station_page": "https://www.ndbc.noaa.gov/station_page.php?station=42002",
+    "realtime_page": "https://www.ndbc.noaa.gov/station_realtime.php?station=42002",
+    "history_page": "https://www.ndbc.noaa.gov/station_history.php?station=42002",
+    "realtime_text": "https://www.ndbc.noaa.gov/data/realtime2/42002.txt",
+    "buoycam": "https://www.ndbc.noaa.gov/buoycam.php?station=42002"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "NDBC_HOME": "https://www.ndbc.noaa.gov/",
+  "NDBC_WEB_DATA_GUIDE": "https://www.ndbc.noaa.gov/docs/ndbc_web_data_guide.pdf",
+  "NDBC_RT_DATA_DOC": "https://www.ndbc.noaa.gov/faq/rt_data_access.shtml",
+  "NDBC_MEAS_DESC": "https://www.ndbc.noaa.gov/faq/measdes.shtml",
+  "NDBC_STATUS_REPORT": "https://www.ndbc.noaa.gov/wstat.shtml",
+  "NDBC_BUOYCAM_FAQ": "https://www.ndbc.noaa.gov/faq/buoycamlinks.shtml",
+  "NDBC_STATION_PAGE_TEMPLATE": "https://www.ndbc.noaa.gov/station_page.php?station={stationId}",
+  "NDBC_STATION_REALTIME_TEMPLATE": "https://www.ndbc.noaa.gov/station_realtime.php?station={stationId}",
+  "NDBC_STATION_HISTORY_TEMPLATE": "https://www.ndbc.noaa.gov/station_history.php?station={stationId}",
+  "NDBC_REALTIME_TEXT_TEMPLATE": "https://www.ndbc.noaa.gov/data/realtime2/{stationId}.txt",
+  "NDBC_BUOYCAM_TEMPLATE": "https://www.ndbc.noaa.gov/buoycam.php?station={stationId}",
+  "NDBC_NETCDF": "https://dods.ndbc.noaa.gov/"
+}
