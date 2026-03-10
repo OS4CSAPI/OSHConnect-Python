@@ -1,0 +1,35 @@
+# docker-compose.yml — OSHConnect Publisher Fleet
+#
+# Usage:
+#   docker compose up -d              # start all publishers
+#   docker compose up -d nws          # start NWS only
+#   docker compose logs -f nws        # follow NWS logs
+#   docker compose down               # stop all
+#
+# All publishers share the same OSH server credentials via the x-osh-env anchor.
+
+x-osh-env: &osh-env
+  OSH_ADDRESS: os4csapi-osh.duckdns.org
+  OSH_PORT: "443"
+  OSH_USER: os4csapi
+  OSH_PASS: ogc134mm
+  OSH_ROOT: sensorhub
+
+services:
+  iss:
+    build:
+      context: ..
+      dockerfile: publishers/iss/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+    command: ["--interval", "30"]
+
+  nws:
+    build:
+      context: ..
+      dockerfile: publishers/nws/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+    command: ["--interval", "3600"]

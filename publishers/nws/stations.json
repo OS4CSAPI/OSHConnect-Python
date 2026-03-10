@@ -1,0 +1,39 @@
+{
+    "nws_stations": [
+        {
+            "id": "KTUS",
+            "name": "Tucson International Airport",
+            "lat": 32.1315,
+            "lon": -110.9564,
+            "elev_m": 776
+        },
+        {
+            "id": "KDMA",
+            "name": "Davis-Monthan AFB",
+            "lat": 32.1664,
+            "lon": -110.8831,
+            "elev_m": 824
+        },
+        {
+            "id": "KFHU",
+            "name": "Fort Huachuca / Sierra Vista",
+            "lat": 31.5886,
+            "lon": -110.3443,
+            "elev_m": 1418
+        },
+        {
+            "id": "KLUF",
+            "name": "Luke Air Force Base",
+            "lat": 33.5350,
+            "lon": -112.3830,
+            "elev_m": 331
+        },
+        {
+            "id": "KPHX",
+            "name": "Phoenix Sky Harbor International Airport",
+            "lat": 33.4278,
+            "lon": -112.0038,
+            "elev_m": 337
+        }
+    ]
+}
