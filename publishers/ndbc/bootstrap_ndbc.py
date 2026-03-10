@@ -50,11 +50,18 @@ from publishers.bootstrap_helpers import (
 VALID_TIME_START = "2026-01-01T00:00:00Z"
 
 PROC_UID = "urn:os4csapi:procedure:ndbc-buoy-observation:v1"
+BUOYCAM_PROC_UID = "urn:os4csapi:procedure:ndbc:buoycam-imagery:v1"
 
 DEPLOY_ROOT_UID = "urn:os4csapi:deployment:ndbc-buoy-demo:v1"
 DEPLOY_GROUP_UID = "urn:os4csapi:deployment:ndbc-buoys:v1"
 
 DS_OUTPUT_NAME = "ndbcBuoyObs"
+BUOYCAM_DS_OUTPUT_NAME = "ndbcBuoyCamImage"
+
+# BuoyCAM-specific URLs
+NDBC_BUOYCAM_HOME = "https://www.ndbc.noaa.gov/buoycams.shtml"
+NDBC_BUOYCAM_STATUS = "https://www.ndbc.noaa.gov/buoycam_status.php"
+BUOYCAM_CACHE_BASE = "https://os4csapi-osh.duckdns.org/buoycam"
 
 # ── NDBC Official URLs ────────────────────────────────────────────────────
 NDBC_HOME = "https://www.ndbc.noaa.gov/"
@@ -346,6 +353,114 @@ def _datastream_schema() -> dict:
     }
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+#  BuoyCAM resource definitions
+# ═══════════════════════════════════════════════════════════════════════════
+
+BUOYCAM_PROCEDURE_BODY = {
+    "type": "Feature",
+    "geometry": None,
+    "properties": {
+        "uid": BUOYCAM_PROC_UID,
+        "featureType": "sosa:ObservingProcedure",
+        "name": "NDBC BuoyCAM Imagery v1",
+        "description": (
+            "Publishes cached BuoyCAM imagery from NOAA NDBC buoy-mounted cameras. "
+            "The publisher periodically polls each station's latest-image endpoint, "
+            "fetches the JPEG when a new image is detected (via SHA-256 hash comparison), "
+            "caches the image to an immutable URL, and publishes an observation record "
+            "referencing that cached URL. BuoyCAMs are daylight-only; image frequency varies "
+            "but status updates typically occur every 30-60 minutes during daylight hours."
+        ),
+        "keywords": [
+            "NOAA", "NDBC", "buoy", "BuoyCAM", "camera", "imagery",
+            "marine", "ocean", "visual", "JPEG",
+        ],
+        "documentation": [
+            {"title": "NDBC BuoyCAM Overview", "href": NDBC_BUOYCAM_HOME, "rel": "about"},
+            {"title": "NDBC BuoyCAM FAQ / Latest Image Links", "href": NDBC_BUOYCAM_FAQ, "rel": "documentation"},
+            {"title": "NDBC BuoyCAM Status Page", "href": NDBC_BUOYCAM_STATUS, "rel": "status"},
+            {"title": "NDBC Station Page Pattern", "href": NDBC_STATION_PAGE_BASE, "rel": "describedby"},
+            {"title": "NDBC Home", "href": NDBC_HOME, "rel": "about"},
+        ],
+        "contacts": [
+            {
+                "role": "operator",
+                "organizationName": NDBC_CONTACT_ORG,
+                "website": NDBC_HOME,
+                "email": NDBC_CONTACT_EMAIL,
+            },
+            {
+                "role": "publisher",
+                "organizationName": "OS4CSAPI",
+                "website": "https://github.com/OS4CSAPI/OSHConnect-Python",
+            },
+        ],
+        "lineage": {
+            "source": "NOAA / National Data Buoy Center — BuoyCAM program",
+            "upstream": "Latest-image JPEG endpoint per station via NDBC BuoyCAM",
+            "normalization": (
+                "Publisher fetches latest JPEG, computes SHA-256 hash for deduplication, "
+                "caches the image to an immutable URL on the OS4CSAPI static host, and "
+                "publishes a JSON observation record referencing the cached image URL."
+            ),
+        },
+        "usageConstraints": {
+            "sourceProtocol": "HTTPS",
+            "sourceFormat": "image/jpeg",
+            "rateLimitNote": "Publisher polls at 15-minute intervals to align with NDBC refresh cadence.",
+            "qualityControlNote": (
+                "BuoyCAMs are daylight-only. Images may be stale at night or during outages. "
+                "The publisher only publishes when a genuinely new image is detected."
+            ),
+        },
+        "validTime": [VALID_TIME_START, ".."],
+    },
+}
+
+
+def _buoycam_datastream_schema() -> dict:
+    """SWE DataRecord schema for BuoyCAM image-reference datastream."""
+    return {
+        "outputName": BUOYCAM_DS_OUTPUT_NAME,
+        "name": "BuoyCAM Image",
+        "description": (
+            "Each observation represents one fetched BuoyCAM image frame. The result is a "
+            "JSON record containing the immutable cached image URL, hash, size, and camera "
+            "status — not raw binary image data. Images are cached to an immutable URL so "
+            "historical observations remain visually stable."
+        ),
+        "documentation": [
+            {"title": "NDBC BuoyCAM Overview", "href": NDBC_BUOYCAM_HOME, "rel": "about"},
+            {"title": "NDBC BuoyCAM FAQ", "href": NDBC_BUOYCAM_FAQ, "rel": "documentation"},
+            {"title": "NDBC BuoyCAM Status", "href": NDBC_BUOYCAM_STATUS, "rel": "status"},
+        ],
+        "characteristics": [
+            {"label": "Source Format", "value": "image/jpeg from NDBC BuoyCAM latest-image endpoint"},
+            {"label": "Storage Mode", "value": "cached-immutable (publisher caches each image to a unique URL)"},
+            {"label": "Nominal Refresh", "value": "Every 30-60 minutes during daylight; publisher polls every 15 minutes"},
+        ],
+        "schema": {
+            "obsFormat": "application/om+json",
+            "resultSchema": {
+                "type": "DataRecord",
+                "label": "BuoyCAM Image Reference",
+                "description": "Cached BuoyCAM image metadata and immutable URL",
+                "fields": [
+                    {"type": "Time",     "name": "timestamp",        "label": "Fetch Time",            "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "referenceTime": "1970-01-01T00:00:00Z", "uom": {"code": "s"}},
+                    {"type": "Text",     "name": "stationId",       "label": "Station ID",            "definition": "http://sensorml.com/ont/swe/property/StationID"},
+                    {"type": "Text",     "name": "imageUrl",        "label": "Cached Image URL",      "definition": "http://www.opengis.net/def/property/OGC/0/ImageURL"},
+                    {"type": "Text",     "name": "mediaType",       "label": "Media Type",            "definition": "http://purl.org/dc/elements/1.1/format"},
+                    {"type": "Text",     "name": "cameraStatus",    "label": "Camera Status",         "definition": "http://sensorml.com/ont/swe/property/SystemStatus"},
+                    {"type": "Text",     "name": "sha256",          "label": "Image SHA-256",         "definition": "http://www.opengis.net/def/property/OGC/0/Checksum"},
+                    {"type": "Quantity", "name": "contentLength",   "label": "Image Size (bytes)",    "definition": "http://purl.org/dc/terms/extent",  "uom": {"code": "By"}},
+                    {"type": "Text",     "name": "latestImageUrl",  "label": "NDBC Latest Image URL", "definition": "http://www.opengis.net/def/property/OGC/0/SourceURL"},
+                ],
+            },
+        },
+    }
+
+
 def _deploy_root() -> dict:
     return {
         "type": "Feature",
@@ -444,7 +559,9 @@ def clean_all(base_url: str, auth: str, stations: list[dict],
         clean_resource(base_url, auth, "systems", _system_uid(st["id"]),
                        dry_run=dry_run, stats=stats, cascade=True)
 
-    # Procedure
+    # Procedures
+    clean_resource(base_url, auth, "procedures", BUOYCAM_PROC_UID,
+                   dry_run=dry_run, stats=stats)
     clean_resource(base_url, auth, "procedures", PROC_UID,
                    dry_run=dry_run, stats=stats)
 
@@ -475,10 +592,13 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = 
             print_summary(stats, dry_run)
             return
 
-    # ── Procedure ─────────────────────────────────────────────────────
+    # ── Procedures ────────────────────────────────────────────────────
     print("  ── Procedures ──")
     proc_id = ensure_procedure(base_url, auth, PROC_UID, PROCEDURE_BODY,
                                dry_run=dry_run, stats=stats)
+    buoycam_proc_id = ensure_procedure(base_url, auth, BUOYCAM_PROC_UID,
+                                       BUOYCAM_PROCEDURE_BODY,
+                                       dry_run=dry_run, stats=stats)
 
     # ── Systems + Datastreams ─────────────────────────────────────────
     print("  ── Systems + Datastreams ──")
@@ -498,6 +618,13 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = 
             ensure_datastream(base_url, auth, sys_id or "pending", DS_OUTPUT_NAME,
                               _datastream_schema(),
                               dry_run=dry_run, stats=stats)
+
+            # BuoyCAM datastream (only for camera-equipped stations)
+            if st.get("has_buoycam"):
+                ensure_datastream(base_url, auth, sys_id or "pending",
+                                  BUOYCAM_DS_OUTPUT_NAME,
+                                  _buoycam_datastream_schema(),
+                                  dry_run=dry_run, stats=stats)
 
     # ── Deployment tree ───────────────────────────────────────────────
     print("  ── Deployments ──")

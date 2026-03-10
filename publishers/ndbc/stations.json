@@ -5,35 +5,40 @@
             "name": "Long Island, NY",
             "lat": 40.251,
             "lon": -73.164,
-            "water_depth_m": 36.3
+            "water_depth_m": 36.3,
+            "has_buoycam": true
         },
         {
             "id": "41009",
             "name": "Canaveral East, FL",
             "lat": 28.519,
             "lon": -80.166,
-            "water_depth_m": 44.0
+            "water_depth_m": 44.0,
+            "has_buoycam": true
         },
         {
             "id": "42036",
             "name": "West Tampa, FL (Gulf)",
             "lat": 28.500,
             "lon": -84.517,
-            "water_depth_m": 274.3
+            "water_depth_m": 274.3,
+            "has_buoycam": true
         },
         {
             "id": "46025",
             "name": "Santa Monica Basin, CA",
             "lat": 33.749,
             "lon": -119.053,
-            "water_depth_m": 882.0
+            "water_depth_m": 882.0,
+            "has_buoycam": true
         },
         {
             "id": "46013",
             "name": "Bodega Bay, CA",
             "lat": 38.242,
             "lon": -123.303,
-            "water_depth_m": 116.0
+            "water_depth_m": 116.0,
+            "has_buoycam": true
         }
     ]
 }
