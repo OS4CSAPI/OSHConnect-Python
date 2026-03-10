@@ -1,0 +1,22 @@
+{
+  "root_deployment_recommendation": {
+    "name": "NWS Weather Demo",
+    "description": "Demonstration deployment for NWS surface weather observation systems published into CSAPI.",
+    "documentation": [
+      {
+        "title": "NWS API Web Service",
+        "href": "https://www.weather.gov/documentation/services-web-api",
+        "rel": "documentation"
+      },
+      {
+        "title": "NWS ASOS Program",
+        "href": "https://www.weather.gov/asos/",
+        "rel": "about"
+      }
+    ]
+  },
+  "group_deployment_recommendation": {
+    "name": "NWS Arizona Weather Stations",
+    "description": "Arizona subset of NWS ASOS/AWOS surface observation stations used for the OS4CSAPI demo."
+  }
+}

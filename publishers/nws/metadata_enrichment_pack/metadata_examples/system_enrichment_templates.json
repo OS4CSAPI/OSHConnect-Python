@@ -1,0 +1,112 @@
+{
+  "system_feature_properties_template": {
+    "keywords": [
+      "NWS",
+      "NOAA",
+      "ASOS/AWOS",
+      "surface weather",
+      "METAR",
+      "{stationId}"
+    ],
+    "externalLinks": [
+      {
+        "href": "https://api.weather.gov/stations/{stationId}",
+        "title": "NWS Station Resource",
+        "rel": "canonical"
+      },
+      {
+        "href": "https://api.weather.gov/stations/{stationId}/observations/latest",
+        "title": "Latest Observation",
+        "rel": "latest-version"
+      },
+      {
+        "href": "https://api.weather.gov/stations/{stationId}/observations",
+        "title": "Observation History",
+        "rel": "collection"
+      },
+      {
+        "href": "https://api.weather.gov/points/{lat},{lon}",
+        "title": "NWS Points Discovery",
+        "rel": "via"
+      },
+      {
+        "href": "https://www.weather.gov/asos/",
+        "title": "NWS ASOS Program",
+        "rel": "about"
+      }
+    ],
+    "operator": {
+      "organizationName": "National Weather Service",
+      "program": "ASOS / AWOS Surface Weather Observation Network"
+    },
+    "image": {
+      "href": "./assets/nws_asos_station_generic.svg",
+      "title": "Representative ASOS station graphic (pack asset)",
+      "sourceHref": "https://www.weather.gov/images/asos/IMG_1176%20blank.png"
+    }
+  },
+  "sensorml_additions_template": {
+    "identifiers": [
+      {
+        "label": "OS4CSAPI UID",
+        "value": "urn:os4csapi:system:nws:{stationIdLower}:v1"
+      },
+      {
+        "label": "NWS Station Identifier",
+        "value": "{stationId}"
+      }
+    ],
+    "classifiers": [
+      {
+        "label": "System Type",
+        "value": "ASOS/AWOS"
+      },
+      {
+        "label": "Operator",
+        "value": "National Weather Service"
+      },
+      {
+        "label": "Program",
+        "value": "ASOS / AWOS Surface Weather Observation Network"
+      }
+    ],
+    "contacts": [
+      {
+        "role": "operator",
+        "organizationName": "National Weather Service",
+        "website": "https://api.weather.gov"
+      },
+      {
+        "role": "support",
+        "organizationName": "ASOS Operations and Monitoring Center",
+        "email": "AOMC@NOAA.GOV"
+      }
+    ],
+    "documentation": [
+      {
+        "name": "NWS Station Resource",
+        "url": "https://api.weather.gov/stations/{stationId}"
+      },
+      {
+        "name": "Latest Observation",
+        "url": "https://api.weather.gov/stations/{stationId}/observations/latest"
+      },
+      {
+        "name": "Observation History",
+        "url": "https://api.weather.gov/stations/{stationId}/observations"
+      },
+      {
+        "name": "NWS Points Discovery",
+        "url": "https://api.weather.gov/points/{lat},{lon}"
+      },
+      {
+        "name": "NWS API Web Service",
+        "url": "https://www.weather.gov/documentation/services-web-api"
+      },
+      {
+        "name": "ASOS Program",
+        "url": "https://www.weather.gov/asos/"
+      }
+    ]
+  }
+}

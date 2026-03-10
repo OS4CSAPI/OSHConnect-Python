@@ -100,7 +100,6 @@ def _station_observations_url(station_id: str) -> str:
 def _points_url(lat: float, lon: float) -> str:
     return f"{NWS_POINTS_BASE}/{lat},{lon}"
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 #  Resource definitions
 # ═══════════════════════════════════════════════════════════════════════════
@@ -165,6 +164,8 @@ PROCEDURE_BODY = {
 
 def _system_stub(station: dict, proc_id: str) -> dict:
     """GeoJSON Feature stub for a NWS station system."""
+    station_id = station["id"].upper()
+    station_type = station.get("station_type", "ASOS/AWOS")
     return {
         "type": "Feature",
         "geometry": {
@@ -174,13 +175,30 @@ def _system_stub(station: dict, proc_id: str) -> dict:
         "properties": {
             "uid": _system_uid(station["id"]),
             "featureType": "sosa:Sensor",
-            "name": f"NWS {station['id']} — {station['name']}",
+            "name": f"NWS {station_id} — {station['name']}",
             "description": (
-                f"NWS ASOS/AWOS surface observation station {station['id']} "
-                f"at {station['name']}. Lat {station['lat']}, Lon {station['lon']}, "
-                f"Elev {station.get('elev_m', '?')}m."
+                f"{station_type} surface observation station {station_id} at {station['name']}. "
+                f"Publishes NWS surface weather observations for temperature, dewpoint, wind, pressure, "
+                f"visibility, humidity, cloud layers, and present weather conditions."
             ),
+            "keywords": ["NWS", "NOAA", station_type, "surface weather", "METAR", station_id],
             "typeOf@link": {"href": proc_id, "title": "NWS Surface Observation v1"},
+            "externalLinks": [
+                {"href": _station_api_url(station_id), "title": "NWS Station Resource", "rel": "canonical"},
+                {"href": _station_latest_obs_url(station_id), "title": "Latest Observation", "rel": "latest-version"},
+                {"href": _station_observations_url(station_id), "title": "Observation History", "rel": "collection"},
+                {"href": _points_url(station['lat'], station['lon']), "title": "NWS Points Discovery", "rel": "via"},
+                {"href": NWS_ASOS_PAGE, "title": "NWS ASOS Program", "rel": "about"},
+            ],
+            "operator": {
+                "organizationName": "National Weather Service",
+                "program": "ASOS / AWOS Surface Weather Observation Network",
+            },
+            "image": {
+                "href": "./assets/nws_asos_station_generic.svg",
+                "title": "Representative ASOS station graphic (pack asset)",
+                "sourceHref": NWS_ASOS_IMAGE,
+            },
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -194,7 +212,7 @@ def _system_sml(station: dict) -> dict:
         "type": "PhysicalSystem",
         "id": _system_uid(station["id"]),
         "uniqueId": _system_uid(station["id"]),
-        "label": f"NWS {station_id} \u2014 {station['name']}",
+        "label": f"NWS {station_id} — {station['name']}",
         "description": (
             f"{station_type} surface weather observing station at {station['name']} ({station_id}). "
             "The NWS ASOS program is operated collaboratively by NWS, FAA, and DoD. "
@@ -307,13 +325,13 @@ def _deploy_group() -> dict:
         "type": "Feature",
         "geometry": {
             "type": "Point",
-            "coordinates": [-95.0, 37.0],
+            "coordinates": [-111.93, 34.17],
         },
         "properties": {
             "uid": DEPLOY_GROUP_UID,
             "featureType": "sosa:Deployment",
-            "name": "NWS Weather Stations",
-            "description": "NWS ASOS/AWOS surface observation stations across the United States used for the OS4CSAPI demo.",
+            "name": "NWS Arizona Weather Stations",
+            "description": "Arizona subset of NWS ASOS/AWOS surface observation stations used for the OS4CSAPI demo.",
             "documentation": [
                 {"title": "NWS API Web Service", "href": NWS_API_DOCS, "rel": "documentation"},
                 {"title": "NWS ASOS Program", "href": NWS_ASOS_PAGE, "rel": "about"},
@@ -368,10 +386,10 @@ def clean_all(base_url: str, auth: str, stations: list[dict],
     clean_resource(base_url, auth, "deployments", DEPLOY_ROOT_UID,
                    dry_run=dry_run, stats=stats)
 
-    # Systems (datastreams cascade-deleted by server)
+    # Systems (datastreams deleted automatically by server)
     for st in reversed(stations):
         clean_resource(base_url, auth, "systems", _system_uid(st["id"]),
-                       dry_run=dry_run, stats=stats, cascade=True)
+                       dry_run=dry_run, stats=stats)
 
     # Procedure
     clean_resource(base_url, auth, "procedures", PROC_UID,

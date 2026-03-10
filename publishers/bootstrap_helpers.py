@@ -159,10 +159,12 @@ def api_put(base_url: str, path: str, body: dict, auth: str,
     return _with_retry(fn, f"PUT {path}")
 
 
-def api_delete(base_url: str, path: str, auth: str) -> bool:
+def api_delete(base_url: str, path: str, auth: str, *, cascade: bool = False) -> bool:
     """DELETE a resource. Returns True on success, False on 404."""
     def fn():
         url = f"{base_url}/{path}"
+        if cascade:
+            url += "?cascade=true" if "?" not in url else "&cascade=true"
         req = Request(url, method="DELETE", headers={"Authorization": auth})
         try:
             with urlopen(req, timeout=15, context=_ssl_ctx) as resp:
@@ -332,7 +334,8 @@ def ensure_deployment(base_url: str, auth: str, uid: str, body: dict,
 
 
 def clean_resource(base_url: str, auth: str, collection: str, uid: str,
-                   *, dry_run: bool = False, stats: dict = None):
+                   *, dry_run: bool = False, stats: dict = None,
+                   cascade: bool = False):
     """Delete a resource by UID if it exists."""
     existing_id = find_by_uid(base_url, auth, collection, uid)
     if not existing_id:
@@ -343,7 +346,7 @@ def clean_resource(base_url: str, auth: str, collection: str, uid: str,
         return
 
     print(f"  DELETE {collection}/{existing_id} ({uid})")
-    api_delete(base_url, f"{collection}/{existing_id}", auth)
+    api_delete(base_url, f"{collection}/{existing_id}", auth, cascade=cascade)
     if stats:
         stats.setdefault("deleted", 0)
         stats["deleted"] += 1

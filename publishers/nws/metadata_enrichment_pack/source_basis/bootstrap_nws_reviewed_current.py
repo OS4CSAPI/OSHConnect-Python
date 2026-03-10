@@ -56,19 +56,6 @@ DEPLOY_GROUP_UID = "urn:os4csapi:deployment:nws-az-stations:v1"
 
 DS_OUTPUT_NAME = "nwsSurfaceObs"
 
-NWS_API_BASE = "https://api.weather.gov"
-NWS_API_DOCS = "https://www.weather.gov/documentation/services-web-api"
-NWS_OPENAPI = "https://api.weather.gov/openapi.json"
-NWS_ASOS_PAGE = "https://www.weather.gov/asos/"
-NWS_ASOS_EQUIP = "https://www.weather.gov/asos/asosequip.html"
-NWS_ASOS_CONTACT = "https://www.weather.gov/asos/contactus.html"
-NWS_ASOS_IMAGE = "https://www.weather.gov/images/asos/IMG_1176%20blank.png"
-NWS_STATION_BASE = "https://api.weather.gov/stations"
-NWS_POINTS_BASE = "https://api.weather.gov/points"
-NWS_AOMC_EMAIL = "AOMC@NOAA.GOV"
-NWS_AOMC_PHONE_1 = "+1-800-242-8194"
-NWS_AOMC_PHONE_2 = "+1-800-242-8895"
-
 
 def _load_stations() -> list[dict]:
     """Load station list from stations.json."""
@@ -85,22 +72,6 @@ def _deploy_uid(station_id: str) -> str:
     return f"urn:os4csapi:deployment:nws-{station_id.lower()}:v1"
 
 
-def _station_api_url(station_id: str) -> str:
-    return f"{NWS_STATION_BASE}/{station_id.upper()}"
-
-
-def _station_latest_obs_url(station_id: str) -> str:
-    return f"{NWS_STATION_BASE}/{station_id.upper()}/observations/latest"
-
-
-def _station_observations_url(station_id: str) -> str:
-    return f"{NWS_STATION_BASE}/{station_id.upper()}/observations"
-
-
-def _points_url(lat: float, lon: float) -> str:
-    return f"{NWS_POINTS_BASE}/{lat},{lon}"
-
-
 # ═══════════════════════════════════════════════════════════════════════════
 #  Resource definitions
 # ═══════════════════════════════════════════════════════════════════════════
@@ -113,51 +84,11 @@ PROCEDURE_BODY = {
         "featureType": "sosa:ObservingProcedure",
         "name": "NWS Surface Observation v1",
         "description": (
-            "Publishes real-time NWS surface observations derived from api.weather.gov station "
-            "resources. Latest station observations are normalized to SI-oriented fields and "
-            "published as flat JSON result objects. The underlying observing network is primarily "
-            "ASOS/AWOS; nominal station reporting is hourly with special observations as conditions "
-            "warrant, and API publication may lag upstream MADIS availability by up to about 20 minutes."
+            "Ingests real-time surface weather observations from the US National Weather Service "
+            "(api.weather.gov). Fetches the latest observation per station, normalises units "
+            "to SI (degC, Pa, km/h, m), and publishes as a flat JSON result object. "
+            "Source: NOAA / NWS. Update cadence: ~1 hour (station-dependent)."
         ),
-        "keywords": [
-            "NWS",
-            "NOAA",
-            "ASOS",
-            "AWOS",
-            "surface weather",
-            "METAR",
-            "api.weather.gov",
-            "aviation weather",
-        ],
-        "documentation": [
-            {"title": "NWS API Web Service", "href": NWS_API_DOCS, "rel": "documentation"},
-            {"title": "NWS OpenAPI Specification", "href": NWS_OPENAPI, "rel": "describedby"},
-            {"title": "NWS ASOS Program", "href": NWS_ASOS_PAGE, "rel": "about"},
-            {"title": "NWS ASOS Equipment FAQ", "href": NWS_ASOS_EQUIP, "rel": "related"},
-            {"title": "NWS ASOS Contact", "href": NWS_ASOS_CONTACT, "rel": "contact"},
-        ],
-        "contacts": [
-            {
-                "role": "operator",
-                "organizationName": "National Weather Service",
-                "website": NWS_API_BASE,
-            },
-            {
-                "role": "support",
-                "organizationName": "ASOS Operations and Monitoring Center",
-                "email": NWS_AOMC_EMAIL,
-                "phone": NWS_AOMC_PHONE_1,
-            },
-        ],
-        "lineage": {
-            "source": "NOAA / National Weather Service",
-            "upstream": "MADIS-mediated station observations exposed by api.weather.gov",
-            "normalization": "Publisher normalizes selected values to SI-oriented fields (degC, Pa, km/h, m).",
-        },
-        "usageConstraints": {
-            "userAgentRequired": True,
-            "rateLimitNote": "NWS API is open data with unpublished but reasonable rate limits.",
-        },
         "validTime": [VALID_TIME_START, ".."],
     },
 }
@@ -188,45 +119,16 @@ def _system_stub(station: dict, proc_id: str) -> dict:
 
 def _system_sml(station: dict) -> dict:
     """SensorML body for rich system metadata."""
-    station_id = station["id"].upper()
-    station_type = station.get("station_type", "ASOS/AWOS")
     return {
         "type": "PhysicalSystem",
         "id": _system_uid(station["id"]),
         "uniqueId": _system_uid(station["id"]),
-        "label": f"NWS {station_id} \u2014 {station['name']}",
+        "label": f"NWS {station['id']} — {station['name']}",
         "description": (
-            f"{station_type} surface weather observing station at {station['name']} ({station_id}). "
-            "The NWS ASOS program is operated collaboratively by NWS, FAA, and DoD. "
-            "This station resource represents the local observing system exposed through api.weather.gov."
+            f"Automated Surface Observing System (ASOS/AWOS) at {station['name']} "
+            f"({station['id']}). Reports temperature, dewpoint, wind, pressure, "
+            f"visibility, humidity, cloud layers, and present weather conditions."
         ),
-        "identifiers": [
-            {"label": "OS4CSAPI UID", "value": _system_uid(station['id'])},
-            {"label": "NWS Station Identifier", "value": station_id},
-        ],
-        "classifiers": [
-            {"label": "System Type", "value": station_type},
-            {"label": "Operator", "value": "National Weather Service"},
-            {"label": "Program", "value": "ASOS / AWOS Surface Weather Observation Network"},
-        ],
-        "contacts": [
-            {"role": "operator", "organizationName": "National Weather Service", "website": NWS_API_BASE},
-            {"role": "support", "organizationName": "ASOS Operations and Monitoring Center", "email": NWS_AOMC_EMAIL},
-        ],
-        "documentation": [
-            {"name": "NWS Station Resource", "url": _station_api_url(station_id)},
-            {"name": "Latest Observation", "url": _station_latest_obs_url(station_id)},
-            {"name": "Observation History", "url": _station_observations_url(station_id)},
-            {"name": "NWS Points Discovery", "url": _points_url(station['lat'], station['lon'])},
-            {"name": "NWS API Web Service", "url": NWS_API_DOCS},
-            {"name": "ASOS Program", "url": NWS_ASOS_PAGE},
-            {"name": "ASOS Equipment FAQ", "url": NWS_ASOS_EQUIP},
-        ],
-        "characteristics": [
-            {"label": "Reporting Cadence", "value": "Hourly routine observations plus special observations as conditions warrant"},
-            {"label": "Latency Note", "value": "API observations may lag upstream MADIS availability by up to about 20 minutes"},
-            {"label": "Representative Image", "value": NWS_ASOS_IMAGE},
-        ],
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"], station.get("elev_m", 0)],
@@ -244,14 +146,6 @@ def _datastream_schema() -> dict:
     return {
         "outputName": DS_OUTPUT_NAME,
         "name": "Surface Observation",
-        "description": (
-            "Latest NWS surface weather observation for a station. Source values are exposed by "
-            "api.weather.gov station endpoints and normalized by the publisher into a flat SI-oriented result."
-        ),
-        "documentation": [
-            {"title": "NWS API Web Service", "href": NWS_API_DOCS, "rel": "documentation"},
-            {"title": "NWS OpenAPI Specification", "href": NWS_OPENAPI, "rel": "describedby"},
-        ],
         "schema": {
             "obsFormat": "application/om+json",
             "resultSchema": {
@@ -292,11 +186,7 @@ def _deploy_root() -> dict:
             "uid": DEPLOY_ROOT_UID,
             "featureType": "sosa:Deployment",
             "name": "NWS Weather Demo",
-            "description": "Demonstration deployment for NWS surface weather observation systems published into CSAPI.",
-            "documentation": [
-                {"title": "NWS API Web Service", "href": NWS_API_DOCS, "rel": "documentation"},
-                {"title": "NWS ASOS Program", "href": NWS_ASOS_PAGE, "rel": "about"},
-            ],
+            "description": "Demonstration deployment: NWS surface weather observations across the United States.",
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -313,11 +203,7 @@ def _deploy_group() -> dict:
             "uid": DEPLOY_GROUP_UID,
             "featureType": "sosa:Deployment",
             "name": "NWS Weather Stations",
-            "description": "NWS ASOS/AWOS surface observation stations across the United States used for the OS4CSAPI demo.",
-            "documentation": [
-                {"title": "NWS API Web Service", "href": NWS_API_DOCS, "rel": "documentation"},
-                {"title": "NWS ASOS Program", "href": NWS_ASOS_PAGE, "rel": "about"},
-            ],
+            "description": "NWS ASOS/AWOS surface observation stations across the United States.",
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -334,14 +220,7 @@ def _deploy_station(station: dict, system_server_id: str) -> dict:
             "uid": _deploy_uid(station["id"]),
             "featureType": "sosa:Deployment",
             "name": f"{station['id']} Station Feed",
-            "description": (
-                f"CSAPI deployment node for station {station['id']} ({station['name']}) and its "
-                "surface observation datastream."
-            ),
-            "externalLinks": [
-                {"href": _station_api_url(station['id']), "title": "NWS Station Resource", "rel": "canonical"},
-                {"href": _station_latest_obs_url(station['id']), "title": "Latest Observation", "rel": "latest-version"},
-            ],
+            "description": f"NWS station {station['id']} observation feed.",
             "validTime": [VALID_TIME_START, ".."],
             "platform@link": {
                 "href": system_server_id,
@@ -368,10 +247,10 @@ def clean_all(base_url: str, auth: str, stations: list[dict],
     clean_resource(base_url, auth, "deployments", DEPLOY_ROOT_UID,
                    dry_run=dry_run, stats=stats)
 
-    # Systems (datastreams cascade-deleted by server)
+    # Systems (datastreams deleted automatically by server)
     for st in reversed(stations):
         clean_resource(base_url, auth, "systems", _system_uid(st["id"]),
-                       dry_run=dry_run, stats=stats, cascade=True)
+                       dry_run=dry_run, stats=stats)
 
     # Procedure
     clean_resource(base_url, auth, "procedures", PROC_UID,

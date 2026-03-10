@@ -1,0 +1,17 @@
+{
+  "datastream_additions": {
+    "description": "Latest NWS surface weather observation for a station. Source values are exposed by api.weather.gov station endpoints and normalized by the publisher into a flat SI-oriented result.",
+    "documentation": [
+      {
+        "title": "NWS API Web Service",
+        "href": "https://www.weather.gov/documentation/services-web-api",
+        "rel": "documentation"
+      },
+      {
+        "title": "NWS OpenAPI Specification",
+        "href": "https://api.weather.gov/openapi.json",
+        "rel": "describedby"
+      }
+    ]
+  }
+}

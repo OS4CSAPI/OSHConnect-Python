@@ -1,0 +1,61 @@
+{
+  "properties_additions": {
+    "keywords": [
+      "NWS",
+      "NOAA",
+      "ASOS",
+      "AWOS",
+      "surface weather",
+      "METAR",
+      "api.weather.gov"
+    ],
+    "documentation": [
+      {
+        "title": "NWS API Web Service",
+        "href": "https://www.weather.gov/documentation/services-web-api",
+        "rel": "documentation"
+      },
+      {
+        "title": "NWS OpenAPI Specification",
+        "href": "https://api.weather.gov/openapi.json",
+        "rel": "describedby"
+      },
+      {
+        "title": "NWS ASOS Program",
+        "href": "https://www.weather.gov/asos/",
+        "rel": "about"
+      },
+      {
+        "title": "NWS ASOS Equipment FAQ",
+        "href": "https://www.weather.gov/asos/asosequip.html",
+        "rel": "related"
+      },
+      {
+        "title": "NWS ASOS Contact",
+        "href": "https://www.weather.gov/asos/contactus.html",
+        "rel": "contact"
+      }
+    ],
+    "contacts": [
+      {
+        "role": "operator",
+        "organizationName": "National Weather Service",
+        "website": "https://api.weather.gov"
+      },
+      {
+        "role": "support",
+        "organizationName": "ASOS Operations and Monitoring Center",
+        "email": "AOMC@NOAA.GOV",
+        "phone": "+1-800-242-8194"
+      }
+    ],
+    "usageConstraints": {
+      "userAgentRequired": true,
+      "rateLimitNote": "NWS API is open data with unpublished but reasonable rate limits."
+    },
+    "lineage": {
+      "upstream": "MADIS-mediated station observations exposed by api.weather.gov",
+      "latencyNote": "API observations may lag upstream availability by up to about 20 minutes"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+Official NWS image reference
+
+Title: An Automated Surface Observing System (ASOS) station at Sterling, VA (May 2025)
+Image URL: https://www.weather.gov/images/asos/IMG_1176%20blank.png
+Program page: https://www.weather.gov/asos/
+
+Why this file exists:
+- an official representative ASOS photo exists and should be preferred when you later fetch/store it in-repo
+- the binary image itself could not be fetched into this session, so this pack includes a local SVG stand-in asset instead

@@ -1,0 +1,35 @@
+{
+  "official_sources": [
+    {
+      "title": "NWS API Web Service",
+      "url": "https://www.weather.gov/documentation/services-web-api",
+      "why_it_matters": "Documents API base URL, open-data status, User-Agent requirement, /points workflow, feature flags, and delayed observations."
+    },
+    {
+      "title": "NWS ASOS Program",
+      "url": "https://www.weather.gov/asos/",
+      "why_it_matters": "Authoritative program page describing ASOS as a collaborative NWS/FAA/DoD observing network with representative station imagery."
+    },
+    {
+      "title": "NWS ASOS Equipment FAQ",
+      "url": "https://www.weather.gov/asos/asosequip.html",
+      "why_it_matters": "Provides equipment categories and explains site-specific installed equipment references."
+    },
+    {
+      "title": "NWS ASOS Contact",
+      "url": "https://www.weather.gov/asos/contactus.html",
+      "why_it_matters": "Provides AOMC contact details for station support/outage issues."
+    },
+    {
+      "title": "NWS OpenAPI JSON",
+      "url": "https://api.weather.gov/openapi.json",
+      "why_it_matters": "Machine-readable API specification for canonical endpoint references."
+    }
+  ],
+  "official_image": {
+    "title": "An Automated Surface Observing System (ASOS) station at Sterling, VA (May 2025)",
+    "url": "https://www.weather.gov/images/asos/IMG_1176%20blank.png",
+    "page": "https://www.weather.gov/asos/",
+    "note": "Official image exists and should be preferred if you later fetch the binary manually."
+  }
+}
