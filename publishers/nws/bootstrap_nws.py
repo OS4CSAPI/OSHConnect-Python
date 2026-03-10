@@ -180,13 +180,13 @@ def _deploy_root() -> dict:
         "type": "Feature",
         "geometry": {
             "type": "Point",
-            "coordinates": [-111.0, 32.5],
+            "coordinates": [-95.0, 37.0],
         },
         "properties": {
             "uid": DEPLOY_ROOT_UID,
             "featureType": "sosa:Deployment",
             "name": "NWS Weather Demo",
-            "description": "Demonstration deployment: NWS surface weather observations for southern Arizona.",
+            "description": "Demonstration deployment: NWS surface weather observations across the United States.",
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -197,13 +197,13 @@ def _deploy_group() -> dict:
         "type": "Feature",
         "geometry": {
             "type": "Point",
-            "coordinates": [-111.0, 32.5],
+            "coordinates": [-95.0, 37.0],
         },
         "properties": {
             "uid": DEPLOY_GROUP_UID,
             "featureType": "sosa:Deployment",
-            "name": "AZ Weather Stations",
-            "description": "NWS ASOS/AWOS stations in the southern Arizona region.",
+            "name": "NWS Weather Stations",
+            "description": "NWS ASOS/AWOS surface observation stations across the United States.",
             "validTime": [VALID_TIME_START, ".."],
         },
     }

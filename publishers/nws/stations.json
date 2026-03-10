@@ -34,6 +34,41 @@
             "lat": 33.4278,
             "lon": -112.0038,
             "elev_m": 337
+        },
+        {
+            "id": "KDCA",
+            "name": "Reagan National Airport, Washington DC",
+            "lat": 38.8483,
+            "lon": -77.0342,
+            "elev_m": 4
+        },
+        {
+            "id": "KIAD",
+            "name": "Dulles International Airport, VA",
+            "lat": 38.9347,
+            "lon": -77.4475,
+            "elev_m": 95
+        },
+        {
+            "id": "KNYG",
+            "name": "Quantico MCAS, Stafford VA",
+            "lat": 38.5033,
+            "lon": -77.3013,
+            "elev_m": 2
+        },
+        {
+            "id": "KDAY",
+            "name": "Dayton International Airport, OH",
+            "lat": 39.9061,
+            "lon": -84.2186,
+            "elev_m": 307
+        },
+        {
+            "id": "KFFO",
+            "name": "Wright-Patterson AFB, Beavercreek OH",
+            "lat": 39.8333,
+            "lon": -84.0500,
+            "elev_m": 251
         }
     ]
 }
