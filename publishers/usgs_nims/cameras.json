@@ -1,0 +1,77 @@
+{
+  "_comment": "Phase 0 draft — NIMS cameras paired with USGS water monitoring stations",
+  "_apiBase": "https://api.waterdata.usgs.gov/nims/v0/",
+  "_imageBaseUrl": "https://usgs-nims-images.s3.amazonaws.com/",
+  "_notes": {
+    "imageUrlPattern": "{imageBaseUrl}{resolution}/{camId}/{camId}___YYYY-MM-DDTHH-mm-ssZ.jpg",
+    "resolutions": ["overlay", "thumbnail", "720", "timelapse"],
+    "newestImage": "Use /listFiles?camId={camId}&limit=1&recent=true to get newest filename",
+    "newestJpgDirect": "___newest.jpg does NOT work (returns 404). Must use listFiles API."
+  },
+  "cameras": [
+    {
+      "camId": "AZ_Colorado_River_at_Lees_Ferry_Upstream",
+      "nwisId": "09380000",
+      "stationName": "Colorado River at Lees Ferry, AZ",
+      "lat": 36.864333,
+      "lon": -111.587872,
+      "state": "AZ"
+    },
+    {
+      "camId": "CO_WILLOW_CREEK_SL",
+      "nwisId": "09019850",
+      "stationName": "Willow Creek below Cabin Creek near Granby, CO",
+      "lat": 40.214269,
+      "lon": -106.050661,
+      "state": "CO"
+    },
+    {
+      "camId": "CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island",
+      "nwisId": "11313433",
+      "stationName": "Dutch Slough at Jersey Island, CA",
+      "lat": 38.013533,
+      "lon": -121.667731,
+      "state": "CA"
+    },
+    {
+      "camId": "TX_Blanco_River_at_Wimberley",
+      "nwisId": "08171000",
+      "stationName": "Blanco River at Wimberley, TX",
+      "lat": 29.994383,
+      "lon": -98.088925,
+      "state": "TX"
+    },
+    {
+      "camId": "MD_Sligo_Creek_Near_Takoma_Park",
+      "nwisId": "01650800",
+      "stationName": "Sligo Creek near Takoma Park, MD",
+      "lat": 38.986222,
+      "lon": -77.004861,
+      "state": "MD"
+    },
+    {
+      "camId": "MN_Bois_De_Sioux_River_near_Doran",
+      "nwisId": "05051300",
+      "stationName": "Bois De Sioux River near Doran, MN",
+      "lat": 46.152504,
+      "lon": -96.579343,
+      "state": "MN"
+    },
+    {
+      "camId": "WA_Okanogan_River_at_Zosel_Millpond_at_Oroville",
+      "nwisId": "12439500",
+      "stationName": "Okanogan River at Oroville, WA",
+      "lat": 48.930718,
+      "lon": -119.420342,
+      "state": "WA"
+    },
+    {
+      "camId": "SC_Little_Pee_Dee_River_at_Galivants_Ferry",
+      "nwisId": "02135000",
+      "stationName": "Little Pee Dee River at Galivants Ferry, SC",
+      "lat": 34.05675,
+      "lon": -79.247722,
+      "state": "SC"
+    }
+  ]
+}

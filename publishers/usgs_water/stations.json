@@ -1,0 +1,143 @@
+{
+  "_comment": "Phase 0 draft — 8 USGS water monitoring stations (all with discharge + gage height + NIMS camera)",
+  "_sources": {
+    "ogcApi": "https://api.waterdata.usgs.gov/ogcapi/v0/",
+    "legacyNwis": "https://waterservices.usgs.gov/nwis/iv/"
+  },
+  "stations": [
+    {
+      "nwisId": "09380000",
+      "name": "Colorado River at Lees Ferry, AZ",
+      "fullName": "COLORADO RIVER AT LEES FERRY, AZ",
+      "lat": 36.864333,
+      "lon": -111.587872,
+      "state": "Arizona",
+      "stateAbbr": "AZ",
+      "county": "Coconino County",
+      "tz": "MST",
+      "drainageArea_sqmi": 111800.0,
+      "huc": "140700061105",
+      "parameterCodes": ["00060", "00065"],
+      "camId": "AZ_Colorado_River_at_Lees_Ferry_Upstream"
+    },
+    {
+      "nwisId": "09019850",
+      "name": "Willow Creek below Cabin Creek near Granby, CO",
+      "fullName": "WILLOW CREEK BELOW CABIN CREEK NEAR GRANBY, CO",
+      "lat": 40.214269,
+      "lon": -106.050661,
+      "state": "Colorado",
+      "stateAbbr": "CO",
+      "county": "Grand County",
+      "tz": "MST",
+      "drainageArea_sqmi": 92.0,
+      "huc": "140100010103",
+      "parameterCodes": ["00060", "00065"],
+      "camId": "CO_WILLOW_CREEK_SL"
+    },
+    {
+      "nwisId": "11313433",
+      "name": "Dutch Slough at Jersey Island, CA",
+      "fullName": "DUTCH SLOUGH BL JERSEY ISLAND RD A JERSEY ISLAND",
+      "lat": 38.013533,
+      "lon": -121.667731,
+      "state": "California",
+      "stateAbbr": "CA",
+      "county": "Contra Costa County",
+      "tz": "PST",
+      "drainageArea_sqmi": null,
+      "huc": "180400030803",
+      "parameterCodes": ["00060", "00065"],
+      "camId": "CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island"
+    },
+    {
+      "nwisId": "08171000",
+      "name": "Blanco River at Wimberley, TX",
+      "fullName": "Blanco Rv at Wimberley, TX",
+      "lat": 29.994383,
+      "lon": -98.088925,
+      "state": "Texas",
+      "stateAbbr": "TX",
+      "county": "Hays County",
+      "tz": "CST",
+      "drainageArea_sqmi": 355.0,
+      "huc": "121002030204",
+      "parameterCodes": ["00060", "00065"],
+      "camId": "TX_Blanco_River_at_Wimberley"
+    },
+    {
+      "nwisId": "01650800",
+      "name": "Sligo Creek near Takoma Park, MD",
+      "fullName": "SLIGO CREEK NEAR TAKOMA PARK, MD",
+      "lat": 38.986222,
+      "lon": -77.004861,
+      "state": "Maryland",
+      "stateAbbr": "MD",
+      "county": "Montgomery County",
+      "tz": "EST",
+      "drainageArea_sqmi": 6.45,
+      "huc": "020700100201",
+      "parameterCodes": ["00060", "00065"],
+      "camId": "MD_Sligo_Creek_Near_Takoma_Park"
+    },
+    {
+      "nwisId": "05051300",
+      "name": "Bois De Sioux River near Doran, MN",
+      "fullName": "BOIS DE SIOUX RIVER NEAR DORAN, MN",
+      "lat": 46.152504,
+      "lon": -96.579343,
+      "state": "Minnesota",
+      "stateAbbr": "MN",
+      "county": "Wilkin County",
+      "tz": "CST",
+      "drainageArea_sqmi": 1880.0,
+      "huc": "090201010507",
+      "parameterCodes": ["00060", "00065"],
+      "camId": "MN_Bois_De_Sioux_River_near_Doran"
+    },
+    {
+      "nwisId": "12439500",
+      "name": "Okanogan River at Oroville, WA",
+      "fullName": "OKANOGAN RIVER AT OROVILLE, WA",
+      "lat": 48.930718,
+      "lon": -119.420342,
+      "state": "Washington",
+      "stateAbbr": "WA",
+      "county": "Okanogan County",
+      "tz": "PST",
+      "drainageArea_sqmi": 3195.0,
+      "huc": "170200061506",
+      "parameterCodes": ["00060", "00065"],
+      "camId": "WA_Okanogan_River_at_Zosel_Millpond_at_Oroville"
+    },
+    {
+      "nwisId": "02135000",
+      "name": "Little Pee Dee River at Galivants Ferry, SC",
+      "fullName": "LITTLE PEE DEE R. AT GALIVANTS FERRY, SC",
+      "lat": 34.05675,
+      "lon": -79.247722,
+      "state": "South Carolina",
+      "stateAbbr": "SC",
+      "county": "Horry County",
+      "tz": "EST",
+      "drainageArea_sqmi": 2790.0,
+      "huc": "03040204",
+      "parameterCodes": ["00060", "00065"],
+      "camId": "SC_Little_Pee_Dee_River_at_Galivants_Ferry"
+    }
+  ],
+  "parameterDefinitions": {
+    "00060": {
+      "name": "Discharge",
+      "description": "Instantaneous discharge (streamflow)",
+      "unit": "ft3/s",
+      "swe_definition": "http://www.opengis.net/def/property/OGC/0/Discharge"
+    },
+    "00065": {
+      "name": "Gage height",
+      "description": "Instantaneous gage height (water level)",
+      "unit": "ft",
+      "swe_definition": "http://www.opengis.net/def/property/OGC/0/GageHeight"
+    }
+  }
+}

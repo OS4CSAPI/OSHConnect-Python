@@ -1,0 +1,37 @@
+{
+  "_comment": "Phase 0 draft — USGS Earthquake GeoJSON feed configuration",
+  "feedUrl": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+  "feedVariant": "all_day",
+  "_availableVariants": {
+    "all_hour": "All earthquakes, past hour (typically 10-30 events, ~15 KB)",
+    "all_day": "All earthquakes, past day (typically 200-400 events, ~300 KB)",
+    "all_week": "All earthquakes, past week (typically 1500-3000 events, ~2 MB)",
+    "all_month": "All earthquakes, past month (typically 8000-12000 events, ~10 MB)",
+    "significant_month": "Significant earthquakes only, past month (typically 5-20 events)"
+  },
+  "_selectedRationale": "all_day provides a good balance: enough events to demonstrate real-time earthquake monitoring without overwhelming the CSAPI server. Updated by USGS every minute. Roughly 200-400 features per fetch.",
+  "pollingIntervalSeconds": 60,
+  "dedupeStrategy": {
+    "primaryKey": "feature.id",
+    "updateField": "feature.properties.updated",
+    "description": "Each earthquake has a stable event ID. The 'updated' timestamp changes when USGS revises magnitude, location, or status. Publisher should track (id, updated) tuples to avoid re-publishing unchanged events while catching revisions."
+  },
+  "responseShape": {
+    "type": "FeatureCollection",
+    "metadata": {
+      "generated": "epoch_ms",
+      "url": "feed_url",
+      "title": "human_label",
+      "status": 200,
+      "api": "1.10.3",
+      "count": "num_features"
+    },
+    "featureProperties": [
+      "mag", "place", "time", "updated", "tz", "url", "detail",
+      "felt", "cdi", "mmi", "alert", "status", "tsunami",
+      "sig", "net", "code", "ids", "sources", "types",
+      "nst", "dmin", "rms", "gap", "magType", "type", "title"
+    ],
+    "geometry": "Point [longitude, latitude, depth_km]"
+  }
+}
