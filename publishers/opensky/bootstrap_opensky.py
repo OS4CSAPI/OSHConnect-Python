@@ -64,10 +64,36 @@ DS_OUTPUT_NAME = "adsbState"
 OPENSKY_HOME = "https://opensky-network.org/"
 OPENSKY_API_DOC = "https://openskynetwork.github.io/opensky-api/rest.html"
 OPENSKY_ABOUT = "https://opensky-network.org/about/about-us"
+OPENSKY_STATE_VECTORS_DOC = "https://openskynetwork.github.io/opensky-api/index.html#state-vectors"
+OPENSKY_AUTH_TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
 
 # ── Contact ──────────────────────────────────────────────────────────────
 OPENSKY_CONTACT_ORG = "The OpenSky Network Association"
 OPENSKY_CONTACT_URL = "https://opensky-network.org/"
+
+
+# ── Enrichment helpers (from metadata_enrichment_pack) ───────────────────
+
+def _bbox_label(config: dict) -> str:
+    bbox = config["bounding_box"]
+    return (
+        f"lat {bbox['lamin']}-{bbox['lamax']}, "
+        f"lon {bbox['lomin']}-{bbox['lomax']}"
+    )
+
+def _daily_budget_note(config: dict) -> str:
+    bbox = config["bounding_box"]
+    cadence = int(config.get("cadence_seconds", 300))
+    req_per_day = int(86400 / cadence) if cadence > 0 else 0
+    credit_cost = bbox.get("credit_cost_per_request", 1)
+    total = req_per_day * credit_cost
+    return (
+        f"{req_per_day} requests/day at {credit_cost} credit(s)/request "
+        f"for an estimated {total} credits/day."
+    )
+
+def _position_source_summary() -> str:
+    return "ADS-B, ASTERIX, MLAT, FLARM"
 
 
 def _load_config() -> dict:
@@ -89,18 +115,29 @@ PROCEDURE_BODY = {
         "featureType": "sosa:ObservingProcedure",
         "name": "OpenSky ADS-B Decoder v1",
         "description": (
-            "Publishes real-time ADS-B aircraft state vectors from the OpenSky Network "
-            "REST API. Data includes position, altitude, velocity, heading, vertical rate, "
-            "transponder code, and on-ground status for all aircraft visible in a configured "
-            "bounding box. Each observation represents one aircraft at one moment in time."
+            "Publishes aircraft state vectors from the OpenSky Network REST API using a "
+            "configured geographic bounding box. Each upstream state vector becomes one "
+            "CSAPI observation for one aircraft at one observation timestamp. The current "
+            "publisher polls the REST API at a configured cadence, normalizes the array-based "
+            "OpenSky payload into named fields, and skips repeated aircraft records whose "
+            "observation timestamps have not changed."
         ),
         "keywords": [
-            "ADS-B", "aircraft", "tracking", "OpenSky", "transponder",
-            "aviation", "airspace", "surveillance", "state vector",
+            "ADS-B",
+            "aircraft",
+            "tracking",
+            "OpenSky",
+            "transponder",
+            "airspace",
+            "state vector",
+            "feed adapter",
+            "Pattern C",
+            "southern Arizona",
         ],
         "documentation": [
             {"title": "OpenSky Network", "href": OPENSKY_HOME, "rel": "about"},
             {"title": "OpenSky REST API", "href": OPENSKY_API_DOC, "rel": "documentation"},
+            {"title": "OpenSky State Vector Fields", "href": OPENSKY_STATE_VECTORS_DOC, "rel": "describedby"},
             {"title": "About OpenSky", "href": OPENSKY_ABOUT, "rel": "about"},
         ],
         "contacts": [
@@ -117,24 +154,22 @@ PROCEDURE_BODY = {
         ],
         "lineage": {
             "source": OPENSKY_CONTACT_ORG,
-            "upstream": f"OpenSky Network REST API at {OPENSKY_API_DOC}",
+            "upstream": "OpenSky REST API /states/all endpoint filtered to the southern Arizona demo window",
             "normalization": (
-                "Publisher fetches ADS-B state vectors from the OpenSky Network /states/all "
-                "endpoint with a geographic bounding box filter. Each state vector array is "
-                "unpacked into a flat JSON observation with named fields."
+                "Publisher fetches array-based state vectors, expands each array into named "
+                "observation result fields, maps integer position-source codes to readable labels, "
+                "and emits one observation per aircraft state snapshot."
             ),
         },
         "usageConstraints": {
             "sourceProtocol": "HTTPS",
-            "sourceFormat": "JSON array of state vector arrays",
-            "rateLimitNote": (
-                "Anonymous: 400 API credits/day, 10s time resolution. "
-                "Authenticated (OAuth2): 4000 credits/day, 5s resolution."
-            ),
+            "sourceFormat": "JSON object with top-level `time` and `states[][]` array payload",
+            "authModeNote": "Current demo configuration uses anonymous access. OAuth2-supported access is available for higher credit budgets.",
+            "rateLimitNote": "At the current demo cadence (300s) and current 12 sq deg window, the feed consumes about 288 credits/day.",
+            "coverageNote": "Current demo window is southern Arizona: lat 31.0-34.0, lon -113.0--109.0 (12 sq deg).",
             "qualityControlNote": (
-                "State vectors are derived from ADS-B, MLAT, and FLARM inputs. "
-                "Position source is indicated per vector. Coverage depends on receiver "
-                "density in the target area."
+                "Position source varies by aircraft record and may reflect ADS-B, ASTERIX, MLAT, "
+                "or FLARM provenance."
             ),
         },
         "validTime": [VALID_TIME_START, ".."],
@@ -157,21 +192,43 @@ def _system_stub(config: dict) -> dict:
         "properties": {
             "uid": SYSTEM_UID,
             "featureType": "sosa:Sensor",
-            "name": "OpenSky ADS-B Feed — Southern Arizona",
+            "name": "OpenSky ADS-B Feed - Southern Arizona",
             "description": (
-                f"Live aircraft surveillance via ADS-B (Automatic Dependent "
-                f"Surveillance–Broadcast). Aircraft transponders broadcast GPS position, "
-                f"altitude, speed, and heading on 1090 MHz. The OpenSky Network collects "
-                f"these broadcasts through ~30,000 crowd-sourced ground receivers and "
-                f"publishes them via REST API. This system queries every 5 minutes for "
-                f"aircraft in southern Arizona "
-                f"(lat {bbox['lamin']}–{bbox['lamax']}, lon {bbox['lomin']}–{bbox['lomax']})."
+                "Feed-adapter system for OpenSky aircraft surveillance over southern Arizona. "
+                "The system represents the configured OpenSky query window rather than any single "
+                "physical sensor. It polls the OpenSky REST API, receives many aircraft state vectors "
+                "per cycle, and republishes each aircraft state as a CSAPI observation."
             ),
             "typeOf@link": {"href": "pending", "title": "OpenSky ADS-B Decoder v1"},
+            "keywords": [
+                "OpenSky",
+                "ADS-B",
+                "airspace tracking",
+                "feed adapter",
+                "southern Arizona",
+            ],
             "links": [
                 {"rel": "about", "title": "OpenSky Network", "href": OPENSKY_HOME},
                 {"rel": "documentation", "title": "REST API Docs", "href": OPENSKY_API_DOC},
+                {"rel": "describedby", "title": "State Vector Fields", "href": OPENSKY_STATE_VECTORS_DOC},
+                {"rel": "about", "title": "About OpenSky", "href": OPENSKY_ABOUT},
             ],
+            "authProfile": {
+                "mode": config.get("auth", {}).get("mode", "anonymous"),
+                "tokenEndpoint": config.get("auth", {}).get("oauth2_token_url", OPENSKY_AUTH_TOKEN_URL),
+                "note": config.get("auth", {}).get("note", ""),
+            },
+            "coverageProfile": {
+                "label": config.get("description", "OpenSky configured coverage window"),
+                "bbox": _bbox_label(config),
+                "area_sq_deg": bbox.get("area_sq_deg", 0),
+                "cadence_seconds": config.get("cadence_seconds", 300),
+                "credit_budget_note": _daily_budget_note(config),
+            },
+            "image": {
+                "href": "./metadata_enrichment_pack/assets/opensky_feed_adapter_generic.svg",
+                "title": "Representative OpenSky feed-adapter coverage graphic",
+            },
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -182,39 +239,64 @@ def _system_sml(config: dict) -> dict:
     bbox = config["bounding_box"]
     center_lon = (bbox["lomin"] + bbox["lomax"]) / 2
     center_lat = (bbox["lamin"] + bbox["lamax"]) / 2
+    auth_cfg = config.get("auth", {})
 
     return {
         "type": "PhysicalSystem",
         "id": SYSTEM_UID,
         "uniqueId": SYSTEM_UID,
         "definition": "sosa:System",
-        "label": "OpenSky ADS-B Feed — Southern Arizona",
+        "label": "OpenSky ADS-B Feed - Southern Arizona",
         "description": (
-            "Live aircraft positions over southern Arizona, collected via ADS-B "
-            "(Automatic Dependent Surveillance–Broadcast). Every aircraft with a "
-            "Mode S transponder continuously broadcasts its GPS position, altitude, "
-            "speed, and heading on 1090 MHz. The OpenSky Network aggregates these "
-            "broadcasts using a crowd-sourced network of ~30,000 volunteer-operated "
-            "ground receivers worldwide. This system queries the OpenSky REST API "
-            "every 5 minutes for all aircraft in the southern Arizona bounding box "
-            "(Tucson, Phoenix, Fort Huachuca) and publishes each aircraft's state "
-            "as an individual observation."
+            "Feed-adapter system representing OpenSky aircraft tracking over southern Arizona. "
+            "This system is not a single aircraft sensor. It is a configured API-backed collection "
+            "point for many aircraft state vectors retrieved from the OpenSky Network and republished "
+            "as individual CSAPI observations."
         ),
         "keywords": [
-            "ADS-B", "OpenSky", "aircraft", "tracking", "airspace",
-            "Arizona", "feed adapter", "surveillance",
+            "ADS-B",
+            "OpenSky",
+            "aircraft",
+            "tracking",
+            "airspace",
+            "southern Arizona",
+            "feed adapter",
+            "state vector",
+            auth_cfg.get("mode", "anonymous"),
         ],
         "identifiers": [
-            {"definition": "http://sensorml.com/ont/swe/property/ShortName",
-             "label": "Short Name", "value": "OpenSky AZ Feed"},
-            {"definition": "http://sensorml.com/ont/swe/property/LongName",
-             "label": "Long Name", "value": "OpenSky Network ADS-B Feed — Southern Arizona Airspace"},
+            {
+                "definition": "http://sensorml.com/ont/swe/property/ShortName",
+                "label": "Short Name",
+                "value": "OpenSky AZ Feed",
+            },
+            {
+                "definition": "http://sensorml.com/ont/swe/property/LongName",
+                "label": "Long Name",
+                "value": "OpenSky Network ADS-B Feed - Southern Arizona Airspace",
+            },
+            {
+                "definition": "http://sensorml.com/ont/swe/property/UniqueID",
+                "label": "OS4CSAPI UID",
+                "value": SYSTEM_UID,
+            },
         ],
         "classifiers": [
-            {"definition": "http://sensorml.com/ont/swe/property/SensorType",
-             "label": "Sensor Type", "value": "ADS-B Feed Adapter (crowd-sourced receiver network)"},
-            {"definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
-             "label": "Intended Application", "value": "Airspace surveillance; aircraft tracking; situational awareness"},
+            {
+                "definition": "http://sensorml.com/ont/swe/property/SensorType",
+                "label": "System Type",
+                "value": "ADS-B feed adapter (crowd-sourced receiver network)",
+            },
+            {
+                "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+                "label": "Intended Application",
+                "value": "Airspace surveillance; aircraft tracking; situational awareness",
+            },
+            {
+                "definition": "http://sensorml.com/ont/swe/property/SystemRole",
+                "label": "Bootstrap Pattern",
+                "value": "Pattern C feed adapter",
+            },
         ],
         "contacts": [
             {
@@ -236,29 +318,59 @@ def _system_sml(config: dict) -> dict:
             {
                 "role": "http://dbpedia.org/resource/Web_page",
                 "name": "OpenSky Network",
-                "description": "The OpenSky Network — a community-based ADS-B receiver network.",
+                "description": "Primary landing page for the OpenSky Network.",
                 "link": {"href": OPENSKY_HOME, "type": "text/html"},
             },
             {
                 "role": "http://dbpedia.org/resource/Web_page",
-                "name": "REST API Documentation",
-                "description": "OpenSky Network REST API reference for state vectors, flights, and tracks.",
+                "name": "OpenSky REST API",
+                "description": "REST API reference for states, flights, and tracks.",
                 "link": {"href": OPENSKY_API_DOC, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "OpenSky State Vector Fields",
+                "description": "Field-level reference for the state vector payload normalized by the publisher.",
+                "link": {"href": OPENSKY_STATE_VECTORS_DOC, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "About OpenSky",
+                "description": "Operator/about page for the OpenSky Network Association.",
+                "link": {"href": OPENSKY_ABOUT, "type": "text/html"},
             },
         ],
         "characteristics": [
             {
-                "name": "feed_characteristics",
+                "name": "coverage_profile",
                 "type": "DataRecord",
-                "label": "Feed Characteristics",
+                "label": "Coverage Profile",
                 "fields": [
-                    {"type": "Text", "name": "data_source",
-                     "definition": "http://sensorml.com/ont/swe/property/DataSource",
-                     "label": "Data Source", "value": "OpenSky Network (crowd-sourced ADS-B)"},
-                    {"type": "Text", "name": "coverage_area",
-                     "definition": "http://sensorml.com/ont/swe/property/SensorType",
-                     "label": "Coverage Area",
-                     "value": f"Southern Arizona: lat {bbox['lamin']}-{bbox['lamax']}, lon {bbox['lomin']}-{bbox['lomax']}"},
+                    {"type": "Text", "name": "coverage_label", "label": "Coverage Label", "value": config.get("description", "Configured OpenSky coverage window")},
+                    {"type": "Text", "name": "bounding_box", "label": "Bounding Box", "value": _bbox_label(config)},
+                    {"type": "Count", "name": "area_sq_deg", "label": "Area (sq deg)", "value": bbox.get("area_sq_deg", 0)},
+                ],
+            },
+            {
+                "name": "access_profile",
+                "type": "DataRecord",
+                "label": "Access Profile",
+                "fields": [
+                    {"type": "Text", "name": "auth_mode", "label": "Auth Mode", "value": auth_cfg.get("mode", "anonymous")},
+                    {"type": "Quantity", "name": "publish_interval", "label": "Publish Interval", "uom": {"code": "s"}, "value": config.get("cadence_seconds", 300)},
+                    {"type": "Count", "name": "credit_cost_per_request", "label": "Credit Cost Per Request", "value": bbox.get("credit_cost_per_request", 1)},
+                    {"type": "Text", "name": "daily_budget_note", "label": "Daily Budget Note", "value": _daily_budget_note(config)},
+                ],
+            },
+            {
+                "name": "position_source_vocabulary",
+                "type": "DataRecord",
+                "label": "Position Source Vocabulary",
+                "fields": [
+                    {"type": "Text", "name": "source_0", "label": "Source 0", "value": "ADS-B"},
+                    {"type": "Text", "name": "source_1", "label": "Source 1", "value": "ASTERIX"},
+                    {"type": "Text", "name": "source_2", "label": "Source 2", "value": "MLAT"},
+                    {"type": "Text", "name": "source_3", "label": "Source 3", "value": "FLARM"},
                 ],
             },
         ],
@@ -268,13 +380,32 @@ def _system_sml(config: dict) -> dict:
                 "type": "DataRecord",
                 "label": "Publisher Capabilities",
                 "capabilities": [
-                    {"type": "Quantity", "name": "update_interval",
-                     "definition": "http://qudt.org/vocab/quantitykind/Period",
-                     "label": "Publish Interval", "uom": {"code": "s"},
-                     "value": config.get("cadence_seconds", 300)},
-                    {"type": "Text", "name": "data_source",
-                     "definition": "http://sensorml.com/ont/swe/property/DataSource",
-                     "label": "Data Source", "value": "OpenSky Network REST API"},
+                    {
+                        "type": "Quantity",
+                        "name": "update_interval",
+                        "definition": "http://qudt.org/vocab/quantitykind/Period",
+                        "label": "Publish Interval",
+                        "uom": {"code": "s"},
+                        "value": config.get("cadence_seconds", 300),
+                    },
+                    {
+                        "type": "Text",
+                        "name": "observation_model",
+                        "label": "Observation Model",
+                        "value": "One aircraft state vector per CSAPI observation",
+                    },
+                    {
+                        "type": "Text",
+                        "name": "deduplication_rule",
+                        "label": "Deduplication Rule",
+                        "value": "Repeated aircraft reports with unchanged timestamps are skipped",
+                    },
+                    {
+                        "type": "Text",
+                        "name": "position_sources",
+                        "label": "Position Sources",
+                        "value": _position_source_summary(),
+                    },
                 ],
             },
         ],
@@ -292,18 +423,22 @@ def _datastream_schema() -> dict:
         "outputName": DS_OUTPUT_NAME,
         "name": "Aircraft State Vectors",
         "description": (
-            "ADS-B state vectors from the OpenSky Network. Each observation represents "
-            "one aircraft at one moment in time, with position, altitude, velocity, heading, "
-            "and transponder information. Multiple aircraft observations are published per cycle."
+            "Normalized OpenSky aircraft state vectors. Each observation represents one aircraft "
+            "inside the configured bounding box at one upstream observation timestamp. The publisher "
+            "polls the OpenSky REST API, expands the array-based payload into named fields, and posts "
+            "one CSAPI observation per aircraft record."
         ),
         "documentation": [
             {"title": "OpenSky REST API", "href": OPENSKY_API_DOC, "rel": "documentation"},
-            {"title": "State Vector Fields", "href": "https://openskynetwork.github.io/opensky-api/index.html#state-vectors", "rel": "describedby"},
+            {"title": "OpenSky State Vector Fields", "href": OPENSKY_STATE_VECTORS_DOC, "rel": "describedby"},
+            {"title": "About OpenSky", "href": OPENSKY_ABOUT, "rel": "about"},
         ],
         "characteristics": [
-            {"label": "Source Format", "value": "JSON array of state vector arrays via OpenSky REST API"},
-            {"label": "Nominal Availability", "value": "Continuous; 10s resolution (anonymous)"},
-            {"label": "Quality Control", "value": "ADS-B integrity checks by OpenSky; MLAT positions less precise"},
+            {"label": "Observation Model", "value": "One observation per aircraft per cycle"},
+            {"label": "Coverage Filter", "value": "Bounding-box filter applied at the source API"},
+            {"label": "Null Handling", "value": "Nullable numeric values are normalized to JSON-safe NaN strings by the current publisher"},
+            {"label": "Position Source Vocabulary", "value": _position_source_summary()},
+            {"label": "Deduplication", "value": "Repeated aircraft states with unchanged timestamps are skipped"},
         ],
         "schema": {
             "obsFormat": "application/om+json",
@@ -348,12 +483,14 @@ def _deploy_root(config: dict) -> dict:
             "featureType": "sosa:Deployment",
             "name": "Airspace Tracking Demo Deployment",
             "description": (
-                "Top-level CSAPI deployment grouping for aircraft tracking feeds "
-                "published by OSHConnect-Python. Currently includes the OpenSky Network "
-                "ADS-B feed for southern Arizona airspace."
+                "Top-level CSAPI deployment grouping for feed-adapter aircraft tracking resources "
+                "published by OSHConnect-Python. This is a conceptual deployment group for the demo "
+                "story, not a single physical field installation."
             ),
             "documentation": [
                 {"title": "OpenSky Network", "href": OPENSKY_HOME, "rel": "about"},
+                {"title": "OpenSky REST API", "href": OPENSKY_API_DOC, "rel": "documentation"},
+                {"title": "OpenSky State Vector Fields", "href": OPENSKY_STATE_VECTORS_DOC, "rel": "describedby"},
             ],
             "validTime": [VALID_TIME_START, ".."],
         },
@@ -376,19 +513,20 @@ def _deploy_feed(config: dict, system_server_id: str) -> dict:
             "featureType": "sosa:Deployment",
             "name": "OpenSky ADS-B Feed",
             "description": (
-                f"OpenSky Network ADS-B feed adapter for southern Arizona airspace "
-                f"(lat {bbox['lamin']}–{bbox['lamax']}, lon {bbox['lomin']}–{bbox['lomax']}). "
-                f"Publishes aircraft state vectors at {config.get('cadence_seconds', 300)}s cadence."
+                f"Configured OpenSky feed-adapter deployment for {_bbox_label(config)}. "
+                f"Publishes one observation per aircraft state at {config.get('cadence_seconds', 300)}s cadence. "
+                f"Current auth mode: {config.get('auth', {}).get('mode', 'anonymous')}."
             ),
             "validTime": [VALID_TIME_START, ".."],
             "platform@link": {
                 "href": system_server_id,
                 "uid": SYSTEM_UID,
-                "title": "OpenSky ADS-B Feed — Southern Arizona",
+                "title": "OpenSky ADS-B Feed - Southern Arizona",
             },
             "links": [
                 {"rel": "about", "title": "OpenSky Network", "href": OPENSKY_HOME},
                 {"rel": "documentation", "title": "REST API", "href": OPENSKY_API_DOC},
+                {"rel": "describedby", "title": "State Vector Fields", "href": OPENSKY_STATE_VECTORS_DOC},
             ],
         },
     }
