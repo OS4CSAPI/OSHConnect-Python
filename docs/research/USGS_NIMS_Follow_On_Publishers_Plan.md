@@ -2,113 +2,123 @@
 
 _Last updated: 2026-03-11_
 
+---
+
 ## 1. Purpose
 
-This document is a **follow-on implementation plan** to the existing `Public_Data_Source_Publishers_Plan.md`. Its purpose is to define the next expansion wave of public-data publishers focused specifically on **USGS water-data and imagery sources**, with a secondary USGS event-feed option for earthquakes.
+This document is a **follow-on implementation plan** to the existing [Public_Data_Source_Publishers_Plan.md](Public_Data_Source_Publishers_Plan.md). Its purpose is to define the next expansion wave of public-data publishers focused specifically on **USGS water-data and imagery sources**, with a secondary USGS event-feed option for earthquakes.
 
-This plan assumes the first plan remains the governing roadmap for the broader public-source publisher initiative, but **some cross-cutting and polish activities from that first plan are intentionally deferred** until after all currently identified publishers have been created. That means this document prioritizes **source onboarding and working publishers first**, while postponing selected secondary activities such as extra polish, advanced Explorer UX work, and non-essential metadata refinement until the broader source set is complete.
+This plan is organized into **sequential phases**, each building one complete publisher from reconnaissance through deployment. Each phase is self-contained: you finish one publisher before starting the next. This avoids half-built publishers and ensures every phase delivers a running service.
 
-## 2. Scope and relationship to the first plan
+---
+
+## 2. Scope and Relationship to the First Plan
 
 This follow-on plan adds three USGS-aligned source tracks:
 
-1. **USGS Water Data OGC APIs** — fixed monitoring locations, time-series metadata, and water observations.
+1. **USGS Water Data APIs** — fixed monitoring locations, time-series metadata, and water observations.
 2. **USGS National Imagery Management System (NIMS)** — camera discovery and gaging-station imagery associated with USGS sites.
-3. **USGS Earthquake feeds** — optional event-feed publisher for real-time seismic events.
+3. **USGS Earthquake Feeds** — optional event-feed publisher for real-time seismic events.
 
-This plan does **not** replace the first public-data-source plan. Instead, it extends it with a new USGS-focused work package and adopts the following sequencing rule:
+This plan does **not** replace the first public-data-source plan. It extends it with a USGS-focused work package and adopts the following sequencing rule:
 
 > **Create all identified publishers first; defer selected cross-cutting enhancements until after publisher coverage is complete.**
 
-Concretely, that means the emphasis is on standing up functioning publishers for water stations, imagery, and optional earthquake events before spending time on broader cleanup work such as advanced UI polish, richer visualization layers, or second-round metadata-pack work beyond what is needed to make each source credible and explorable.
+---
 
-## 3. Why these USGS sources are good additions
+## 3. Why These USGS Sources Are Good Additions
 
-### 3.1 USGS water-data APIs are unusually aligned with the CSAPI effort
+### 3.1 USGS Water Data APIs are unusually aligned with the CSAPI effort
 
-USGS states that its Water Data APIs already expose water data through the **OGC API family of standards**, including access to monitoring locations, time-series metadata, and water measurements. That makes this source unusually well aligned with an OGC API - Connected Systems demonstration because the upstream data model is already modern, standards-oriented, and explicitly geospatial. citeturn496793view1turn992799search0turn992799search9
+USGS states that its Water Data APIs already expose water data through the **OGC API family of standards**, including access to monitoring locations, time-series metadata, and water measurements. The upstream data model is already modern, standards-oriented, and explicitly geospatial.
 
 ### 3.2 NIMS gives a second modality: station imagery
 
-USGS documents that the National Imagery Management System (NIMS) provides programmatic access to **gaging-station imagery**, including camera discovery, image file listings, base paths for full-size and thumbnail images, “newest image” URLs, and time-lapse video paths. This creates a natural extension of the existing publisher model: fixed monitoring systems can expose both scalar observations and image-related datastreams. citeturn496793view1turn100693view0
+USGS documents that the National Imagery Management System (NIMS) provides programmatic access to **gaging-station imagery**, including camera discovery, image file listings, base paths for full-size and thumbnail images, "newest image" URLs, and time-lapse video paths. This creates a natural extension of the existing publisher model: fixed monitoring systems can expose both scalar observations and image-related datastreams.
 
 ### 3.3 Earthquakes provide a clean event-feed use case
 
-USGS also publishes real-time earthquake feeds in **GeoJSON, KML, QuakeML, CSV, and ATOM**, with the GeoJSON summary feed explicitly intended as a programmatic interface. This is a good candidate when the project wants a USGS event-stream demonstration that is not bound to fixed stations. citeturn970860search3turn970860search4
+USGS publishes real-time earthquake feeds in **GeoJSON, KML, QuakeML, CSV, and ATOM**, with the GeoJSON summary feed explicitly designed as a programmatic interface. This is a good candidate for a USGS event-stream demonstration that is not bound to fixed stations.
 
-## 4. Planning assumptions
+---
 
-This plan is based on the following assumptions:
+## 4. Planning Assumptions
 
-- The existing OSHConnect-Python publisher pattern remains the implementation baseline: one bootstrap script for CSAPI Part 1 resources and one publisher/runtime script for fetch-normalize-publish behavior.
+- The existing OSHConnect-Python publisher pattern remains the implementation baseline: one bootstrap script for CSAPI Part 1 resources and one publisher script for fetch-normalize-publish behavior. The proven directory structure is:
+  ```
+  publishers/{source}/
+    ├── __init__.py
+    ├── bootstrap_{source}.py
+    ├── {source}_publisher.py
+    └── stations.json (or config.json)
+  ```
 - The project continues to prefer **deployed-system-first** and **normalized-first** modeling.
-- The project is willing to obtain a **free USGS API key** for higher rate limits when needed. USGS documents that API keys raise the effective rate ceiling and are passed via query parameter or `X-Api-Key` header. Without a key, the newer APIs are more constrained. citeturn496793view1turn970860search1turn970860search2turn970860search5
 - The first goal is **working publishers**, not maximum metadata perfection.
-- Some activities previously planned in the first roadmap remain deferred until all identified publishers, including these USGS ones, have been stood up.
+- Each publisher will run as a persistent process on the Oracle VM (`129.80.248.53`), consistent with the existing NWS, NDBC, CO-OPS, Aviation WX, OpenSky, and ISS publishers.
+- Some activities previously planned in the first roadmap remain deferred until all identified publishers have been stood up.
 
-## 5. Recommended source portfolio and priority
+---
 
-### Priority 1 — USGS Water Monitoring Publisher
+## 5. Shared Architecture Decisions
 
-Build a publisher for **USGS monitoring locations and time-series metadata**, with an initial focus on a small curated set of water stations.
+### 5.1 Continue the two-script publisher pattern
 
-Why first:
-- closest fit to the existing station/datastream model,
-- upstream source is already OGC-oriented,
-- allows immediate integration into the same fixed-system presentation model used for NWS, NDBC, and CO-OPS. citeturn496793view1turn992799search0turn992799search9
+For each USGS source:
+- `bootstrap_{source}.py` — creates CSAPI Part 1 metadata (procedure, deployment, systems, datastreams)
+- `{source}_publisher.py` — polls upstream API, normalizes observations, publishes to OSH
 
-### Priority 2 — USGS NIMS Imagery Publisher
+### 5.2 Keep shared utilities centralized
 
-Build a companion imagery publisher for a curated subset of camera-equipped USGS gaging sites.
+Common logic should live in `publishers/base.py` and `publishers/bootstrap_helpers.py`:
+- API-key handling (USGS API key via query parameter or `X-Api-Key` header)
+- Pagination helpers (follow `next` links, never synthesize page URLs)
+- Polling cadence helpers
+- Image URL construction utilities
+- Common metadata blocks for procedures and deployments
 
-Why second:
-- strongly complements the water monitoring publisher,
-- introduces image and optional time-lapse observation patterns,
-- gives the project a second real-world image source after BuoyCAM. citeturn100693view0
+### 5.3 Canonical field discipline
 
-### Priority 3 — USGS Earthquake Publisher (optional but recommended)
+Continue enforcing a small shared canonical observation vocabulary across all publishers. This becomes especially important when mixing numeric monitoring stations and imagery/event publishers.
 
-Build an event-feed publisher from the USGS GeoJSON earthquake feeds.
+### 5.4 Prefer curated station sets first
 
-Why third:
-- clean event-stream use case,
-- easy visual impact,
-- broadens the public-source demo portfolio beyond environmental station networks. citeturn970860search3turn970860search4
+Do not begin with nationwide scale. Begin with intentionally chosen sites that support the demonstration well: **5–10 water stations**, **3–5 camera-equipped stations**, and **1 earthquake feed**.
 
-## 6. Source-by-source implementation strategy
+---
 
-## 6.1 USGS Water Monitoring Publisher
+## 6. Phase 0 — Prerequisites
 
-### 6.1.1 Objective
+**Goal:** Establish the prerequisites that all three publishers depend on. No code is written in this phase.
 
-Create a CSAPI publisher that represents selected USGS monitoring locations as systems and exposes one or more datastreams per site for water-related measurements and time-series metadata.
+| Step | Task | Deliverable | Done? |
+|---|---|---|---|
+| 0.1 | **Obtain USGS API key** — register at https://api.usgs.gov and obtain a free API key. Without it, USGS rate limits will constrain development. All three publishers share one key. | API key stored in a `.env` file or environment variable on the VM | ☐ |
+| 0.2 | **API reconnaissance — USGS Water Data** — probe the actual USGS Water Data endpoints to determine: (a) which base URL to use (legacy `waterservices.usgs.gov` vs newer `labs.waterdata.usgs.gov`), (b) the actual response JSON structure for monitoring locations and time-series values, (c) available parameters per site, (d) pagination behavior. | Written recon notes documenting base URL, response shapes, and selected stations | ☐ |
+| 0.3 | **API reconnaissance — NIMS** — probe the NIMS camera discovery and image listing endpoints to determine: (a) whether NIMS v1 is live or v0 is the current version, (b) the camera discovery response format (`/cameras`), (c) the image listing response format (`/listFiles`), (d) URL construction patterns for full-size/thumbnail/newest images. | Written recon notes documenting endpoint version, response shapes, and URL patterns | ☐ |
+| 0.4 | **API reconnaissance — USGS Earthquake** — fetch the GeoJSON summary feed (`earthquake.usgs.gov/earthquakes/feed/v1.0/summary/*.geojson`) to confirm response structure, event ID format, and update timestamp field. | Written recon notes documenting response shape and dedupe key | ☐ |
+| 0.5 | **Station selection** — using the recon results, select: (a) 5–10 USGS water monitoring locations with reliable gage height and/or discharge data, (b) 3–5 of those stations (or nearby stations) that have NIMS cameras, (c) 1 earthquake feed variant (e.g., `all_hour.geojson` or `significant_month.geojson`). | `stations.json` draft for water, `cameras.json` draft for NIMS, feed URL for earthquake | ☐ |
 
-### 6.1.2 Why this is the best first USGS implementation
+**Exit criteria:** API key obtained, all three APIs probed with real responses examined, station/camera/feed selections made.
 
-USGS’s Water Data APIs already expose:
-- **monitoring locations**,
-- **time series metadata**,
-- OGC-compliant resource behavior,
-- and water measurements in standardized formats. citeturn496793view1turn992799search0turn992799search9
+---
 
-That means the project does not need to invent a fragile scraping approach or heavily reverse-engineer the source.
+## 7. Phase 1 — USGS Water Monitoring Publisher
 
-### 6.1.3 Recommended initial modeling pattern
+**Goal:** Build a complete publisher for selected USGS monitoring locations with numeric water observations.
 
-Use a **station-centric model**:
+### 7.1 Modeling Pattern
 
-- **System**: one per selected USGS monitoring location.
-- **Procedure**: a USGS water-observation acquisition and normalization procedure.
-- **Deployment**: one top-level USGS Water monitoring deployment group, optionally with regional or watershed subgrouping later.
-- **Datastreams**: begin with one or two curated datastream families per site rather than trying to mirror the full USGS catalog immediately.
+Use a **station-centric model** consistent with existing NWS/NDBC/CO-OPS publishers:
 
-Recommended first datastream candidates:
-- water level or gage height,
-- discharge/streamflow where available,
-- water temperature where available,
-- optional site-status or time-series metadata datastream if useful for explanation.
+- **System**: one per selected USGS monitoring location
+- **Procedure**: one USGS water-observation acquisition and normalization procedure
+- **Deployment**: one top-level "USGS Water Monitoring" deployment, with one subdeployment per station (following the 1:1 deployment pairing pattern)
+- **Datastreams**: 1–2 per station from the following candidates:
+  - gage height / water level
+  - discharge / streamflow
+  - water temperature (where available)
 
-### 6.1.4 Normalization guidance
+### 7.2 Normalization
 
 Normalize around a compact common observation shape:
 
@@ -121,88 +131,62 @@ Normalize around a compact common observation shape:
 - `qualifier/status` if supplied
 - optional `raw`
 
-Keep source-specific richness in metadata rather than forcing every upstream field into the first version.
+### 7.3 Implementation Steps
 
-### 6.1.5 Bootstrap deliverables
+| Step | Task | Deliverable |
+|---|---|---|
+| 1.1 | **Create directory structure** | `publishers/usgs_water/__init__.py` |
+| 1.2 | **Create station config** — finalize the curated station list from Phase 0 recon, including site IDs, names, coordinates, and selected parameter codes | `publishers/usgs_water/stations.json` |
+| 1.3 | **Implement bootstrap** — create procedure, top-level deployment, per-station subdeployments with `platform@link`, per-station systems, and datastreams for selected parameters | `publishers/usgs_water/bootstrap_usgs_water.py` |
+| 1.4 | **Run bootstrap on OSH** — execute against the live server, capture all created resource IDs | Bootstrap output with ID map |
+| 1.5 | **Implement publisher** — polling client with API key support, `next`-link pagination handling, normalized observation builder, publish loop | `publishers/usgs_water/usgs_water_publisher.py` |
+| 1.6 | **Local test** — run publisher locally, verify observations appear on OSH, check at least one full polling cycle produces correct data | Manual verification |
+| 1.7 | **Deploy to VM** — copy publisher to Oracle VM, configure as a persistent process, verify it runs unattended | Running process on `129.80.248.53` |
+| 1.8 | **Verify in Explorer** — confirm stations appear in the deployment tree, datastreams show observations, map pins are positioned correctly | Visual verification in demo app |
 
-- `publishers/usgs_water/bootstrap_usgs_water.py`
-- `publishers/usgs_water/stations.json`
-- one procedure resource
-- one deployment root
-- one system per station
-- one datastream per initial variable family
+### 7.4 Risks
 
-### 6.1.6 Runtime publisher deliverables
+- Variable availability differs by site — some selected stations may lack a parameter. Handle gracefully (skip missing parameters, don't fail the whole station).
+- Pagination and rate-limit handling must be correct. USGS documents maximum page sizes, `next` links, and API-key-based rate ceilings.
+- The newer `labs.waterdata.usgs.gov` API may have different behavior than legacy `waterservices.usgs.gov` — the Phase 0 recon will determine which to use.
 
-- `publishers/usgs_water/usgs_water_publisher.py`
-- station discovery or station-file loader
-- polling client with API key support
-- pagination handling, because USGS documents paginated responses and advises clients to follow returned `next` links rather than synthesizing them. citeturn970860search5
-- normalized observation builder
-- publish loop
+### 7.5 Acceptance Criteria
 
-### 6.1.7 Risks
+- [ ] Creates valid CSAPI metadata resources (procedure, deployment hierarchy, systems, datastreams)
+- [ ] Publishes at least one numeric datastream per selected station
+- [ ] Handles pagination correctly (follows `next` links)
+- [ ] Uses API key correctly (query parameter or `X-Api-Key` header)
+- [ ] Produces stable observations for at least one full polling cycle
+- [ ] Stations visible in Explorer with correct map positions and data
 
-- variable availability differs by site,
-- overly ambitious station/parameter selection could create noisy data-model branching,
-- pagination and rate-limit handling need to be implemented correctly. USGS notes maximum page sizes and `next` links, plus API-key-based rate limits. citeturn992799search7turn970860search1turn970860search5
+**Exit criteria:** Water publisher running on VM, observations flowing, visible in Explorer.
 
-### 6.1.8 Recommendation
+---
 
-Start with **5–10 carefully chosen stations** and **1–2 variables per station**, not full catalog parity.
+## 8. Phase 2 — USGS NIMS Imagery Publisher
 
-## 6.2 USGS NIMS Imagery Publisher
+**Goal:** Build a companion publisher that exposes USGS gaging-station imagery as image-reference observations.
 
-### 6.2.1 Objective
+### 8.1 Modeling Pattern
 
-Create a CSAPI publisher that exposes **USGS gaging-station imagery** as image-reference observations and optionally time-lapse media metadata.
+Use **Pattern A — imagery as a companion datastream** on the same station system (preferred over creating separate camera systems):
 
-### 6.2.2 Why NIMS is worth doing
+- **System**: reuse the USGS monitoring location system from Phase 1 where the station has cameras, or create a new system for camera-only sites
+- **Procedure**: one USGS NIMS image acquisition and normalization procedure
+- **Deployment**: subdeployment under the USGS Water Monitoring deployment (or separate "USGS NIMS Imagery" deployment if stations don't overlap)
+- **Datastream**: one imagery datastream per selected camera/site
 
-NIMS explicitly supports:
-- camera discovery via `/cameras`,
-- image-file listings via `/listFiles`,
-- construction of full-size, thumbnail, and 720px image URLs,
-- a stable “newest image” pattern,
-- and time-lapse video URLs via `tlDir + camId + '_720.mp4'`. citeturn100693view0
+### 8.2 Key Design Decision
 
-That is a strong fit for the kind of image-capable CSAPI demonstration you have already been moving toward with BuoyCAM.
+Do **not** ingest binary images into the server. Instead:
+- Use NIMS API discovery to identify camera-equipped sites
+- Construct stable image URLs from the NIMS base paths
+- Publish **image-reference observations** whose result records contain URLs, timestamps, media type, and camera identifiers
+- Optionally cache or mirror images later if historical stability becomes necessary
 
-### 6.2.3 Recommended implementation decision
+This mirrors the BuoyCAM approach already proven in the NDBC publisher.
 
-Do **not** start by ingesting binary images into the server.
-
-Instead:
-- use NIMS API discovery to identify camera-equipped sites,
-- construct stable image URLs,
-- publish **image-reference observations** whose result records contain URLs, timestamps, media type, and camera identifiers,
-- optionally cache or mirror images later if historical stability becomes necessary.
-
-This mirrors the practical decision already used in other image-source planning: get the CSAPI and Explorer behavior working first, then decide if local image persistence is worth the added operational burden.
-
-### 6.2.4 Modeling pattern
-
-Two good patterns exist.
-
-#### Pattern A — imagery as a companion datastream on the same station system
-
-- **System**: USGS monitoring location
-- **Datastream A**: numeric water observations
-- **Datastream B**: latest/stored imagery observations
-
-This is the preferred first pattern because it keeps the imagery directly associated with the water station.
-
-#### Pattern B — camera as child system
-
-- **System**: USGS monitoring location
-- **Sub-system / linked system**: individual camera
-- **Datastream**: image observations for that camera
-
-This is richer but should be deferred until the first version is stable.
-
-### 6.2.5 Observation result pattern
-
-Recommended image observation result fields:
+### 8.3 Observation Result Pattern
 
 - `imageTime`
 - `camId`
@@ -215,190 +199,141 @@ Recommended image observation result fields:
 - optional `filename`
 - optional `raw`
 
-### 6.2.6 Bootstrap deliverables
+### 8.4 Implementation Steps
 
-- `publishers/usgs_nims/bootstrap_usgs_nims.py`
-- `publishers/usgs_nims/cameras.json`
-- one procedure resource
-- deployment grouping for NIMS-enabled stations
-- one imagery datastream per selected site or per selected camera
+| Step | Task | Deliverable |
+|---|---|---|
+| 2.1 | **Create directory structure** | `publishers/usgs_nims/__init__.py` |
+| 2.2 | **Create camera config** — finalize the curated camera list from Phase 0 recon, including site IDs, camera IDs, and image base paths | `publishers/usgs_nims/cameras.json` |
+| 2.3 | **Decide system reuse** — for stations that overlap with Phase 1 water stations, determine whether to add an imagery datastream to the existing system or create a new system. Document the decision. | Decision recorded |
+| 2.4 | **Implement bootstrap** — create procedure, deployment structure, systems (or reuse), imagery datastreams per selected camera | `publishers/usgs_nims/bootstrap_usgs_nims.py` |
+| 2.5 | **Run bootstrap on OSH** — execute against the live server, capture all created resource IDs | Bootstrap output with ID map |
+| 2.6 | **Implement publisher** — camera discovery client, image listing client, URL constructor for `overlayDir`/`thumbDir`/`smallDir`, most-recent optimization using `_newest.jpg`, API-key support, publish loop | `publishers/usgs_nims/usgs_nims_publisher.py` |
+| 2.7 | **Local test** — run publisher locally, verify image-reference observations appear on OSH with correct URLs | Manual verification |
+| 2.8 | **Deploy to VM** — copy publisher to Oracle VM, configure as a persistent process | Running process on `129.80.248.53` |
+| 2.9 | **Verify in Explorer** — confirm image observations appear, thumbnails render in the UI, newest-image pattern works for live display | Visual verification in demo app |
 
-### 6.2.7 Runtime publisher deliverables
+### 8.5 Key Constraints
 
-- `publishers/usgs_nims/usgs_nims_publisher.py`
-- camera discovery client (`/cameras`)
-- image listing client (`/listFiles`)
-- URL constructor for `overlayDir`, `thumbDir`, `smallDir`
-- most-recent optimization using `_newest.jpg` when appropriate
-- optional time-lapse URL construction
-- API-key support and rate-limit awareness. USGS states that NIMS uses the same API-key system and returns rate-limit headers. citeturn100693view0turn970860search1
+- NIMS v0 is fully supported but legacy; USGS recommends migrating to v1 once available. Build the publisher so the endpoint base URL is configurable.
+- Not every water site has camera imagery — handle missing cameras gracefully.
+- The "newest image" pattern is excellent for live display but weaker for historic fidelity unless filenames are also stored.
 
-### 6.2.8 Key constraints
+### 8.6 Acceptance Criteria
 
-- NIMS v0 is fully supported but legacy, and USGS recommends migrating to v1 once available. Build the publisher so the endpoint version is configurable. citeturn100693view0
-- Not every water site has camera imagery.
-- The easiest “newest image” pattern is excellent for live display but weaker for historic fidelity unless filenames are also stored.
+- [ ] Discovers cameras for selected sites via NIMS API
+- [ ] Constructs valid image URLs (full-size, thumbnail, small)
+- [ ] Publishes image-reference observations with timestamps
+- [ ] Thumbnails or small images render correctly in Explorer
+- [ ] Handles stations without imagery gracefully (skip, don't fail)
+- [ ] Endpoint version is configurable (v0/v1)
 
-### 6.2.9 Recommendation
+**Exit criteria:** NIMS publisher running on VM, image observations flowing, thumbnails visible in Explorer.
 
-Select a **small curated set of stations with cameras** and build a station-linked imagery datastream first.
+---
 
-## 6.3 USGS Earthquake Publisher (optional)
+## 9. Phase 3 — USGS Earthquake Publisher (Optional but Recommended)
 
-### 6.3.1 Objective
+**Goal:** Build an event-feed publisher from the USGS GeoJSON earthquake feeds.
 
-Create a CSAPI event-feed publisher using the USGS GeoJSON earthquake feeds.
-
-### 6.3.2 Why it belongs in the portfolio
-
-USGS explicitly presents its GeoJSON earthquake feeds as a programmatic interface, and the service offers real-time feeds plus more detailed event information. citeturn970860search3turn970860search4
-
-### 6.3.3 Recommended model
+### 9.1 Modeling Pattern
 
 Use a **feed-adapter event model**, not a fixed-station model:
 
-- **System**: USGS Earthquake feed adapter
-- **Datastream**: earthquake events
-- **Observation/Event result**:
-  - event ID
-  - magnitude
-  - place
-  - time
-  - updated time
-  - longitude
-  - latitude
-  - depth
-  - status
-  - detail URL
+- **System**: one "USGS Earthquake Feed" adapter system (do NOT create one system per earthquake)
+- **Procedure**: one earthquake feed normalization procedure
+- **Deployment**: one "USGS Earthquake Feed" deployment
+- **Datastream**: one earthquake events datastream
 
-Do not create one `System` per earthquake.
+### 9.2 Observation Result Pattern
 
-### 6.3.4 Deliverables
+- `eventId`
+- `magnitude`
+- `place`
+- `time`
+- `updatedTime`
+- `longitude`
+- `latitude`
+- `depth`
+- `status`
+- `detailUrl`
 
-- `publishers/usgs_eq/bootstrap_usgs_eq.py`
-- `publishers/usgs_eq/usgs_eq_publisher.py`
-- one procedure
-- one system
-- one datastream
-- polling / dedupe logic keyed by event ID and updated timestamp
+### 9.3 Implementation Steps
 
-### 6.3.5 Recommendation
+| Step | Task | Deliverable |
+|---|---|---|
+| 3.1 | **Create directory structure** | `publishers/usgs_eq/__init__.py` |
+| 3.2 | **Create feed config** — document the selected feed URL and polling interval | `publishers/usgs_eq/config.json` |
+| 3.3 | **Implement bootstrap** — create procedure, system, deployment, one earthquake-events datastream | `publishers/usgs_eq/bootstrap_usgs_eq.py` |
+| 3.4 | **Run bootstrap on OSH** — execute against the live server | Bootstrap output with ID map |
+| 3.5 | **Implement publisher** — GeoJSON feed poller, event deduplication logic (keyed by event ID + updated timestamp), normalized observation builder, publish loop | `publishers/usgs_eq/usgs_eq_publisher.py` |
+| 3.6 | **Local test** — run publisher locally, verify earthquake observations appear on OSH, confirm dedupe prevents duplicates across polling cycles | Manual verification |
+| 3.7 | **Deploy to VM** — copy publisher to Oracle VM, configure as a persistent process | Running process on `129.80.248.53` |
+| 3.8 | **Verify in Explorer** — confirm earthquake events appear on the map with correct locations, magnitudes render meaningfully | Visual verification in demo app |
 
-Treat this as **recommended but optional**. It is a strong public-source addition, but it does not need to block delivery of the water + imagery work.
+### 9.4 Acceptance Criteria
 
-## 7. What is explicitly deferred from the first plan
+- [ ] Polls the selected GeoJSON feed successfully
+- [ ] Deduplicates events by event ID and updated timestamp
+- [ ] Publishes earthquake observations that map correctly in Explorer
+- [ ] Does not create one system per earthquake (single feed-adapter system)
+- [ ] Handles feed errors gracefully (retry, don't crash)
 
-This follow-on plan assumes the project is currently optimizing for **publisher coverage first**. Therefore, the following categories of work are intentionally deferred until after all identified publishers are built:
+**Exit criteria:** Earthquake publisher running on VM, events flowing, visible on map in Explorer.
 
-- advanced Explorer rendering enhancements beyond what is needed to prove each publisher,
-- broader metadata second-pass enrichment packs that are not required for source credibility,
-- non-essential packaging or repo refactoring not needed to stand up the next publisher,
-- deeper per-object lifecycle modeling for feeds where feed-adapter modeling is sufficient,
-- advanced analytics, fused overlays, and multi-source derived products,
-- broad performance optimization beyond basic rate-limit-safe polling.
+---
 
-This is not a statement that these activities are unimportant. It is simply a sequencing rule: **finish the publisher set first, then return to deferred polish and harmonization tasks**.
+## 10. Phase 4 — Harmonization and Deferred Work
 
-## 8. Shared architecture decisions for this follow-on effort
+**Goal:** Now that all identified publishers are running, revisit deferred work from the first plan.
 
-### 8.1 Continue the two-script publisher pattern
+This phase is intentionally vague — it is a placeholder for work that should only begin after Phases 1–3 deliver running publishers.
 
-For each USGS source, use:
-- `bootstrap_{source}.py`
-- `{source}_publisher.py`
+| Step | Task |
+|---|---|
+| 4.1 | **Decide water + imagery merge** — should the water publisher and NIMS publisher share station systems, or should they remain separate companions? The Phase 2 decision (step 2.3) may already have resolved this at a station level; this step evaluates whether to formalize the pattern project-wide. |
+| 4.2 | **Metadata enrichment pass** — apply the same enrichment-pack approach used for NWS/NDBC/CO-OPS to the USGS publishers if it materially improves the Explorer experience. |
+| 4.3 | **Explorer rendering enhancements** — any advanced visualization work (water-level charts, image galleries, earthquake magnitude rendering) that was deferred during publisher construction. |
+| 4.4 | **Cross-publisher observation vocabulary audit** — verify that all publishers (NWS, NDBC, CO-OPS, Aviation WX, OpenSky, ISS, USGS Water, USGS NIMS, USGS EQ) use consistent canonical observation field names where applicable. |
+| 4.5 | **Performance review** — evaluate polling cadences, rate-limit headroom, and observation volume across all publishers running simultaneously on the VM. |
+| 4.6 | **Revisit first plan deferrals** — review `Public_Data_Source_Publishers_Plan.md` for any originally-deferred items that are now unblocked. |
 
-### 8.2 Keep shared utilities centralized
+---
 
-Common logic should live in shared publisher helpers where possible:
-- API-key handling
-- pagination helpers
-- polling cadence helpers
-- image URL construction utilities
-- common metadata blocks for procedures and deployments
+## 11. What Is Explicitly Deferred Until Phase 4
 
-### 8.3 Canonical field discipline
+The following categories of work are intentionally deferred until after all publishers are running:
 
-Across all public-source publishers, continue enforcing a small shared canonical observation vocabulary where feasible. This becomes especially important when mixing numeric monitoring stations and imagery/event publishers.
+- Advanced Explorer rendering enhancements beyond what is needed to prove each publisher
+- Broader metadata second-pass enrichment packs not required for source credibility
+- Non-essential packaging or repo refactoring not needed to stand up the next publisher
+- Deeper per-object lifecycle modeling for feeds where feed-adapter modeling is sufficient
+- Advanced analytics, fused overlays, and multi-source derived products
+- Broad performance optimization beyond basic rate-limit-safe polling
+- Docker/systemd formalization (publishers run as persistent processes first; containerization is a Phase 4+ activity)
 
-### 8.4 Prefer curated station sets first
+This is not a statement that these activities are unimportant. It is a sequencing rule: **finish the publisher set first, then return to deferred polish and harmonization tasks**.
 
-Do not begin with nationwide scale. Begin with intentionally chosen sites that support the demonstration well.
+---
 
-## 9. Recommended implementation sequence
+## 12. Summary: Phase Sequence and Exit Gates
 
-### Phase A — prep and selection
+| Phase | Publisher | Key Exit Gate |
+|---|---|---|
+| **Phase 0** | Prerequisites | API key obtained, all 3 APIs probed, stations/cameras/feeds selected |
+| **Phase 1** | USGS Water Monitoring | Publisher running on VM, numeric observations flowing, visible in Explorer |
+| **Phase 2** | USGS NIMS Imagery | Publisher running on VM, image-reference observations flowing, thumbnails visible in Explorer |
+| **Phase 3** | USGS Earthquake (optional) | Publisher running on VM, earthquake events on map in Explorer |
+| **Phase 4** | Harmonization | Deferred work addressed, cross-publisher consistency verified |
 
-1. Freeze the deferred-work rule from the first plan.
-2. Obtain one USGS API key for development and testing. USGS offers free keys and documents both query-parameter and header-based usage. citeturn970860search1turn970860search2
-3. Select:
-   - 5–10 water monitoring locations,
-   - 3–5 NIMS-enabled camera sites,
-   - optional earthquake feed variants.
+Each phase is completed before the next begins. No half-built publishers.
 
-### Phase B — water publisher
+---
 
-4. Implement `bootstrap_usgs_water.py`
-5. Implement `usgs_water_publisher.py`
-6. Validate station creation, datastream creation, paging, and sample observations
+## 13. Bottom Line
 
-### Phase C — NIMS publisher
+This plan adds a strong **USGS expansion package** to the public-data-publisher roadmap. The most important strategic fact is that the water-data APIs are already OGC-oriented and NIMS already provides a documented imagery interface with camera discovery, image listings, and stable URL construction. That gives this project an unusually favorable path to adding **water monitoring**, **station imagery**, and optionally **event feeds** without resorting to fragile scraping or overly bespoke source logic.
 
-7. Implement `bootstrap_usgs_nims.py`
-8. Implement `usgs_nims_publisher.py`
-9. Validate image URL construction, newest-image behavior, and Explorer preview rendering
+The key sequencing rule:
 
-### Phase D — optional earthquake publisher
-
-10. Implement `bootstrap_usgs_eq.py`
-11. Implement `usgs_eq_publisher.py`
-12. Validate event dedupe and map rendering
-
-### Phase E — harmonization after source coverage improves
-
-13. Revisit deferred polish items from the first plan
-14. Decide whether water+imagery should be merged into one richer site model or kept as companion publishers
-15. Add second-pass metadata enrichment only where it materially improves usability
-
-## 10. Proposed acceptance criteria
-
-### USGS Water Publisher
-
-- Creates valid CSAPI metadata resources
-- Publishes at least one numeric datastream for each selected station
-- Handles paging correctly
-- Uses API key support correctly
-- Produces stable observations for at least one polling cycle
-
-### USGS NIMS Publisher
-
-- Discovers cameras for selected sites
-- Constructs valid image URLs
-- Publishes image-reference observations with timestamps
-- Supports thumbnail or small-image rendering in Explorer
-- Handles stations without imagery gracefully
-
-### USGS Earthquake Publisher
-
-- Polls a chosen GeoJSON feed successfully
-- Deduplicates events by event identifier/update timestamp
-- Publishes event observations that map correctly in Explorer
-
-## 11. Recommended near-term decision
-
-If only one new USGS track is started immediately, begin with:
-
-1. **USGS Water Monitoring Publisher**
-2. **USGS NIMS Imagery Publisher**
-3. **USGS Earthquake Publisher**
-
-That order is recommended because the first two form a coherent, station-centric pair and are directly relevant to the existing environmental/public-observation storyline, while the earthquake feed is valuable but more optional.
-
-## 12. Bottom line
-
-This follow-on plan adds a strong **USGS expansion package** to the public-data-publisher roadmap.
-
-The most important strategic fact is that the water-data APIs are already OGC-oriented and NIMS already provides a documented imagery interface with camera discovery, image listings, and stable URL construction. That gives this project an unusually favorable path to adding **water monitoring**, **station imagery**, and optionally **event feeds** without resorting to fragile scraping or overly bespoke source logic. citeturn496793view1turn100693view0turn970860search3
-
-The key sequencing rule remains:
-
-> **Stand up the remaining identified publishers first, including these USGS ones, and defer selected polish and cross-cutting enhancements until publisher coverage is complete.**
+> **Complete each phase before starting the next. Stand up each publisher as a running service before moving on. Defer polish and cross-cutting enhancements until all publishers are live.**
