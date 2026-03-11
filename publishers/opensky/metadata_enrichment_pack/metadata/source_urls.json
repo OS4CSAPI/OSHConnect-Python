@@ -1,0 +1,29 @@
+{
+  "official_sources": [
+    {
+      "title": "OpenSky Network Home",
+      "url": "https://opensky-network.org/",
+      "why_it_matters": "Primary public landing page for the OpenSky Network and the best high-level reference for operator identity and mission framing."
+    },
+    {
+      "title": "OpenSky REST API Documentation",
+      "url": "https://openskynetwork.github.io/opensky-api/rest.html",
+      "why_it_matters": "Documents the REST endpoints, request patterns, and high-level service behavior used by the publisher."
+    },
+    {
+      "title": "OpenSky State Vector Fields",
+      "url": "https://openskynetwork.github.io/opensky-api/index.html#state-vectors",
+      "why_it_matters": "Authoritative field-level reference for the state vector array that the publisher normalizes into CSAPI observations."
+    },
+    {
+      "title": "About OpenSky",
+      "url": "https://opensky-network.org/about/about-us",
+      "why_it_matters": "Provides operator context for the OpenSky Network Association and reinforces that this is a community-operated receiver network."
+    },
+    {
+      "title": "OpenSky OAuth2 Token Endpoint",
+      "url": "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token",
+      "why_it_matters": "Runtime token endpoint referenced by the current config for authenticated mode. Useful for operator/auth profile metadata even if not surfaced as a user-facing link."
+    }
+  ]
+}

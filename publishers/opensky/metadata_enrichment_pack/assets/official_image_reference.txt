@@ -1,0 +1,8 @@
+No official OpenSky binary image was bundled into this pack.
+
+Recommended operator-facing references:
+- https://opensky-network.org/
+- https://opensky-network.org/about/about-us
+
+Use `opensky_feed_adapter_generic.svg` as the local representative asset for
+review packs, demos, or future Explorer-side metadata cards.

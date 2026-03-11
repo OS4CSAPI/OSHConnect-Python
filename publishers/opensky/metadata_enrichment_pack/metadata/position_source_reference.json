@@ -1,0 +1,20 @@
+{
+  "position_source_map": {
+    "0": {
+      "label": "ADS-B",
+      "why_it_matters": "Best baseline source for transponder-derived aircraft state in the current feed."
+    },
+    "1": {
+      "label": "ASTERIX",
+      "why_it_matters": "Indicates radar-style upstream feed provenance rather than direct ADS-B."
+    },
+    "2": {
+      "label": "MLAT",
+      "why_it_matters": "Multilateration-derived positions may carry different uncertainty characteristics than direct ADS-B."
+    },
+    "3": {
+      "label": "FLARM",
+      "why_it_matters": "Important for glider/general-aviation contexts where FLARM-derived positions may appear."
+    }
+  }
+}

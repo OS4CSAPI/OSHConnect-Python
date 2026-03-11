@@ -1,0 +1,25 @@
+{
+  "coverage_profile": {
+    "region_label": "Southern Arizona airspace",
+    "region_summary": "Tucson, Phoenix, and Fort Huachuca corridor",
+    "bounding_box": {
+      "lamin": 31.0,
+      "lomin": -113.0,
+      "lamax": 34.0,
+      "lomax": -109.0,
+      "area_sq_deg": 12
+    },
+    "coverage_note": "Configured area is under the 25 sq deg threshold used in the current pack assumptions for one credit per request."
+  },
+  "access_profile": {
+    "auth_mode": "anonymous",
+    "cadence_seconds": 300,
+    "cadence_note": "5-minute cadence keeps the feed well inside the anonymous daily budget.",
+    "credit_cost_per_request": 1,
+    "configured_requests_per_day": 288,
+    "configured_daily_credit_cost": 288,
+    "anonymous_daily_credit_limit": 400,
+    "nominal_credit_margin": 112,
+    "oauth2_token_url": "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
+  }
+}

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420" role="img" aria-label="Representative OpenSky feed adapter coverage graphic">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d9eefb"/>
+      <stop offset="100%" stop-color="#f6fbfe"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="420" fill="url(#sky)"/>
+  <rect x="86" y="68" width="548" height="284" rx="18" fill="#ffffff" stroke="#2f6f90" stroke-width="4"/>
+  <rect x="150" y="114" width="420" height="192" rx="14" fill="#eef7fb" stroke="#4d9cc2" stroke-width="3" stroke-dasharray="10 8"/>
+  <text x="360" y="102" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="24" fill="#154b63">Southern Arizona airspace feed window</text>
+  <text x="360" y="138" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#215f7c">Representative OpenSky Pattern C feed-adapter coverage graphic</text>
+  <path d="M220 250 L360 180 L500 240" fill="none" stroke="#4d9cc2" stroke-width="4"/>
+  <circle cx="220" cy="250" r="7" fill="#1f6f9c"/>
+  <circle cx="360" cy="180" r="7" fill="#1f6f9c"/>
+  <circle cx="500" cy="240" r="7" fill="#1f6f9c"/>
+  <path d="M272 210 l28 -8 34 -30 17 10 -26 16 -14 28 -16 -2 z" fill="#e26d5a" stroke="#9a3f30" stroke-width="2"/>
+  <path d="M424 228 l24 -7 28 -25 15 9 -21 13 -12 24 -14 -2 z" fill="#e26d5a" stroke="#9a3f30" stroke-width="2"/>
+  <text x="180" y="278" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#154b63">Tucson</text>
+  <text x="344" y="164" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#154b63">Phoenix</text>
+  <text x="458" y="266" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#154b63">Fort Huachuca</text>
+  <text x="360" y="340" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#215f7c">Use as a local representative asset when an official binary image is not bundled.</text>
+</svg>

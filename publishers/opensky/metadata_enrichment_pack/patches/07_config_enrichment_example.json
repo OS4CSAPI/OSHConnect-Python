@@ -1,0 +1,30 @@
+{
+  "opensky": {
+    "description": "OpenSky Network ADS-B state vector feed - southern Arizona airspace",
+    "region_label": "Southern Arizona airspace",
+    "region_summary": "Tucson, Phoenix, and Fort Huachuca corridor",
+    "bounding_box": {
+      "description": "Southern Arizona airspace covering Tucson, Phoenix, Fort Huachuca",
+      "lamin": 31.0,
+      "lomin": -113.0,
+      "lamax": 34.0,
+      "lomax": -109.0,
+      "area_sq_deg": 12,
+      "credit_cost_per_request": 1,
+      "note": "12 sq deg < 25 sq deg threshold -> 1 credit per request"
+    },
+    "cadence_seconds": 300,
+    "cadence_note": "5-minute cadence = 288 requests/day.",
+    "auth": {
+      "mode": "anonymous",
+      "note": "Anonymous: 400 credits/day, 10s time resolution. OAuth2 available for 4000 credits/day.",
+      "oauth2_token_url": "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
+    },
+    "daily_budget": {
+      "configured_requests_per_day": 288,
+      "configured_daily_credit_cost": 288,
+      "anonymous_credit_limit": 400,
+      "nominal_credit_margin": 112
+    }
+  }
+}
