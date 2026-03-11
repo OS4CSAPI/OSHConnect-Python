@@ -159,11 +159,13 @@ def _system_stub(config: dict) -> dict:
             "featureType": "sosa:Sensor",
             "name": "OpenSky ADS-B Feed — Southern Arizona",
             "description": (
-                f"Feed adapter system that publishes ADS-B aircraft state vectors from the "
-                f"OpenSky Network for a bounding box over southern Arizona "
-                f"(lat {bbox['lamin']}–{bbox['lamax']}, lon {bbox['lomin']}–{bbox['lomax']}). "
-                f"Each observation is one aircraft's state at one moment; the datastream "
-                f"contains a continuous flow of multi-aircraft state vectors."
+                f"Live aircraft surveillance via ADS-B (Automatic Dependent "
+                f"Surveillance–Broadcast). Aircraft transponders broadcast GPS position, "
+                f"altitude, speed, and heading on 1090 MHz. The OpenSky Network collects "
+                f"these broadcasts through ~30,000 crowd-sourced ground receivers and "
+                f"publishes them via REST API. This system queries every 5 minutes for "
+                f"aircraft in southern Arizona "
+                f"(lat {bbox['lamin']}–{bbox['lamax']}, lon {bbox['lomin']}–{bbox['lomax']})."
             ),
             "typeOf@link": {"href": "pending", "title": "OpenSky ADS-B Decoder v1"},
             "links": [
@@ -188,11 +190,15 @@ def _system_sml(config: dict) -> dict:
         "definition": "sosa:System",
         "label": "OpenSky ADS-B Feed — Southern Arizona",
         "description": (
-            "Feed adapter that publishes aircraft ADS-B state vectors from the OpenSky "
-            "Network. Covers southern Arizona airspace — Tucson, Phoenix, and Fort Huachuca. "
-            "This is a virtual system (Pattern C: feed adapter) — it does not represent a "
-            "single physical sensor but aggregates data from the crowd-sourced OpenSky "
-            "receiver network."
+            "Live aircraft positions over southern Arizona, collected via ADS-B "
+            "(Automatic Dependent Surveillance–Broadcast). Every aircraft with a "
+            "Mode S transponder continuously broadcasts its GPS position, altitude, "
+            "speed, and heading on 1090 MHz. The OpenSky Network aggregates these "
+            "broadcasts using a crowd-sourced network of ~30,000 volunteer-operated "
+            "ground receivers worldwide. This system queries the OpenSky REST API "
+            "every 5 minutes for all aircraft in the southern Arizona bounding box "
+            "(Tucson, Phoenix, Fort Huachuca) and publishes each aircraft's state "
+            "as an individual observation."
         ),
         "keywords": [
             "ADS-B", "OpenSky", "aircraft", "tracking", "airspace",
