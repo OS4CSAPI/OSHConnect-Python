@@ -1,0 +1,30 @@
+{
+  "verifiedDate": "2026-03-11",
+  "sourceUrl": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/latest-continuous/items?monitoring_location_id=USGS-09380000&parameter_code=00060&limit=2&f=json",
+  "feature": {
+    "properties": {
+      "id": "82cdec84-3a98-414f-9f08-e6f8e5309c66",
+      "time_series_id": "a62122d8ff094125b63bb2f73410b2b4",
+      "monitoring_location_id": "USGS-09380000",
+      "parameter_code": "00060",
+      "statistic_id": "00011",
+      "time": "2026-03-11T21:00:00+00:00",
+      "value": "8490",
+      "unit_of_measure": "ft^3/s",
+      "approval_status": "Provisional",
+      "qualifier": null,
+      "last_modified": "2026-03-11T21:11:25.114399+00:00"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        -111.58787222222222,
+        36.864333333333335
+      ]
+    }
+  },
+  "notes": [
+    "This is the key live evidence supporting future migration to latest-continuous for latest-only polling.",
+    "The response confirms statistic_id 00011 instantaneous semantics and exposes time_series_id and last_modified."
+  ]
+}

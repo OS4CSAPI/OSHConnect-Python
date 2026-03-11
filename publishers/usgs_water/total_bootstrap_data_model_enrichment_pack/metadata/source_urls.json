@@ -1,0 +1,34 @@
+{
+  "verifiedDate": "2026-03-11",
+  "core": {
+    "waterDataHome": "https://waterdata.usgs.gov/",
+    "ogcApiLandingJson": "https://api.waterdata.usgs.gov/ogcapi/v0?f=json",
+    "openApiHtml": "https://api.waterdata.usgs.gov/ogcapi/v0/openapi?f=html",
+    "collectionsHtml": "https://api.waterdata.usgs.gov/ogcapi/v0/collections?f=html",
+    "longFormDocs": "https://api.waterdata.usgs.gov/docs/ogcapi/",
+    "apiRegistration": "https://api.usgs.gov/",
+    "legacyNwisFallback": "https://waterservices.usgs.gov/nwis/iv/"
+  },
+  "collections": {
+    "monitoringLocations": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/monitoring-locations",
+    "continuous": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/continuous",
+    "latestContinuous": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/latest-continuous",
+    "timeSeriesMetadata": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/time-series-metadata",
+    "combinedMetadata": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/combined-metadata",
+    "parameterCodes": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/parameter-codes",
+    "statisticCodes": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/statistic-codes"
+  },
+  "workedExamples": {
+    "monitoringLocation09380000": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/monitoring-locations/items/USGS-09380000?f=json",
+    "latestContinuous09380000Discharge": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/latest-continuous/items?monitoring_location_id=USGS-09380000&parameter_code=00060&limit=2&f=json",
+    "timeSeries09380000Discharge": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/time-series-metadata/items?monitoring_location_id=USGS-09380000&parameter_code=00060&limit=2&f=json",
+    "combined09380000Discharge": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/combined-metadata/items?monitoring_location_id=USGS-09380000&parameter_code=00060&limit=2&f=json",
+    "parameter00060": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/parameter-codes/items/00060?f=json",
+    "statistic00011": "https://api.waterdata.usgs.gov/ogcapi/v0/collections/statistic-codes/items/00011?f=json"
+  },
+  "notes": [
+    "The package intentionally keeps only official USGS sources here.",
+    "The current active OGC API version path is v0 as verified on 2026-03-11.",
+    "Parameter-code items are useful references but do not fully replace time-series-metadata for current-series semantics."
+  ]
+}
