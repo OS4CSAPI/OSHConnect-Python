@@ -48,7 +48,7 @@ The deployment-scoped data query question spans Parts 1 and 2.
 
 ### 2.1  Deployment Basics (Part 1 — Uncontroversial)
 
-Part 1 defines the `Deployment` resource ([OGC 23-001, §7.5](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part1/standard/sections/clause_7_requirements_class_deployments.adoc)) with well-established endpoints:
+Part 1 defines the `Deployment` resource ([OGC 23-001, Clause 11](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-features)) with well-established endpoints:
 
 | Endpoint | Conformance Class | Mandatory? |
 |---|---|---|
@@ -58,15 +58,22 @@ Part 1 defines the `Deployment` resource ([OGC 23-001, §7.5](https://github.com
 
 These all work on OSH. No dispute here.
 
-### 2.2  The `deployment` Association on DataStreams (Part 2, Clause 8)
+**Part 1 already defines the foundation for deployment-scoped data access.** The Deployment resource's associations table ([OGC 23-001, Clause 11.2, Table 11](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-resource)) includes optional `datastreams` and `controlstreams` associations:
 
-Part 2 defines the DataStream resource's associations in a table (clause 8, "DataStream Associations"):
+> | `datastreams` | — | The Data Streams containing observations collected during the Deployment. | A list of DataStream resources. | **Optional** |
+> | `controlstreams` | — | The Control Streams that received commands issued during the Deployment. | A list of ControlStream resources. | **Optional** |
+
+The GeoJSON encoding (Part 1, Clause 19.1, Table 43) maps both associations to weblinks resolving to DataStream/ControlStream resources endpoints — the same endpoints that Part 2's mandatory requirements provide. Additionally, Part 1's Subdeployments requirements class ([Clause 12, Table 13](https://docs.ogc.org/is/23-001/23-001.html#clause-subdeployments)) specifies that for deployments with subdeployments, these associations **SHALL** recursively include resources from all subdeployments.
+
+### 2.2  The `deployment` Association on DataStreams (Part 2, Clause 9)
+
+Part 2 defines the DataStream resource's associations in a table ([OGC 23-002, Clause 9](https://docs.ogc.org/is/23-002/23-002.html), "DataStream Associations"):
 
 > | **Name** | **SOSA/SSN Property** | **Definition** | **Target Content** | **Usage** |
 > |---|---|---|---|---|
 > | `deployment` | — | The deployment during which the datastream was generated. | A single `Deployment` resource. | **Optional** |
 
-**Source**: [`clause_8_requirements_class_datastreams.adoc`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_8_requirements_class_datastreams.adoc), DataStream Associations table.
+**Source**: [OGC 23-002, Clause 9.2](https://docs.ogc.org/is/23-002/23-002.html) (DataStream Associations table); AsciiDoc source: [`clause_8_requirements_class_datastreams.adoc`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_8_requirements_class_datastreams.adoc).
 
 This means the standard explicitly models a deployment-to-datastream relationship. The keyword **Optional** means a server is not required to support this association, but if it does, the representation must include `deployment@link`.
 
@@ -79,13 +86,13 @@ The JSON Schema at [`dataStream.json`](https://github.com/opengeospatial/ogcapi-
 }
 ```
 
-The ControlStream resource has an identical optional `deployment` association ([clause 9](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_9_requirements_class_controlstreams.adoc), "ControlStream Associations table"):
+The ControlStream resource has an identical optional `deployment` association ([OGC 23-002, Clause 10](https://docs.ogc.org/is/23-002/23-002.html), ControlStream Associations table):
 
 > | `deployment` | — | The deployment during which the control stream was used. | A single `Deployment` resource. | **Optional** |
 
-### 2.3  The Deployment-Scoped DataStream Endpoint (Part 2, Clause 8) — The Critical Requirement
+### 2.3  The Deployment-Scoped DataStream Endpoint (Part 2, Clause 9) — The Critical Requirement
 
-Here is the most important normative text for this discussion, reproduced verbatim from [`clause_8_requirements_class_datastreams.adoc`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_8_requirements_class_datastreams.adoc), under "Nested DataStream Resources Endpoints":
+Here is the most important normative text for this discussion, from [OGC 23-002, Clause 9.4.3](https://docs.ogc.org/is/23-002/23-002.html) (Nested DataStream Resources Endpoints); AsciiDoc source: [`clause_8_requirements_class_datastreams.adoc`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_8_requirements_class_datastreams.adoc):
 
 > *"The set of datastreams associated to a specific deployment is available at a nested endpoint under the corresponding `Deployment` resource:"*
 >
@@ -99,9 +106,9 @@ Here is the most important normative text for this discussion, reproduced verbat
 
 This is a **SHALL** requirement — the strongest normative language in ISO/OGC standards. The condition is that the server implements the `deployment` requirement class from Part 1. It is not gated by a separate optional conformance class — it is part of the core "Datastreams & Observations" requirements class.
 
-### 2.4  The Deployment-Scoped ControlStream Endpoint (Part 2, Clause 9)
+### 2.4  The Deployment-Scoped ControlStream Endpoint (Part 2, Clause 10)
 
-An identical pattern exists for control streams in [`clause_9_requirements_class_controlstreams.adoc`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_9_requirements_class_controlstreams.adoc):
+An identical pattern exists for control streams ([OGC 23-002, Clause 10.4.3](https://docs.ogc.org/is/23-002/23-002.html); AsciiDoc source: [`clause_9_requirements_class_controlstreams.adoc`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_9_requirements_class_controlstreams.adoc)):
 
 > **Requirement `/req/controlstream/ref-from-deployment`**
 >
@@ -122,12 +129,12 @@ Through exhaustive review of the Part 2 specification text and OAS files, the fo
 | Proposed Endpoint/Parameter | In Standard? | Notes |
 |---|---|---|
 | `GET /deployments/{id}/observations` | **No** | Observations nest under datastreams, not deployments. No `/req/.../obs-ref-from-deployment` exists. |
-| `?deployment=` query parameter on `/datastreams` | **No** | The Advanced Filtering requirements class (clause 14) defines parameters `phenomenonTime`, `resultTime`, `observedProperty`, `foi`, `system` — but **not** `deployment`. |
+| `?deployment=` query parameter on `/datastreams` | **No** | The Advanced Filtering requirements class ([OGC 23-002, Clause 13](https://docs.ogc.org/is/23-002/23-002.html)) defines parameters `phenomenonTime`, `resultTime`, `observedProperty`, `foi`, `system` — but **not** `deployment`. |
 | `?deployment=` query parameter on `/observations` | **No** | Same — not defined in the Advanced Filtering requirements class. |
 
 The lack of a `deployment` query parameter on top-level endpoints is particularly significant — it means the **only** standard-defined way to get deployment-scoped datastreams is through the nested endpoint `GET /deployments/{depId}/datastreams`.
 
-The Advanced Filtering requirements class is defined in [`clause_14_requirements_class_advanced_filtering.adoc`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_14_requirements_class_advanced_filtering.adoc). The top-level DataStreams path (showing all accepted query parameters) is defined in [`dataStreams.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/dataStreams.yaml). The top-level Observations path is in [`observations.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/observations.yaml). None include a `deployment` parameter.
+The Advanced Filtering requirements class is defined in [OGC 23-002, Clause 13](https://docs.ogc.org/is/23-002/23-002.html) (AsciiDoc source: [`clause_14_requirements_class_advanced_filtering.adoc`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_14_requirements_class_advanced_filtering.adoc)). The top-level DataStreams path (showing all accepted query parameters) is defined in [`dataStreams.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/dataStreams.yaml). The top-level Observations path is in [`observations.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/observations.yaml). None include a `deployment` parameter.
 
 ### 2.6  OAS Gap: Missing Path File
 
@@ -145,7 +152,7 @@ Notably **absent**:
 - ~~`deploymentDataStreams.yaml`~~ — would define `/deployments/{depId}/datastreams`
 - ~~`deploymentControlStreams.yaml`~~ — would define `/deployments/{depId}/controlstreams`
 
-The normative text in clauses 8 and 9 **requires** these endpoints, but the non-normative OAS companion files **do not include them**. This is an internal inconsistency in the published standard materials. Implementors working from the OAS YAML rather than the normative AsciiDoc text would never discover these endpoints.
+The normative text in Clauses 9 and 10 **requires** these endpoints, but the non-normative OAS companion files **do not include them**. This is an internal inconsistency in the published standard materials. Implementors working from the OAS YAML rather than the normative text would never discover these endpoints.
 
 ### 2.7  Bundled OAS 3.1 YAML Cross-Check — Definitive Machine-Readable Confirmation
 
@@ -527,7 +534,7 @@ This is not just an OS4CSAPI issue. The OGC CSAPI standard is designed for inter
 
 ### 8.3  For Standards Body Attention
 
-- The normative text (clauses 8 and 9) mandates deployment-scoped endpoints
+- The normative text (Clauses 9 and 10) mandates deployment-scoped endpoints
 - The companion OAS YAML files do not include path definitions for these endpoints
 - This internal inconsistency should be addressed in a corrigendum or future revision
 - The question of whether `GET /deployments/{depId}/observations` SHOULD be added to the standard (it's a natural extension of the pattern defined for datastreams) is worth raising with the SWG
@@ -567,7 +574,9 @@ This is not just an OS4CSAPI issue. The OGC CSAPI standard is designed for inter
 
 ---
 
-## 11  Appendix: Spec Source References
+## 11  Appendix: Spec Source References and Research Methodology
+
+### 11.1  Authoritative Published Standards
 
 The authoritative published standards are hosted by OGC:
 
@@ -576,15 +585,49 @@ The authoritative published standards are hosted by OGC:
 | **OGC 23-001 — Part 1: Feature Resources** | [https://docs.ogc.org/is/23-001/23-001.html](https://docs.ogc.org/is/23-001/23-001.html) |
 | **OGC 23-002 — Part 2: Observation & Command Resources** | [https://docs.ogc.org/is/23-002/23-002.html](https://docs.ogc.org/is/23-002/23-002.html) |
 
-For line-level analysis of normative text, clause-level AsciiDoc source files and companion OpenAPI/JSON Schema files from the OGC GitHub repository ([opengeospatial/ogcapi-connected-systems](https://github.com/opengeospatial/ogcapi-connected-systems), branch: `master`) were consulted. These contain the same normative content used to generate the published HTML standards above:
+Both published HTML standards were fetched and reviewed in full on 2025-06-24. All clause references, requirement identifiers, and normative text cited in this report have been verified against the authoritative published documents. The normative content is identical to the AsciiDoc source files on GitHub.
+
+**Key published standard clause anchors** (deep-linkable):
+
+| Content | Published HTML Deep Link |
+|---|---|
+| Part 1, Clause 11 — Deployment Features | [23-001 §11](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-features) |
+| Part 1, Clause 11.2 — Deployment Resource | [23-001 §11.2](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-resource) |
+| Part 1, Clause 11.4 — Deployment Endpoints | [23-001 §11.4](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-resources-endpoint) |
+| Part 1, Clause 12 — Subdeployments | [23-001 §12](https://docs.ogc.org/is/23-001/23-001.html#clause-subdeployments) |
+| Part 2, Clause 9 — DataStreams & Observations | [23-002 §9](https://docs.ogc.org/is/23-002/23-002.html) |
+| Part 2, Clause 10 — ControlStreams & Commands | [23-002 §10](https://docs.ogc.org/is/23-002/23-002.html) |
+| Part 2, Clause 13 — Advanced Filtering | [23-002 §13](https://docs.ogc.org/is/23-002/23-002.html) |
+
+### 11.2  AsciiDoc Source File References
+
+For line-level analysis of normative text, clause-level AsciiDoc source files and companion OpenAPI/JSON Schema files from the OGC GitHub repository ([opengeospatial/ogcapi-connected-systems](https://github.com/opengeospatial/ogcapi-connected-systems), branch: `master`) were consulted. These contain the same normative content used to generate the published HTML standards above.
+
+**Important note on clause numbering:** The AsciiDoc source filenames (e.g., `clause_8_...`) do NOT match the published standard's clause numbers. The build process produces different numbering due to front-matter clauses. The mapping is:
+
+| Published Clause | Content | AsciiDoc Source File |
+|---|---|---|
+| Part 2, **Clause 9** | DataStreams & Observations | `clause_8_requirements_class_datastreams.adoc` |
+| Part 2, **Clause 10** | ControlStreams & Commands | `clause_9_requirements_class_controlstreams.adoc` |
+| Part 2, **Clause 13** | Advanced Filtering | `clause_14_requirements_class_advanced_filtering.adoc` |
+| Part 2, **Clause 7** | Overview | `clause_6_overview.adoc` |
+| Part 2, **Clause 16** | JSON Encoding | `clause_20_requirements_class_json_encoding.adoc` |
+| Part 1, **Clause 11** | Deployment Features | `clause_7_requirements_class_deployments.adoc` |
+
+**AsciiDoc source links:**
 
 | Reference | Link |
 |---|---|
-| Part 2, Clause 8 (DataStreams & Observations) | [clause_8_requirements_class_datastreams.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_8_requirements_class_datastreams.adoc) |
-| Part 2, Clause 9 (ControlStreams & Commands) | [clause_9_requirements_class_controlstreams.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_9_requirements_class_controlstreams.adoc) |
-| Part 2, Clause 14 (Advanced Filtering) | [clause_14_requirements_class_advanced_filtering.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_14_requirements_class_advanced_filtering.adoc) |
-| Part 2, Clause 6 (Overview) | [clause_6_overview.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_6_overview.adoc) |
-| Part 2, Clause 20 (JSON Encoding) | [clause_20_requirements_class_json_encoding.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_20_requirements_class_json_encoding.adoc) |
+| Part 2, Clause 9 (DataStreams & Observations) | [clause_8_requirements_class_datastreams.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_8_requirements_class_datastreams.adoc) |
+| Part 2, Clause 10 (ControlStreams & Commands) | [clause_9_requirements_class_controlstreams.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_9_requirements_class_controlstreams.adoc) |
+| Part 2, Clause 13 (Advanced Filtering) | [clause_14_requirements_class_advanced_filtering.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_14_requirements_class_advanced_filtering.adoc) |
+| Part 2, Clause 7 (Overview) | [clause_6_overview.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_6_overview.adoc) |
+| Part 2, Clause 16 (JSON Encoding) | [clause_20_requirements_class_json_encoding.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_20_requirements_class_json_encoding.adoc) |
+
+### 11.3  OpenAPI/JSON Schema References
+
+| Reference | Link |
+|---|---|
 | DataStream JSON Schema | [dataStream.json](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/schemas/json/dataStream.json) |
 | DataStream Create JSON Schema | [dataStream_create.json](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/schemas/json/dataStream_create.json) |
 | ControlStream JSON Schema | [controlStream.json](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/schemas/json/controlStream.json) |
@@ -597,3 +640,15 @@ For line-level analysis of normative text, clause-level AsciiDoc source files an
 | Part 2 Standard Sections Directory | [standard/sections/](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2/standard/sections) |
 | **Bundled OAS 3.1 — Part 1** (all `$ref`s resolved) | [ogcapi-connectedsystems-1.bundled.oas31.yaml](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) |
 | **Bundled OAS 3.1 — Part 2** (all `$ref`s resolved) | [ogcapi-connectedsystems-2.bundled.oas31.yaml](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml) |
+
+### 11.4  Research Methodology
+
+This report was researched using three complementary evidence layers:
+
+1. **Authoritative published HTML standards** at `docs.ogc.org` — the definitive normative text. Both OGC 23-001 and OGC 23-002 were fetched and read in full. All clause numbers, requirement identifiers, and normative language cited in this report reflect the published standard's numbering.
+
+2. **AsciiDoc source files** on GitHub — used for line-level analysis where the published HTML lacks granular anchor targets. The normative content is identical; only the clause numbering differs due to the build process (see §11.2).
+
+3. **Bundled OAS 3.1 YAML specifications** — single-file, all-`$ref`s-resolved OpenAPI documents providing the definitive machine-readable API surface. Cross-checked independently against both the individual OAS files and the normative text.
+
+4. **Live empirical testing** against the OSH reference implementation — `curl` commands via SSH, providing ground truth about what the server actually does.
