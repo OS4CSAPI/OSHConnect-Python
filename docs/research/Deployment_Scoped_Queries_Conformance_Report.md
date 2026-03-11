@@ -40,15 +40,15 @@ The Connected Systems API is defined across three normative documents:
 
 | Document | OGC Identifier | Scope |
 |---|---|---|
-| **Part 1: Feature Resources** | OGC 23-001 | Systems, Deployments, Procedures, Sampling Features |
-| **Part 2: Observation & Command Resources** | OGC 23-002 | DataStreams, Observations, ControlStreams, Commands |
-| **Part 3: Publish/Subscribe** | OGC 23-003 | WebSocket, MQTT real-time channels |
+| **Part 1: Feature Resources** | [OGC 23-001](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part1) | Systems, Deployments, Procedures, Sampling Features |
+| **Part 2: Observation & Command Resources** | [OGC 23-002](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2) | DataStreams, Observations, ControlStreams, Commands |
+| **Part 3: Publish/Subscribe** | [OGC 23-003](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part3) | WebSocket, MQTT real-time channels |
 
 The deployment-scoped data query question spans Parts 1 and 2.
 
 ### 2.1  Deployment Basics (Part 1 — Uncontroversial)
 
-Part 1 defines the `Deployment` resource (OGC 23-001, §7.5) with well-established endpoints:
+Part 1 defines the `Deployment` resource ([OGC 23-001, §7.5](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part1/standard/sections/clause_7_requirements_class_deployments.adoc)) with well-established endpoints:
 
 | Endpoint | Conformance Class | Mandatory? |
 |---|---|---|
@@ -398,7 +398,7 @@ In my initial summary of these findings, I used the phrase "the standard's aspir
 
 The word "aspirational" implies a wish, a goal, a direction — something that might be implemented someday. That is **not** what the OGC CSAPI standard is.
 
-OGC 23-002 (Part 2) is a normative standard. Requirement `/req/datastream/ref-from-deployment` uses the word **SHALL**, which in ISO/OGC standards language means "mandatory requirement." It is not a recommendation. It is not a future consideration. It is a binding obligation on any server that claims both `conf/deployment` and `conf/datastream`.
+[OGC 23-002](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2) (Part 2) is a normative standard. Requirement `/req/datastream/ref-from-deployment` uses the word **SHALL**, which in ISO/OGC standards language means "mandatory requirement." It is not a recommendation. It is not a future consideration. It is a binding obligation on any server that claims both `conf/deployment` and `conf/datastream`.
 
 The correct characterization is:
 
@@ -412,7 +412,7 @@ The reason developers experience these requirements as aspirational rather than 
 
 **Factor 2: The companion OAS YAML files are incomplete.** The normative text says the endpoint SHALL exist, but the non-normative OpenAPI Specification companion files don't include `deploymentDataStreams.yaml` or `deploymentControlStreams.yaml`. Developers who generate client code from the OAS (a standard practice) will never see these endpoints. This creates an internal inconsistency in the published standard materials where the normative text mandates endpoints that the companion OAS doesn't define.
 
-**Factor 3: The standard is newly published.** OGC 23-001/23-002/23-003 are relatively new. The [OSH development team](https://github.com/opensensorhub) (led by Alex Robin at [Botts Innovative Research / GeoRobotix](https://www.georobotix.com/)) is actively implementing these parts. Some requirements are implemented; some are not yet. This is normal for new standards, but it means the "standard says X" and "software does X" sets have imperfect overlap.
+**Factor 3: The standard is newly published.** [OGC 23-001](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part1)/[23-002](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2)/[23-003](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part3) are relatively new. The [OSH development team](https://github.com/opensensorhub) (led by Alex Robin at [Botts Innovative Research / GeoRobotix](https://www.georobotix.com/)) is actively implementing these parts. Some requirements are implemented; some are not yet. This is normal for new standards, but it means the "standard says X" and "software does X" sets have imperfect overlap.
 
 ### 5.3  The Correct Mental Model for Developers
 
