@@ -33,3 +33,13 @@ services:
     environment:
       <<: *osh-env
     command: ["--interval", "3600"]
+
+  usgs-water:
+    build:
+      context: ..
+      dockerfile: publishers/usgs_water/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+      # USGS_API_KEY: "${USGS_API_KEY:-}"
+    command: ["--interval", "900"]

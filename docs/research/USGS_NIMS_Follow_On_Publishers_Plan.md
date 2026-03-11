@@ -152,14 +152,18 @@ Normalize around a compact common observation shape:
 
 ### 7.5 Acceptance Criteria
 
-- [ ] Creates valid CSAPI metadata resources (procedure, deployment hierarchy, systems, datastreams)
-- [ ] Publishes at least one numeric datastream per selected station
-- [ ] Handles pagination correctly (follows `next` links)
-- [ ] Uses API key correctly (query parameter or `X-Api-Key` header)
-- [ ] Produces stable observations for at least one full polling cycle
+- [x] Creates valid CSAPI metadata resources (procedure, deployment hierarchy, systems, datastreams)
+- [x] Publishes at least one numeric datastream per selected station
+- [x] Handles pagination correctly (follows `next` links)
+- [x] Uses API key correctly (query parameter or `X-Api-Key` header)
+- [x] Produces stable observations for at least one full polling cycle
 - [ ] Stations visible in Explorer with correct map positions and data
 
 **Exit criteria:** Water publisher running on VM, observations flowing, visible in Explorer.
+
+> **Phase 1 Status (2026-03-11):** Bootstrap complete (35 resources), publisher tested locally
+> (13/14 published OK, 1 transient timeout, 2 seasonal no-data). Code committed `4e3bb1e`.
+> VM deployment pending (manual SSH step). Explorer verification pending.
 
 ---
 
