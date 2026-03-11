@@ -1,0 +1,69 @@
+{
+    "aviation_wx_stations": [
+        {
+            "icao_id": "KTUS",
+            "name": "Tucson International Airport",
+            "city": "Tucson",
+            "state": "AZ",
+            "lat": 32.1315,
+            "lon": -110.9564,
+            "elev_m": 776,
+            "faa_id": "TUS",
+            "station_type": "ASOS",
+            "station_url": "https://aviationweather.gov/metar/data?ids=KTUS",
+            "airport_diagram": "https://aeronav.faa.gov/d-tpp/2506/00664AD.PDF"
+        },
+        {
+            "icao_id": "KDMA",
+            "name": "Davis-Monthan Air Force Base",
+            "city": "Tucson",
+            "state": "AZ",
+            "lat": 32.165,
+            "lon": -110.887,
+            "elev_m": 804,
+            "faa_id": "DMA",
+            "station_type": "ASOS",
+            "station_url": "https://aviationweather.gov/metar/data?ids=KDMA",
+            "airport_diagram": "https://aeronav.faa.gov/d-tpp/2506/00161AD.PDF"
+        },
+        {
+            "icao_id": "KFHU",
+            "name": "Sierra Vista Municipal Airport / Fort Huachuca",
+            "city": "Sierra Vista",
+            "state": "AZ",
+            "lat": 31.586,
+            "lon": -110.348,
+            "elev_m": 1424,
+            "faa_id": "FHU",
+            "station_type": "ASOS",
+            "station_url": "https://aviationweather.gov/metar/data?ids=KFHU",
+            "airport_diagram": "https://aeronav.faa.gov/d-tpp/2506/05773AD.PDF"
+        },
+        {
+            "icao_id": "KLUF",
+            "name": "Luke Air Force Base",
+            "city": "Glendale",
+            "state": "AZ",
+            "lat": 33.538,
+            "lon": -112.38,
+            "elev_m": 333,
+            "faa_id": "LUF",
+            "station_type": "ASOS",
+            "station_url": "https://aviationweather.gov/metar/data?ids=KLUF",
+            "airport_diagram": "https://aeronav.faa.gov/d-tpp/2506/00402AD.PDF"
+        },
+        {
+            "icao_id": "KPHX",
+            "name": "Phoenix Sky Harbor International Airport",
+            "city": "Phoenix",
+            "state": "AZ",
+            "lat": 33.4278,
+            "lon": -112.0037,
+            "elev_m": 338,
+            "faa_id": "PHX",
+            "station_type": "ASOS",
+            "station_url": "https://aviationweather.gov/metar/data?ids=KPHX",
+            "airport_diagram": "https://aeronav.faa.gov/d-tpp/2506/00562AD.PDF"
+        }
+    ]
+}
