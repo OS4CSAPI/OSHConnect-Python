@@ -7,7 +7,7 @@
 | **Status** | Corrective Report — Errata to Prior Work |
 | **Scope** | Whether deployment-scoped data query endpoints exist in the OGC CSAPI standard, what the standard mandates, and what the reference implementation (OSH) actually supports |
 | **Corrects** | [CSAPI_Deployed_Systems_Design_Pattern.md](CSAPI_Deployed_Systems_Design_Pattern.md) §3.2, §7.3, §9.1, §10 |
-| **Related Reports** | See §10 |
+| **Related Reports** | See §11 |
 
 ---
 
@@ -515,24 +515,115 @@ The following table identifies every claim in [CSAPI_Deployed_Systems_Design_Pat
 
 ---
 
-## 8  The Broader Impact: What This Means for Any CSAPI Implementor
+## 8  Reassessment: Design Alternatives in Light of Conformance Findings
+
+The prior report [CSAPI_Deployed_Systems_Design_Pattern.md](CSAPI_Deployed_Systems_Design_Pattern.md) §8 compared four design alternatives for modeling deployed systems in the CSAPI. That comparison assumed deployment-scoped data endpoints worked on OSH. Now that the empirical testing in §3 and the normative analysis in §2 have established exactly what works and what doesn't, every pro and con from that comparison deserves a re-evaluation.
+
+This section recreates the original comparison tables with two additional columns — **"Still Valid?"** and **"Assessment"** — reflecting our current understanding after reading both published standards in full and testing every endpoint on OSH.
+
+### 8.1  Alternative A: Systems Only, No Deployments
+
+The simplest approach — interact with systems directly, skip deployments entirely.
+
+| Claim | Type | Still Valid? | Assessment |
+|---|---|---|---|
+| Simpler — fewer resources to create | Pro | **Yes** | Objectively true. You skip creating deployments, subdeployments, and wiring `platform@link`. |
+| No organizational hierarchy | Con | **Yes** | Systems model *physical composition* (subsystems). They cannot model operational structure (net → string → node). The spec deliberately separates these concerns — [Part 1 Clause 11](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-features) (Deployments) vs Clause 8 (Systems). |
+| No per-role observation scoping | Con | **Partially** | The standard defines `GET /deployments/{id}/datastreams` as a SHALL requirement (see §2.3), so the spec *intends* per-role scoping. But OSH doesn't implement it (returns 400 — see §3.3.1). Today, even with deployments, you don't get per-role observation scoping in a single call — you must multi-hop through `platform@link` → system → datastreams (see §6). The con is real in principle, but the deployment advantage doesn't materialize on OSH yet. |
+| No temporal scoping by deployment period | Con | **Yes** | Deployments carry `validTime`. Systems don't have an equivalent "when was I fielded here?" concept. This works on OSH today. |
+| Hardware swap breaks all queries | Con | **Yes** | The strongest argument for deployments and 100% valid. If MA-1 is replaced by MA-4 at Node 1, with systems-only you lose continuity entirely — different system ID, different datastream IDs, no persistent identifier for the role. With deployments, you update `platform@link` and the deployment persists as the role identifier. |
+| "Which systems are deployed at Ft Huachuca?" has no standard answer | Con | **Yes** | `GET /deployments?bbox=...` works today on OSH. No equivalent filter exists on systems for "currently deployed at location X." |
+| System hierarchy models physical composition, not operational structure | Con | **Yes** | Core design intent of the standard. Systems = what exists (physical inventory). Deployments = what's fielded (operational context). |
+
+**Bottom line:** The cons are largely real. Even without deployment-scoped data endpoints working, deployments provide organizational hierarchy, temporal scoping, spatial scoping, role continuity, and a persistent identifier for "what's at this position." You just can't shortcut to the *data* through the deployment layer in a single hop today.
+
+### 8.2  Alternative B: Organization Modeled in System Hierarchy
+
+Model operational organization (sensor networks, strings, nodes) as a system hierarchy instead of using deployments.
+
+| Claim | Type | Still Valid? | Assessment |
+|---|---|---|---|
+| One hierarchy to think about | Pro | **Yes** | Simpler mental model, but at the costs described below. |
+| Reparenting costs thousands of API calls + data migration | Con | **Yes** | Proven in the [Reparenting Feasibility report](CSAPI_Deployment_Reparenting_Feasibility.md). Moving a system in the hierarchy means moving all its datastreams, observations, control streams, and commands. Moving a deployment requires ~12 API calls. |
+| Sensor Net and String Alpha aren't really "systems" | Con | **Yes** | The OGC standard defines a System as something with sensors, actuators, or processes. An organizational grouping like "String Alpha" is not a system — it's an operational construct. Modeling it as a system is a semantic mismatch with the spec's data model. |
+| Conflates physical composition with operational organization | Con | **Yes** | Same fundamental problem from a different angle. The spec deliberately separates these concerns across [Part 1 Clause 8](https://docs.ogc.org/is/23-001/23-001.html) (Systems) and [Clause 11](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-features) (Deployments). |
+
+**Bottom line:** All claims remain valid. This is the worst option — it misuses the System resource for something the Deployment resource was designed to do, and creates catastrophic reparenting costs.
+
+### 8.3  Alternative C: Flat Deployment with `deployedSystems` (ChatGPT's "Doctrinal Minimalism")
+
+A single flat deployment listing multiple systems via `deployedSystems@link`, rather than one-deployment-per-node with subdeployment hierarchy.
+
+| Claim | Type | Still Valid? | Assessment |
+|---|---|---|---|
+| Minimal resource count | Pro | **Yes** | Fewer resources to create than one-deployment-per-node. |
+| OSH silently drops `deployedSystems@link` | Con | **Yes** | Proven by the [DeployedSystems Conformance Probe](OSH_DeployedSystems_Conformance_Probe.md). You can POST it, but OSH doesn't persist it. The data disappears silently — no error, no warning. |
+| No per-node observation scoping | Con | **Yes** | A flat deployment with 3 systems linked gives you no way to ask "what is Node 1 specifically seeing?" — you'd get all 3 systems' data mixed together. |
+| No per-node temporal validity | Con | **Yes** | One flat deployment can't track that MA-1 was at Node 1 from Jan–Jun and MA-4 from Jul onward. |
+| Doesn't survive contact with the implementation | Con | **Yes** | Since `deployedSystems@link` is silently dropped by OSH, this entire approach is dead on arrival with the reference implementation. |
+
+**Bottom line:** All claims remain valid. This approach doesn't work on OSH, period. Even if OSH added `deployedSystems` support, it would still lack per-node scoping and temporal granularity.
+
+### 8.4  The Recommended Pattern: 1:1 Deployment Pairing — Updated Assessment
+
+One deployment per operationally significant system, with `platform@link` wiring, organized via subdeployment hierarchy. This is the pattern analyzed throughout this report.
+
+| Claim | Type | Still Valid? | Assessment |
+|---|---|---|---|
+| Per-node observation scoping | Pro | **In principle only** | The standard says `GET /deployments/{id}/datastreams` SHALL work (see §2.3). OSH returns 400 (see §3.3.1). Today, you do NOT get per-node observation scoping through the deployment layer in a single call. You must resolve `platform@link` → system → datastreams (see §6). The *wiring* is correct; the *shortcut* doesn't work yet. |
+| Organizational hierarchy | Pro | **Yes — works today** | `GET /deployments/{id}/subdeployments` works on OSH. You can navigate net → string → node. Tested and functional (§3.3.1). |
+| Role continuity across hardware swaps | Pro | **Yes — works today** | Update `platform@link` on the deployment. The deployment ID persists as the role identifier. This is the killer feature of the pattern and it works right now. |
+| Temporal scoping per deployment | Pro | **Yes — works today** | `validTime` on deployments works. You can query `?validTime=now` or specific time ranges. |
+| Cheap to rearrange (~12 API calls per move) | Pro | **Yes — works today** | Deployment reparenting is cheap; system reparenting is catastrophically expensive. Proven in the [Reparenting Feasibility report](CSAPI_Deployment_Reparenting_Feasibility.md). |
+| Standards-conformant | Pro | **Yes, but nuanced** | The 1:1 pairing pattern itself is 100% spec-conformant: `platform@link`, subdeployments, and deployment hierarchy are all spec-defined and OSH-implemented. The deployment-scoped data endpoints are also spec-defined (SHALL language) but not OSH-implemented. The pattern is conformant; the server has a conformance gap. |
+| Works on OSH today | Pro | **Partially** | The hierarchy and wiring work today. The deployment-scoped data shortcuts do not. This should read: "pattern works; deployment-scoped data queries await OSH implementation." |
+| Forward-compatible with `deployedSystems` if OSH adds it | Pro | **Yes** | The pattern doesn't conflict with `deployedSystems`; the two approaches are additive. |
+| More resources to create (one deployment per significant system) | Con | **Yes** | Real cost — you're maintaining a parallel hierarchy of deployments alongside your systems. |
+| `deployment@link` must be set on every datastream | Con | **Broken today** | OSH rejects `deployment@link` on datastream PUT with HTTP 400 (§3.3.2). You literally *cannot* do this step right now. However, even without `deployment@link`, the multi-hop path (`platform@link` → system → datastreams) still works as a fallback (§6). |
+
+**Bottom line:** The pattern is still the right choice. Five of its eight "pros" work today on OSH. Two are blocked by OSH's conformance gap (deployment-scoped data queries and `deployment@link` write support) — they are spec-mandated but not yet implemented. One (forward-compatibility with `deployedSystems`) is future-oriented. Both cons are real.
+
+### 8.5  What Actually Works Today vs. What's Waiting on OSH
+
+| Capability | Works Today? | Depends On |
+|---|---|---|
+| Deployment CRUD (create, read, update, delete) | **Yes** | — |
+| Subdeployment hierarchy (net → string → node) | **Yes** | — |
+| `platform@link` wiring (deployment → system) | **Yes** | — |
+| Navigating deployment → `platform@link` → system → datastreams (multi-hop) | **Yes** | Client-side resolution (see §6) |
+| `validTime` temporal scoping on deployments | **Yes** | — |
+| `GET /deployments/{id}/datastreams` (single-hop data access) | **No** — 400 | OSH implementing `/req/datastream/ref-from-deployment` |
+| `deployment@link` on datastreams (write) | **No** — 400 | OSH accepting the JSON schema property |
+| `GET /deployments/{id}/observations` | **Never** | Not in the standard — observations always nest under datastreams, not directly under deployments or systems |
+
+### 8.6  The Verdict
+
+The 1:1 deployment pairing pattern remains the correct architecture. The OGC standard was explicitly designed for this separation — [Part 1 Clause 11](https://docs.ogc.org/is/23-001/23-001.html#clause-deployment-features) defines deployments with optional `datastreams`/`controlstreams` associations (Table 11), and [Part 2 Clause 9](https://docs.ogc.org/is/23-002/23-002.html) mandates deployment-scoped data endpoints with SHALL language.
+
+The practical reality today: you build the deployment hierarchy (that works), wire `platform@link` (that works), and when a user asks "what is Node 1 seeing?", your code resolves `deployment → platform@link → system → datastreams → observations` in multiple hops instead of one. When OSH catches up to the spec, that multi-hop path collapses to a single call, and your architecture doesn't change at all.
+
+The prior report's §8 comparison still recommends the right choice. Two of its listed "pros" are currently theoretical rather than practical. Everything else — hierarchy, role continuity, temporal scoping, cheap reparenting — is real and working right now.
+
+---
+
+## 9  The Broader Impact: What This Means for Any CSAPI Implementor
 
 This is not just an OS4CSAPI issue. The OGC CSAPI standard is designed for interoperability across the entire geospatial community. Every developer building a CSAPI client or server needs to understand these findings:
 
-### 8.1  For Client Library Developers
+### 9.1  For Client Library Developers
 
 - **Do not assume** all SHALL requirements in the normative text are implemented by a given server
 - **Always check** the conformance endpoint (`GET /conformance`) and validate empirically — a server declaring a conformance class may still lack individual requirements within that class
 - **Follow link relations** advertised in resource representations. If a deployment resource does not include a `datastreams` link relation, the endpoint likely doesn't work on that server
 - **Implement graceful fallback** for Tier 2 endpoints (see §5.3 and §6.3)
 
-### 8.2  For Server Implementors
+### 9.2  For Server Implementors
 
 - OSH's missing implementation of `/req/datastream/ref-from-deployment` is a conformance gap that should be reported to the [OSH development team](https://github.com/opensensorhub)
 - The absence of `deploymentDataStreams.yaml` and `deploymentControlStreams.yaml` in the OAS companion files may contribute to implementors overlooking these requirements
 - The relevant GitHub issue tracker is: [opengeospatial/ogcapi-connected-systems/issues](https://github.com/opengeospatial/ogcapi-connected-systems/issues)
 
-### 8.3  For Standards Body Attention
+### 9.3  For Standards Body Attention
 
 - The normative text (Clauses 9 and 10) mandates deployment-scoped endpoints
 - The companion OAS YAML files do not include path definitions for these endpoints
@@ -541,9 +632,9 @@ This is not just an OS4CSAPI issue. The OGC CSAPI standard is designed for inter
 
 ---
 
-## 9  Summary: The Definitive Answer
+## 10  Summary: The Definitive Answer
 
-### 9.1  Quick Reference Table
+### 10.1  Quick Reference Table
 
 | Query | In OGC Standard? | Spec Requirement ID | OSH Tested | OSH Result | Tier |
 |---|---|---|---|---|---|
@@ -556,13 +647,13 @@ This is not just an OS4CSAPI issue. The OGC CSAPI standard is designed for inter
 | `PUT /datastreams/{id}` with `deployment@link` | Yes (JSON schema) | Schema-level, optional | Yes | **400** — empty body | **Tier 2** |
 | `GET /datastreams?deployment={id}` | **No** | None | Yes | 200 but **filter ignored** (60 items regardless) | **Tier 3** |
 
-### 9.2  One-Line Answer
+### 10.2  One-Line Answer
 
 **The OGC CSAPI standard requires `GET /deployments/{id}/datastreams` as a SHALL-level mandate. OSH does not implement it. `GET /deployments/{id}/observations` doesn't exist in the standard at all. Plan accordingly.**
 
 ---
 
-## 10  Related Reports
+## 11  Related Reports
 
 | Report | Relevance |
 |---|---|
@@ -574,9 +665,9 @@ This is not just an OS4CSAPI issue. The OGC CSAPI standard is designed for inter
 
 ---
 
-## 11  Appendix: Spec Source References and Research Methodology
+## 12  Appendix: Spec Source References and Research Methodology
 
-### 11.1  Authoritative Published Standards
+### 12.1  Authoritative Published Standards
 
 The authoritative published standards are hosted by OGC:
 
@@ -599,7 +690,7 @@ Both published HTML standards were fetched and reviewed in full on 2025-06-24. A
 | Part 2, Clause 10 — ControlStreams & Commands | [23-002 §10](https://docs.ogc.org/is/23-002/23-002.html) |
 | Part 2, Clause 13 — Advanced Filtering | [23-002 §13](https://docs.ogc.org/is/23-002/23-002.html) |
 
-### 11.2  AsciiDoc Source File References
+### 12.2  AsciiDoc Source File References
 
 For line-level analysis of normative text, clause-level AsciiDoc source files and companion OpenAPI/JSON Schema files from the OGC GitHub repository ([opengeospatial/ogcapi-connected-systems](https://github.com/opengeospatial/ogcapi-connected-systems), branch: `master`) were consulted. These contain the same normative content used to generate the published HTML standards above.
 
@@ -624,7 +715,7 @@ For line-level analysis of normative text, clause-level AsciiDoc source files an
 | Part 2, Clause 7 (Overview) | [clause_6_overview.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_6_overview.adoc) |
 | Part 2, Clause 16 (JSON Encoding) | [clause_20_requirements_class_json_encoding.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_20_requirements_class_json_encoding.adoc) |
 
-### 11.3  OpenAPI/JSON Schema References
+### 12.3  OpenAPI/JSON Schema References
 
 | Reference | Link |
 |---|---|
@@ -641,13 +732,13 @@ For line-level analysis of normative text, clause-level AsciiDoc source files an
 | **Bundled OAS 3.1 — Part 1** (all `$ref`s resolved) | [ogcapi-connectedsystems-1.bundled.oas31.yaml](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) |
 | **Bundled OAS 3.1 — Part 2** (all `$ref`s resolved) | [ogcapi-connectedsystems-2.bundled.oas31.yaml](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml) |
 
-### 11.4  Research Methodology
+### 12.4  Research Methodology
 
 This report was researched using three complementary evidence layers:
 
 1. **Authoritative published HTML standards** at `docs.ogc.org` — the definitive normative text. Both OGC 23-001 and OGC 23-002 were fetched and read in full. All clause numbers, requirement identifiers, and normative language cited in this report reflect the published standard's numbering.
 
-2. **AsciiDoc source files** on GitHub — used for line-level analysis where the published HTML lacks granular anchor targets. The normative content is identical; only the clause numbering differs due to the build process (see §11.2).
+2. **AsciiDoc source files** on GitHub — used for line-level analysis where the published HTML lacks granular anchor targets. The normative content is identical; only the clause numbering differs due to the build process (see §12.2).
 
 3. **Bundled OAS 3.1 YAML specifications** — single-file, all-`$ref`s-resolved OpenAPI documents providing the definitive machine-readable API surface. Cross-checked independently against both the individual OAS files and the normative text.
 
