@@ -187,49 +187,148 @@ def _system_stub(station: dict, proc_id: str) -> dict:
 
 
 def _system_sml(station: dict) -> dict:
-    """SensorML body for rich system metadata."""
+    """SensorML body for rich system metadata.
+
+    Field shapes follow the SensorML JSON encoding expected by OSH SensorHub:
+      - contacts use ``organisationName`` (British spelling) and nested ``contactInfo``
+      - documents use ``"documents"`` key with ``link: {href, type}``
+      - characteristics are grouped SWE DataComponent trees
+      - identifiers / classifiers carry ``definition`` URIs
+    """
     station_id = station["id"].upper()
     station_type = station.get("station_type", "ASOS/AWOS")
+    elev_m = station.get("elev_m", 0)
     return {
         "type": "PhysicalSystem",
         "id": _system_uid(station["id"]),
         "uniqueId": _system_uid(station["id"]),
+        "definition": "sosa:System",
         "label": f"NWS {station_id} \u2014 {station['name']}",
         "description": (
             f"{station_type} surface weather observing station at {station['name']} ({station_id}). "
             "The NWS ASOS program is operated collaboratively by NWS, FAA, and DoD. "
             "This station resource represents the local observing system exposed through api.weather.gov."
         ),
+        "keywords": [
+            "NWS", "NOAA", "ASOS", "AWOS", "METAR",
+            "weather", "surface observation", station_id,
+        ],
         "identifiers": [
-            {"label": "OS4CSAPI UID", "value": _system_uid(station['id'])},
-            {"label": "NWS Station Identifier", "value": station_id},
+            {"definition": "http://sensorml.com/ont/swe/property/ShortName",
+             "label": "Short Name", "value": f"NWS {station_id}"},
+            {"definition": "http://sensorml.com/ont/swe/property/LongName",
+             "label": "Long Name", "value": f"NWS {station_id} — {station['name']}"},
+            {"definition": "http://sensorml.com/ont/swe/property/ModelNumber",
+             "label": "NWS Station Identifier", "value": station_id},
+            {"definition": "http://sensorml.com/ont/swe/property/UniqueID",
+             "label": "OS4CSAPI UID", "value": _system_uid(station['id'])},
         ],
         "classifiers": [
-            {"label": "System Type", "value": station_type},
-            {"label": "Operator", "value": "National Weather Service"},
-            {"label": "Program", "value": "ASOS / AWOS Surface Weather Observation Network"},
+            {"definition": "http://sensorml.com/ont/swe/property/SensorType",
+             "label": "System Type", "value": station_type},
+            {"definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+             "label": "Network", "value": "ASOS / AWOS Surface Weather Observation Network"},
+            {"definition": "http://sensorml.com/ont/swe/property/SystemRole",
+             "label": "Operator", "value": "National Weather Service"},
         ],
         "contacts": [
-            {"role": "operator", "organizationName": "National Weather Service", "website": NWS_API_BASE},
-            {"role": "support", "organizationName": "ASOS Operations and Monitoring Center", "email": NWS_AOMC_EMAIL},
+            {
+                "role": "http://sensorml.com/ont/swe/property/Operator",
+                "organisationName": "National Weather Service",
+                "contactInfo": {
+                    "website": NWS_API_BASE,
+                },
+            },
+            {
+                "role": "http://sensorml.com/ont/swe/property/Maintainer",
+                "organisationName": "ASOS Operations and Monitoring Center",
+                "contactInfo": {
+                    "website": NWS_ASOS_CONTACT,
+                    "phone": {"voice": NWS_AOMC_PHONE_1},
+                    "address": {"country": "United States"},
+                },
+            },
         ],
-        "documentation": [
-            {"name": "NWS Station Resource", "url": _station_api_url(station_id)},
-            {"name": "Latest Observation", "url": _station_latest_obs_url(station_id)},
-            {"name": "Observation History", "url": _station_observations_url(station_id)},
-            {"name": "NWS Points Discovery", "url": _points_url(station['lat'], station['lon'])},
-            {"name": "NWS API Web Service", "url": NWS_API_DOCS},
-            {"name": "ASOS Program", "url": NWS_ASOS_PAGE},
-            {"name": "ASOS Equipment FAQ", "url": NWS_ASOS_EQUIP},
+        "documents": [
+            {
+                "role": "http://dbpedia.org/resource/Photograph",
+                "name": "ASOS Station Image",
+                "description": "Representative photograph of a typical NWS ASOS observing installation.",
+                "link": {"href": NWS_ASOS_IMAGE, "type": "image/png"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "NWS Station Resource",
+                "description": f"NWS API resource for station {station_id}.",
+                "link": {"href": _station_api_url(station_id), "type": "application/geo+json"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "Latest Observation",
+                "description": f"Most recent surface observation from {station_id}.",
+                "link": {"href": _station_latest_obs_url(station_id), "type": "application/geo+json"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "Observation History",
+                "description": f"Archived observations from {station_id} via api.weather.gov.",
+                "link": {"href": _station_observations_url(station_id), "type": "application/geo+json"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "NWS API Web Service",
+                "description": "Documentation for the NWS weather.gov web API.",
+                "link": {"href": NWS_API_DOCS, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "ASOS Program",
+                "description": "NWS ASOS program overview page.",
+                "link": {"href": NWS_ASOS_PAGE, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "ASOS Equipment FAQ",
+                "description": "NWS ASOS equipment and sensor FAQ.",
+                "link": {"href": NWS_ASOS_EQUIP, "type": "text/html"},
+            },
         ],
         "characteristics": [
-            {"label": "Reporting Cadence", "value": "Hourly routine observations plus special observations as conditions warrant"},
-            {"label": "Latency Note", "value": "API observations may lag upstream MADIS availability by up to about 20 minutes"},
-            {"label": "Representative Image", "value": NWS_ASOS_IMAGE},
+            {
+                "label": "Station Properties",
+                "characteristics": [
+                    {"type": "Text", "name": "reporting_cadence",
+                     "definition": "http://sensorml.com/ont/swe/property/ReportingFrequency",
+                     "label": "Reporting Cadence",
+                     "value": "Hourly routine observations plus special observations as conditions warrant"},
+                    {"type": "Text", "name": "latency_note",
+                     "definition": "http://sensorml.com/ont/swe/property/DataLatency",
+                     "label": "Latency Note",
+                     "value": "API observations may lag upstream MADIS availability by up to about 20 minutes"},
+                    {"type": "Quantity", "name": "station_elevation",
+                     "definition": "http://sensorml.com/ont/swe/property/Elevation",
+                     "label": "Station Elevation",
+                     "uom": {"code": "m"}, "value": elev_m},
+                ],
+            },
+        ],
+        "capabilities": [
+            {
+                "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+                "label": "Publisher Capabilities",
+                "capabilities": [
+                    {"type": "Quantity", "name": "update_interval",
+                     "definition": "http://qudt.org/vocab/quantitykind/Period",
+                     "label": "Publish Interval", "uom": {"code": "s"}, "value": 300.0},
+                    {"type": "Text", "name": "data_source",
+                     "definition": "http://sensorml.com/ont/swe/property/DataSource",
+                     "label": "Data Source", "value": "api.weather.gov station observations"},
+                ],
+            },
         ],
         "position": {
             "type": "Point",
-            "coordinates": [station["lon"], station["lat"], station.get("elev_m", 0)],
+            "coordinates": [station["lon"], station["lat"], elev_m],
             "srsName": "http://www.opengis.net/def/crs/EPSG/0/4979",
         },
     }
@@ -378,7 +477,8 @@ def clean_all(base_url: str, auth: str, stations: list[dict],
                    dry_run=dry_run, stats=stats)
 
 
-def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = False):
+def bootstrap(*, clean: bool = False, clean_only: bool = False,
+              dry_run: bool = False, force_sml: bool = False):
     """Main bootstrap entry point."""
     config = get_config()
     base_url = config["base_url"]
@@ -393,7 +493,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = 
     print("=" * 70)
     print(f"  Server:    {base_url}")
     print(f"  Stations:  {len(stations)} ({', '.join(s['id'] for s in stations)})")
-    print(f"  Clean:     {clean}  Clean-only: {clean_only}  Dry-run: {dry_run}")
+    print(f"  Clean:     {clean}  Clean-only: {clean_only}  Dry-run: {dry_run}  Force-SML: {force_sml}")
     print()
 
     # ── Clean ─────────────────────────────────────────────────────────
@@ -421,7 +521,8 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = 
         sml = _system_sml(st)
 
         sys_id = ensure_system(base_url, auth, uid, stub, sml,
-                               dry_run=dry_run, stats=stats)
+                               dry_run=dry_run, stats=stats,
+                               force_sml=force_sml)
         system_ids[st["id"]] = sys_id
 
         if sys_id or dry_run:
@@ -462,6 +563,7 @@ def main():
         clean=args.clean,
         clean_only=args.clean_only,
         dry_run=args.dry_run,
+        force_sml=args.force_sml,
     )
 
 

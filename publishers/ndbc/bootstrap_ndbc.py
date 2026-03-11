@@ -213,72 +213,186 @@ def _system_stub(station: dict, proc_id: str) -> dict:
 
 
 def _system_sml(station: dict) -> dict:
-    """SensorML body for rich system metadata."""
+    """SensorML body for rich system metadata.
+
+    Field shapes follow the SensorML JSON encoding expected by OSH SensorHub:
+      - contacts use ``organisationName`` (British spelling) and nested ``contactInfo``
+      - documents use ``"documents"`` key with ``link: {href, type}``
+      - characteristics are grouped SWE DataComponent trees
+      - identifiers / classifiers carry ``definition`` URIs
+    """
     station_id = station["id"]
     owner = station.get("owner", "National Data Buoy Center")
     platform_type = station.get("platform_type", "Buoy / marine observing platform")
     payload_type = station.get("payload_type", "Unknown")
 
-    characteristics = [
-        {"label": "Owner / Maintainer", "value": owner},
-        {"label": "Platform Type", "value": platform_type},
-        {"label": "Payload Type", "value": payload_type},
+    # ── Build inner SWE characteristic items ──────────────────────────
+    char_items: list[dict] = [
+        {"type": "Text", "name": "owner",
+         "definition": "http://sensorml.com/ont/swe/property/Operator",
+         "label": "Owner / Maintainer", "value": owner},
+        {"type": "Text", "name": "platform_type",
+         "definition": "http://sensorml.com/ont/swe/property/SensorType",
+         "label": "Platform Type", "value": platform_type},
+        {"type": "Text", "name": "payload_type",
+         "definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+         "label": "Payload Type", "value": payload_type},
     ]
     if "site_elevation_m" in station:
-        characteristics.append({"label": "Site Elevation (m)", "value": station["site_elevation_m"]})
+        char_items.append(
+            {"type": "Quantity", "name": "site_elevation",
+             "definition": "http://sensorml.com/ont/swe/property/Elevation",
+             "label": "Site Elevation", "uom": {"code": "m"}, "value": station["site_elevation_m"]})
     if "air_temp_height_m" in station:
-        characteristics.append({"label": "Air Temp Height (m)", "value": station["air_temp_height_m"]})
+        char_items.append(
+            {"type": "Quantity", "name": "air_temp_height",
+             "definition": "http://sensorml.com/ont/swe/property/Height",
+             "label": "Air Temp Height", "uom": {"code": "m"}, "value": station["air_temp_height_m"]})
     if "anemometer_height_m" in station:
-        characteristics.append({"label": "Anemometer Height (m)", "value": station["anemometer_height_m"]})
+        char_items.append(
+            {"type": "Quantity", "name": "anemometer_height",
+             "definition": "http://sensorml.com/ont/swe/property/Height",
+             "label": "Anemometer Height", "uom": {"code": "m"}, "value": station["anemometer_height_m"]})
     if "barometer_height_m" in station:
-        characteristics.append({"label": "Barometer Height (m)", "value": station["barometer_height_m"]})
+        char_items.append(
+            {"type": "Quantity", "name": "barometer_height",
+             "definition": "http://sensorml.com/ont/swe/property/Height",
+             "label": "Barometer Height", "uom": {"code": "m"}, "value": station["barometer_height_m"]})
     if "sea_temp_depth_m" in station:
-        characteristics.append({"label": "Sea Temp Depth (m)", "value": station["sea_temp_depth_m"]})
+        char_items.append(
+            {"type": "Quantity", "name": "sea_temp_depth",
+             "definition": "http://sensorml.com/ont/swe/property/Depth",
+             "label": "Sea Temp Depth", "uom": {"code": "m"}, "value": station["sea_temp_depth_m"]})
     if "water_depth_m" in station:
-        characteristics.append({"label": "Water Depth (m)", "value": station["water_depth_m"]})
+        char_items.append(
+            {"type": "Quantity", "name": "water_depth",
+             "definition": "http://qudt.org/vocab/quantitykind/Depth",
+             "label": "Water Depth", "uom": {"code": "m"}, "value": station["water_depth_m"]})
     if "watch_circle_radius_yd" in station:
-        characteristics.append({"label": "Watch Circle Radius (yd)", "value": station["watch_circle_radius_yd"]})
-    if station.get("has_buoycam"):
-        characteristics.append({"label": "BuoyCAM", "value": _station_buoycam_url(station_id)})
+        char_items.append(
+            {"type": "Quantity", "name": "watch_circle_radius",
+             "definition": "http://qudt.org/vocab/quantitykind/Radius",
+             "label": "Watch Circle Radius", "uom": {"code": "yd"}, "value": station["watch_circle_radius_yd"]})
+
+    # ── Build documents list ──────────────────────────────────────────
+    docs: list[dict] = [
+        {
+            "role": "http://dbpedia.org/resource/Photograph",
+            "name": "BuoyCAM Image",
+            "description": f"Latest BuoyCAM photograph from station {station_id}.",
+            "link": {"href": _station_buoycam_url(station_id), "type": "text/html"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "NDBC Station Page",
+            "description": f"NDBC station home page for {station_id}.",
+            "link": {"href": _station_page_url(station_id), "type": "text/html"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Realtime Station Page",
+            "description": f"NDBC realtime conditions for {station_id}.",
+            "link": {"href": _station_realtime_url(station_id), "type": "text/html"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Historical Station Page",
+            "description": f"NDBC historical data for {station_id}.",
+            "link": {"href": _station_history_url(station_id), "type": "text/html"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Dataset",
+            "name": "Realtime Flat File",
+            "description": f"NDBC realtime2 data file for {station_id}.",
+            "link": {"href": _station_realtime_text_url(station_id), "type": "text/plain"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Measurement Descriptions and Units",
+            "description": "NDBC documentation for measurement symbols and SI units.",
+            "link": {"href": NDBC_MEAS_DESC, "type": "text/html"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Realtime Data Retrieval FAQ",
+            "description": "NDBC FAQ on accessing realtime data products.",
+            "link": {"href": NDBC_RT_DATA_DOC, "type": "text/html"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "BuoyCAM FAQ",
+            "description": "NDBC BuoyCAM overview and frequently asked questions.",
+            "link": {"href": NDBC_BUOYCAM_FAQ, "type": "text/html"},
+        },
+    ]
 
     return {
         "type": "PhysicalSystem",
         "id": _system_uid(station_id),
         "uniqueId": _system_uid(station_id),
+        "definition": "sosa:System",
         "label": f"NDBC {station_id} — {station['name']}",
         "description": (
             f"Marine observing platform at {station['name']} ({station_id}) operated by NOAA's "
             f"National Data Buoy Center. This resource represents the station as exposed through "
             f"NDBC realtime and station web resources."
         ),
+        "keywords": [
+            "NOAA", "NDBC", "buoy", "marine", "ocean",
+            "weather buoy", station_id,
+        ],
         "identifiers": [
-            {"label": "OS4CSAPI UID", "value": _system_uid(station_id)},
-            {"label": "NDBC Station Identifier", "value": station_id},
+            {"definition": "http://sensorml.com/ont/swe/property/ShortName",
+             "label": "Short Name", "value": f"NDBC {station_id}"},
+            {"definition": "http://sensorml.com/ont/swe/property/LongName",
+             "label": "Long Name", "value": f"NDBC {station_id} — {station['name']}"},
+            {"definition": "http://sensorml.com/ont/swe/property/ModelNumber",
+             "label": "NDBC Station Identifier", "value": station_id},
+            {"definition": "http://sensorml.com/ont/swe/property/UniqueID",
+             "label": "OS4CSAPI UID", "value": _system_uid(station_id)},
         ],
         "classifiers": [
-            {"label": "System Type", "value": platform_type},
-            {"label": "Operator", "value": owner},
-            {"label": "Program", "value": "NOAA National Data Buoy Center"},
+            {"definition": "http://sensorml.com/ont/swe/property/SensorType",
+             "label": "System Type", "value": platform_type},
+            {"definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+             "label": "Program", "value": "NOAA National Data Buoy Center"},
+            {"definition": "http://sensorml.com/ont/swe/property/SystemRole",
+             "label": "Operator", "value": owner},
         ],
         "contacts": [
             {
-                "role": "operator",
-                "organizationName": owner,
-                "website": NDBC_HOME,
-                "email": NDBC_CONTACT_EMAIL,
+                "role": "http://sensorml.com/ont/swe/property/Operator",
+                "organisationName": owner,
+                "contactInfo": {
+                    "website": NDBC_HOME,
+                    "address": {
+                        "deliveryPoint": NDBC_CONTACT_ADDRESS,
+                        "country": "United States",
+                    },
+                },
             },
         ],
-        "documentation": [
-            {"name": "NDBC Station Page", "url": _station_page_url(station_id)},
-            {"name": "Realtime Station Page", "url": _station_realtime_url(station_id)},
-            {"name": "Historical Station Page", "url": _station_history_url(station_id)},
-            {"name": "Realtime Flat File", "url": _station_realtime_text_url(station_id)},
-            {"name": "Measurement Descriptions and Units", "url": NDBC_MEAS_DESC},
-            {"name": "Realtime Data Retrieval FAQ", "url": NDBC_RT_DATA_DOC},
-            {"name": "Station Status Report", "url": NDBC_STATUS_REPORT},
-            {"name": "BuoyCAM FAQ", "url": NDBC_BUOYCAM_FAQ},
+        "documents": docs,
+        "characteristics": [
+            {
+                "label": "Station Properties",
+                "characteristics": char_items,
+            },
         ],
-        "characteristics": characteristics,
+        "capabilities": [
+            {
+                "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+                "label": "Publisher Capabilities",
+                "capabilities": [
+                    {"type": "Quantity", "name": "update_interval",
+                     "definition": "http://qudt.org/vocab/quantitykind/Period",
+                     "label": "Publish Interval", "uom": {"code": "s"}, "value": 300.0},
+                    {"type": "Text", "name": "data_source",
+                     "definition": "http://sensorml.com/ont/swe/property/DataSource",
+                     "label": "Data Source", "value": "NDBC realtime2 flat files"},
+                ],
+            },
+        ],
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"]],
@@ -566,7 +680,8 @@ def clean_all(base_url: str, auth: str, stations: list[dict],
                    dry_run=dry_run, stats=stats)
 
 
-def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = False):
+def bootstrap(*, clean: bool = False, clean_only: bool = False,
+              dry_run: bool = False, force_sml: bool = False):
     """Main bootstrap entry point."""
     config = get_config()
     base_url = config["base_url"]
@@ -581,7 +696,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = 
     print("=" * 70)
     print(f"  Server:    {base_url}")
     print(f"  Buoys:     {len(stations)} ({', '.join(s['id'] for s in stations)})")
-    print(f"  Clean:     {clean}  Clean-only: {clean_only}  Dry-run: {dry_run}")
+    print(f"  Clean:     {clean}  Clean-only: {clean_only}  Dry-run: {dry_run}  Force-SML: {force_sml}")
     print()
 
     # ── Clean ─────────────────────────────────────────────────────────
@@ -611,7 +726,8 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = 
         sml = _system_sml(st)
 
         sys_id = ensure_system(base_url, auth, uid, stub, sml,
-                               dry_run=dry_run, stats=stats)
+                               dry_run=dry_run, stats=stats,
+                               force_sml=force_sml)
         system_ids[st["id"]] = sys_id
 
         if sys_id or dry_run:
@@ -659,6 +775,7 @@ def main():
         clean=args.clean,
         clean_only=args.clean_only,
         dry_run=args.dry_run,
+        force_sml=args.force_sml,
     )
 
 

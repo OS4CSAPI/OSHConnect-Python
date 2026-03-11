@@ -244,14 +244,30 @@ def ensure_procedure(base_url: str, auth: str, uid: str, body: dict,
 
 def ensure_system(base_url: str, auth: str, uid: str, stub_body: dict,
                   sml_body: dict | None = None,
-                  *, dry_run: bool = False, stats: dict = None) -> str | None:
-    """Create a system with optional SensorML PUT. Returns server ID."""
+                  *, dry_run: bool = False, stats: dict = None,
+                  force_sml: bool = False) -> str | None:
+    """Create a system with optional SensorML PUT. Returns server ID.
+
+    When *force_sml* is True and the system already exists, the SML body is
+    PUT again (useful for correcting previously-broken SML payloads).
+    """
     existing = find_by_uid(base_url, auth, "systems", uid)
     if existing:
-        print(f"  [SKIP] System {uid} already exists (id={existing})")
-        if stats:
-            stats.setdefault("skipped", 0)
-            stats["skipped"] += 1
+        if force_sml and sml_body:
+            if dry_run:
+                print(f"  [DRY] Would force-PUT SML for system {uid} (id={existing})")
+            else:
+                api_put(base_url, f"systems/{existing}", sml_body, auth,
+                        content_type="application/sml+json")
+                print(f"  [SML] Force-PUT SensorML for system {uid} (id={existing})")
+            if stats:
+                stats.setdefault("sml_updated", 0)
+                stats["sml_updated"] += 1
+        else:
+            print(f"  [SKIP] System {uid} already exists (id={existing})")
+            if stats:
+                stats.setdefault("skipped", 0)
+                stats["skipped"] += 1
         return existing
 
     if dry_run:
@@ -368,6 +384,8 @@ def add_bootstrap_args(parser: argparse.ArgumentParser):
                         help="Delete only (teardown)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print what would happen without making changes")
+    parser.add_argument("--force-sml", action="store_true",
+                        help="Force re-PUT SensorML on existing systems (update metadata)")
 
 
 def print_summary(stats: dict, dry_run: bool = False):
