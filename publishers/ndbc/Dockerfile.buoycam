@@ -1,0 +1,20 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# BuoyCAM publisher uses only stdlib — no pip dependencies needed
+
+# Copy publisher framework + NDBC publisher (includes buoycam)
+COPY publishers/ /app/publishers/
+
+# Default: 15min cadence
+ENV OSH_ADDRESS=os4csapi-osh.duckdns.org
+ENV OSH_PORT=443
+ENV OSH_USER=os4csapi
+ENV OSH_PASS=ogc134mm
+# BuoyCAM cache directory (mount a volume for persistence)
+ENV BUOYCAM_CACHE_ROOT=/var/www/buoycam
+ENV BUOYCAM_CACHE_BASE_URL=https://os4csapi-osh.duckdns.org/buoycam
+
+ENTRYPOINT ["python", "-m", "publishers.ndbc.ndbc_buoycam_publisher"]
+CMD ["--interval", "900"]

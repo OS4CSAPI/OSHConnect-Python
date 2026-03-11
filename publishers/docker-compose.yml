@@ -5,8 +5,10 @@
 #   docker compose up -d nws          # start NWS only
 #   docker compose logs -f nws        # follow NWS logs
 #   docker compose down               # stop all
+#   docker compose ps                 # check status
 #
 # All publishers share the same OSH server credentials via the x-osh-env anchor.
+# All 9 publishers run as persistent services with automatic restart.
 
 x-osh-env: &osh-env
   OSH_ADDRESS: os4csapi-osh.duckdns.org
@@ -16,6 +18,7 @@ x-osh-env: &osh-env
   OSH_ROOT: sensorhub
 
 services:
+  # ── ISS Satellite Tracking (30s cadence) ──
   iss:
     build:
       context: ..
@@ -25,6 +28,7 @@ services:
       <<: *osh-env
     command: ["--interval", "30"]
 
+  # ── NWS Surface Observations (1h cadence) ──
   nws:
     build:
       context: ..
@@ -34,6 +38,61 @@ services:
       <<: *osh-env
     command: ["--interval", "3600"]
 
+  # ── NDBC Buoy Met Observations (1h cadence) ──
+  ndbc:
+    build:
+      context: ..
+      dockerfile: publishers/ndbc/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+    command: ["--interval", "3600"]
+
+  # ── NDBC BuoyCAM Imagery (15min cadence) ──
+  ndbc-buoycam:
+    build:
+      context: ..
+      dockerfile: publishers/ndbc/Dockerfile.buoycam
+    restart: always
+    environment:
+      <<: *osh-env
+      BUOYCAM_CACHE_ROOT: /var/www/buoycam
+      BUOYCAM_CACHE_BASE_URL: https://os4csapi-osh.duckdns.org/buoycam
+    volumes:
+      - buoycam-cache:/var/www/buoycam
+    command: ["--interval", "900"]
+
+  # ── CO-OPS Coastal Observations (6min cadence) ──
+  coops:
+    build:
+      context: ..
+      dockerfile: publishers/coops/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+    command: ["--interval", "360"]
+
+  # ── AviationWeather METAR (5min cadence) ──
+  aviation-wx:
+    build:
+      context: ..
+      dockerfile: publishers/aviation_wx/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+    command: ["--interval", "300"]
+
+  # ── OpenSky ADS-B Feed (5min cadence) ──
+  opensky:
+    build:
+      context: ..
+      dockerfile: publishers/opensky/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+    command: ["--interval", "300"]
+
+  # ── USGS Water Monitoring (15min cadence) ──
   usgs-water:
     build:
       context: ..
@@ -43,3 +102,17 @@ services:
       <<: *osh-env
       # USGS_API_KEY: "${USGS_API_KEY:-}"
     command: ["--interval", "900"]
+
+  # ── USGS NIMS Imagery (15min cadence) ──
+  usgs-nims:
+    build:
+      context: ..
+      dockerfile: publishers/usgs_nims/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+      # USGS_API_KEY: "${USGS_API_KEY:-}"
+    command: ["--interval", "900"]
+
+volumes:
+  buoycam-cache:
