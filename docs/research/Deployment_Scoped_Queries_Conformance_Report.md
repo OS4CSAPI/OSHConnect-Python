@@ -525,6 +525,26 @@ This section recreates the original comparison tables with two additional column
 
 The simplest approach — interact with systems directly, skip deployments entirely.
 
+```
+Systems:
+  AZ-MA-1
+    ├── 7 datastreams, thousands of observations
+    └── subsystems
+```
+
+**Original assessment** (from [CSAPI_Deployed_Systems_Design_Pattern.md §8.1](CSAPI_Deployed_Systems_Design_Pattern.md#81--alternative-a-systems-only-no-deployments)):
+
+| Pros | Cons |
+|---|---|
+| Simpler — fewer resources to create | No organizational hierarchy |
+| | No per-role observation scoping |
+| | No temporal scoping by deployment period |
+| | Hardware swap breaks all queries |
+| | "Which systems are deployed at Ft Huachuca?" has no standard answer |
+| | System hierarchy models physical composition, not operational structure |
+
+**Updated assessment** — each claim cross-checked against the published standards and empirical OSH testing:
+
 | Claim | Type | Still Valid? | Assessment |
 |---|---|---|---|
 | Simpler — fewer resources to create | Pro | **Yes** | Objectively true. You skip creating deployments, subdeployments, and wiring `platform@link`. |
@@ -541,6 +561,24 @@ The simplest approach — interact with systems directly, skip deployments entir
 
 Model operational organization (sensor networks, strings, nodes) as a system hierarchy instead of using deployments.
 
+```
+Systems:
+  Sensor Net (system)
+    └── String Alpha (subsystem)
+          └── AZ-MA-1 (subsystem)
+```
+
+**Original assessment** (from [CSAPI_Deployed_Systems_Design_Pattern.md §8.2](CSAPI_Deployed_Systems_Design_Pattern.md#82--alternative-b-organization-modeled-in-system-hierarchy)):
+
+| Pros | Cons |
+|---|---|
+| One hierarchy to think about | Reparenting costs thousands of API calls + data migration |
+| | Sensor Net and String Alpha aren't really "systems" |
+| | Conflates physical composition with operational organization |
+| | [Documented in detail](CSAPI_Deployment_Reparenting_Feasibility.md) |
+
+**Updated assessment** — each claim cross-checked against the published standards and empirical OSH testing:
+
 | Claim | Type | Still Valid? | Assessment |
 |---|---|---|---|
 | One hierarchy to think about | Pro | **Yes** | Simpler mental model, but at the costs described below. |
@@ -553,6 +591,23 @@ Model operational organization (sensor networks, strings, nodes) as a system hie
 ### 8.3  Alternative C: Flat Deployment with `deployedSystems` (ChatGPT's "Doctrinal Minimalism")
 
 A single flat deployment listing multiple systems via `deployedSystems@link`, rather than one-deployment-per-node with subdeployment hierarchy.
+
+```
+Deployments:
+  String Alpha (deployment)
+    deployedSystems@link: [MA-1, MA-2, MA-3]
+```
+
+**Original assessment** (from [CSAPI_Deployed_Systems_Design_Pattern.md §8.3](CSAPI_Deployed_Systems_Design_Pattern.md#83--alternative-c-flat-deployment-with-deployedsystems-chatgpts-doctrinal-minimalism)):
+
+| Pros | Cons |
+|---|---|
+| Minimal resource count | **OSH silently drops `deployedSystems@link`** — [proven by probe](OSH_DeployedSystems_Conformance_Probe.md) |
+| | No per-node observation scoping |
+| | No per-node temporal validity |
+| | Doesn't survive contact with the implementation |
+
+**Updated assessment** — each claim cross-checked against the published standards and empirical OSH testing:
 
 | Claim | Type | Still Valid? | Assessment |
 |---|---|---|---|
@@ -567,6 +622,30 @@ A single flat deployment listing multiple systems via `deployedSystems@link`, ra
 ### 8.4  The Recommended Pattern: 1:1 Deployment Pairing — Updated Assessment
 
 One deployment per operationally significant system, with `platform@link` wiring, organized via subdeployment hierarchy. This is the pattern analyzed throughout this report.
+
+```
+Deployments:
+  Sensor Net
+    └── String Alpha
+          ├── Node 1 (platform@link → MA-1)
+          ├── Node 2 (platform@link → MA-2)
+          └── Node 3 (platform@link → MA-3)
+```
+
+**Original assessment** (from [CSAPI_Deployed_Systems_Design_Pattern.md §8.4](CSAPI_Deployed_Systems_Design_Pattern.md#84--recommended-11-deployment-pairing-this-document)):
+
+| Pros | Cons |
+|---|---|
+| Per-node observation scoping | More resources to create (one deployment per significant system) |
+| Organizational hierarchy | `deployment@link` must be set on every datastream |
+| Role continuity across hardware swaps | |
+| Temporal scoping per deployment | |
+| Cheap to rearrange (~12 API calls per move) — [documented](CSAPI_Deployment_Reparenting_Feasibility.md) | |
+| Standards-conformant | |
+| Works on OSH today | |
+| Forward-compatible with `deployedSystems` if OSH adds it | |
+
+**Updated assessment** — each claim cross-checked against the published standards and empirical OSH testing:
 
 | Claim | Type | Still Valid? | Assessment |
 |---|---|---|---|
