@@ -26,7 +26,7 @@ And §10's conclusion claims:
 These statements were **not empirically tested** at the time of writing. Developers on the OS4CSAPI team subsequently attempted to build against these endpoints and asked whether they exist in the standard and/or actually function on the live server. This report provides the definitive answer, backed by:
 
 1. Line-by-line analysis of the OGC normative specification text
-2. Analysis of the companion OAS (OpenAPI Specification) YAML definition files
+2. Analysis of the companion OAS (OpenAPI Specification) YAML definition files — both the individual upstream source files and the fully-resolved bundled OAS 3.1 companion specifications
 3. Live empirical testing against the OSH reference implementation at `os4csapi-osh.duckdns.org`
 4. Full conformance class inventory from the running server
 
@@ -146,6 +146,85 @@ Notably **absent**:
 - ~~`deploymentControlStreams.yaml`~~ — would define `/deployments/{depId}/controlstreams`
 
 The normative text in clauses 8 and 9 **requires** these endpoints, but the non-normative OAS companion files **do not include them**. This is an internal inconsistency in the published standard materials. Implementors working from the OAS YAML rather than the normative AsciiDoc text would never discover these endpoints.
+
+### 2.7  Bundled OAS 3.1 YAML Cross-Check — Definitive Machine-Readable Confirmation
+
+The upstream individual OAS YAML files analyzed in §2.5–2.6 use `$ref` references that require multi-file resolution. To eliminate any possibility that deployment-scoped paths exist in a referenced file we missed, we performed an independent cross-check against the **bundled** (all `$ref`s fully resolved) OAS 3.1 companion specifications. These are single-file, self-contained OpenAPI documents where every path, parameter, and schema is inlined — making them the definitive machine-readable authority.
+
+The bundled files are maintained in the [OS4CSAPI/ogc-client-CSAPI_2](https://github.com/OS4CSAPI/ogc-client-CSAPI_2) repository at [`docs/research/standards/`](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/tree/main/docs/research/standards):
+
+| File | Scope |
+|---|---|
+| [ogcapi-connectedsystems-1.bundled.oas31.yaml](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) | Part 1: Feature Resources (Systems, Deployments, Procedures, Sampling Features, Properties) |
+| [ogcapi-connectedsystems-2.bundled.oas31.yaml](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml) | Part 2: Observation & Command Resources (DataStreams, Observations, ControlStreams, Commands) |
+
+#### 2.7.1  Part 2 Bundled YAML — Complete Path Inventory
+
+The Part 2 bundled OAS defines **exactly** the following paths (exhaustive list):
+
+| # | Path | Scoping |
+|---|---|---|
+| 1 | `/datastreams` | Top-level |
+| 2 | `/systems/{systemId}/datastreams` | System-scoped |
+| 3 | `/datastreams/{dataStreamId}` | Single resource |
+| 4 | `/datastreams/{dataStreamId}/schema` | Schema |
+| 5 | `/observations` | Top-level |
+| 6 | `/datastreams/{dataStreamId}/observations` | DataStream-scoped |
+| 7 | `/controlstreams` | Top-level |
+| 8 | `/systems/{systemId}/controlstreams` | System-scoped |
+| 9 | `/controlstreams/{controlStreamId}` | Single resource |
+| 10 | `/controlstreams/{controlStreamId}/schema` | Schema |
+| 11 | `/commands` | Top-level |
+| 12 | `/controlstreams/{controlStreamId}/commands` | ControlStream-scoped |
+| 13 | `/commands/{cmdId}` | Single resource |
+| 14 | `/commands/{cmdId}/status` | Command status |
+| 15 | `/commands/{cmdId}/status/{statusId}` | Single status |
+| 16 | `/commands/{cmdId}/result` | Command results |
+| 17 | `/commands/{cmdId}/result/{resultId}` | Single result |
+| 18 | `/systemEvents` | Top-level |
+| 19 | `/systems/{systemId}/events` | System-scoped |
+| 20 | `/systems/{systemId}/history` | System history |
+| 21 | `/systems/{systemId}/history/{revId}` | Single revision |
+
+**Absent from the Part 2 bundled YAML** (confirming §2.6):
+
+- ❌ `/deployments/{depId}/datastreams`
+- ❌ `/deployments/{depId}/controlstreams`
+- ❌ `/deployments/{depId}/observations`
+
+**Query parameters on `/datastreams`**: `id`, `q`, `phenomenonTime`, `resultTime`, `system`, `foi`, `observedProperty`, `limit` — **no `deployment` parameter**.
+
+**Query parameters on `/observations`**: `id`, `phenomenonTime`, `resultTime`, `dataStream`, `system`, `foi`, `observedProperty`, `limit` — **no `deployment` parameter**.
+
+**Query parameters on `/controlstreams`**: `id`, `q`, `issueTime`, `executionTime`, `system`, `foi`, `controlledProperty`, `limit` — **no `deployment` parameter**.
+
+Despite the absence of deployment-scoped paths, the `deployment@link` property **is** present in both the `dataStream` schema (description: *"Link to the deployment during which the observations are/were collected"*) and the `controlStream` schema (description: *"Link to the deployment during which the commands are/were received"*). This confirms the data model recognizes the deployment association — the gap is solely in the path definitions.
+
+#### 2.7.2  Part 1 Bundled YAML — Deployment Paths Defined
+
+The Part 1 bundled OAS defines the following deployment-related paths:
+
+| Path | Methods | Description |
+|---|---|---|
+| `/deployments` | GET, POST | List/create deployments. Query params: `id`, `bbox`, `datetime`, `geom`, `q`, `parent`, `system`, `foi`, `observedProperty`, `controlledProperty`, `limit` |
+| `/deployments/{deploymentId}` | GET, PUT, DELETE | Single deployment CRUD |
+| `/deployments/{deploymentId}/subdeployments` | GET, POST | List/add subdeployments, with `recursive` flag |
+| `/systems/{systemId}/deployments` | GET | List deployments for a specific system |
+
+The deployment resource schema includes `platform@link` and `deployedSystems@link` but **no** link relations to datastreams, observations, or controlstreams.
+
+**No deployment-scoped data endpoints exist in Part 1 either.** This is expected — Part 1 covers feature resources only. But it confirms there is no cross-part path definition that we missed.
+
+#### 2.7.3  Cross-Check Conclusion
+
+The bundled OAS 3.1 YAMLs — with all `$ref` references fully resolved into single self-contained files — independently confirm every finding from §2.5 and §2.6:
+
+1. **No deployment-scoped data paths** exist in either Part 1 or Part 2 OAS companion files
+2. **No `deployment` query parameter** exists on any top-level endpoint
+3. **`deployment@link`** exists in the data model schemas but has no corresponding path definitions
+4. The normative AsciiDoc requirements (`/req/datastream/ref-from-deployment`, `/req/controlstream/ref-from-deployment`) mandate these endpoints, but the companion OAS files — both individual and bundled — omit them
+
+This is the strongest possible form of evidence: a single resolved file containing every path and parameter the OAS defines, with zero ambiguity about `$ref` resolution or file-level scope.
 
 ---
 
@@ -509,3 +588,5 @@ All spec references are from the OGC Connected Systems API GitHub repository at 
 | Part 2 OAS Paths Directory | [paths/](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2/openapi/paths) (no deployment-scoped files present) |
 | Part 2 JSON Schemas Directory | [schemas/json/](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2/openapi/schemas/json) |
 | Part 2 Standard Sections Directory | [standard/sections/](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2/standard/sections) |
+| **Bundled OAS 3.1 — Part 1** (all `$ref`s resolved) | [ogcapi-connectedsystems-1.bundled.oas31.yaml](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-1.bundled.oas31.yaml) |
+| **Bundled OAS 3.1 — Part 2** (all `$ref`s resolved) | [ogcapi-connectedsystems-2.bundled.oas31.yaml](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/blob/main/docs/research/standards/ogcapi-connectedsystems-2.bundled.oas31.yaml) |
