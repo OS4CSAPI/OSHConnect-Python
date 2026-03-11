@@ -278,7 +278,22 @@ def _system_sml(station: dict) -> dict:
     docs: list[dict] = [
         {
             "role": "http://dbpedia.org/resource/Photograph",
-            "name": "BuoyCAM Image",
+            "name": "Station Hardware Photo",
+            "description": (
+                f"NDBC photograph of the {station.get('platform_type', 'buoy')} "
+                f"platform used at station {station_id}."
+            ),
+            "link": {
+                "href": station.get(
+                    "station_photo",
+                    f"https://www.ndbc.noaa.gov/images/stations/{station_id}.jpg",
+                ),
+                "type": "image/jpeg",
+            },
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "BuoyCAM Feed",
             "description": f"Latest BuoyCAM photograph from station {station_id}.",
             "link": {"href": _station_buoycam_url(station_id), "type": "text/html"},
         },

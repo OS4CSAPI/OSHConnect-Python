@@ -6,7 +6,10 @@
             "lat": 40.251,
             "lon": -73.164,
             "water_depth_m": 36.3,
-            "has_buoycam": true
+            "has_buoycam": true,
+            "platform_type": "3-meter foam buoy",
+            "payload_type": "SCOOP",
+            "station_photo": "https://www.ndbc.noaa.gov/images/stations/3mfoam_scoop.jpg"
         },
         {
             "id": "41009",
@@ -14,7 +17,10 @@
             "lat": 28.519,
             "lon": -80.166,
             "water_depth_m": 44.0,
-            "has_buoycam": true
+            "has_buoycam": true,
+            "platform_type": "3-meter discus buoy",
+            "payload_type": "SCOOP",
+            "station_photo": "https://www.ndbc.noaa.gov/images/stations/3mdiscus_scoop.jpg"
         },
         {
             "id": "42036",
@@ -22,7 +28,10 @@
             "lat": 28.500,
             "lon": -84.517,
             "water_depth_m": 274.3,
-            "has_buoycam": true
+            "has_buoycam": true,
+            "platform_type": "3-meter discus buoy",
+            "payload_type": "SCOOP",
+            "station_photo": "https://www.ndbc.noaa.gov/images/stations/3mdiscus_scoop.jpg"
         },
         {
             "id": "46025",
@@ -30,7 +39,10 @@
             "lat": 33.749,
             "lon": -119.053,
             "water_depth_m": 882.0,
-            "has_buoycam": true
+            "has_buoycam": true,
+            "platform_type": "3-meter discus buoy w/ seal cage",
+            "payload_type": "SCOOP",
+            "station_photo": "https://www.ndbc.noaa.gov/images/stations/3mdiscus_scoop_seal_cage.jpg"
         },
         {
             "id": "46013",
@@ -38,7 +50,10 @@
             "lat": 38.242,
             "lon": -123.303,
             "water_depth_m": 116.0,
-            "has_buoycam": true
+            "has_buoycam": true,
+            "platform_type": "3-meter discus buoy w/ seal cage",
+            "payload_type": "SCOOP",
+            "station_photo": "https://www.ndbc.noaa.gov/images/stations/3mdiscus_scoop_seal_cage.jpg"
         }
     ]
 }
