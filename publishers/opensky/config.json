@@ -1,0 +1,45 @@
+{
+    "opensky": {
+        "description": "OpenSky Network ADS-B state vector feed — southern Arizona airspace",
+        "bounding_box": {
+            "description": "Southern Arizona airspace covering Tucson, Phoenix, Fort Huachuca",
+            "lamin": 31.0,
+            "lomin": -113.0,
+            "lamax": 34.0,
+            "lomax": -109.0,
+            "area_sq_deg": 12,
+            "credit_cost_per_request": 1,
+            "note": "12 sq deg < 25 sq deg threshold → 1 credit per request"
+        },
+        "cadence_seconds": 300,
+        "cadence_note": "5-min cadence = 288 requests/day. Anonymous limit = 400 credits/day.",
+        "auth": {
+            "mode": "anonymous",
+            "note": "Anonymous: 400 credits/day, 10s time resolution. OAuth2 available for 4000 credits/day.",
+            "oauth2_token_url": "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
+        },
+        "category_map": {
+            "0": "No information",
+            "1": "No ADS-B category info",
+            "2": "Light (< 15500 lbs)",
+            "3": "Small (15500–75000 lbs)",
+            "4": "Large (75000–300000 lbs)",
+            "5": "High Vortex Large (B-757)",
+            "6": "Heavy (> 300000 lbs)",
+            "7": "High Performance (> 5g / 400kt)",
+            "8": "Rotorcraft",
+            "9": "Glider / sailplane",
+            "10": "Lighter-than-air",
+            "11": "Parachutist / skydiver",
+            "12": "Ultralight / hang-glider / paraglider",
+            "13": "Reserved",
+            "14": "Unmanned Aerial Vehicle",
+            "15": "Space / transatmospheric vehicle",
+            "16": "Surface – Emergency Vehicle",
+            "17": "Surface – Service Vehicle",
+            "18": "Point Obstacle",
+            "19": "Cluster Obstacle",
+            "20": "Line Obstacle"
+        }
+    }
+}
