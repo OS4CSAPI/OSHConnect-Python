@@ -4,7 +4,7 @@
 
 **Date:** 2026-06-10  
 **Author:** AI Research Agent (GitHub Copilot / Claude Opus 4.6)  
-**Status:** Confirmed — empirically validated on Oracle OSH instance  
+**Status:** Resolved — all 15 systems re-PUT and verified rich on Oracle OSH instance  
 **Severity:** Medium — feature degradation, no data loss  
 **Affects:** All 10 NWS weather stations, all 5 NDBC buoy systems  
 **Related reports:**
@@ -211,17 +211,17 @@ This means:
 
 ---
 
-## 6. Fix Plan
+## 6. Fix Plan (Completed)
 
-1. **Fix `_system_sml()` in `bootstrap_nws.py`:** Rewrite contacts, documents, and characteristics to match the ISS SensorML JSON schema. Add `definition` URIs to identifiers and classifiers. Add keywords.
+1. ✅ **Fix `_system_sml()` in `bootstrap_nws.py`:** Rewrite contacts, documents, and characteristics to match the ISS SensorML JSON schema. Add `definition` URIs to identifiers and classifiers. Add keywords.
 
-2. **Fix `_system_sml()` in `bootstrap_ndbc.py`:** Same structural corrections.
+2. ✅ **Fix `_system_sml()` in `bootstrap_ndbc.py`:** Same structural corrections.
 
-3. **Add `--force-sml` to `ensure_system()`:** Allow the SML PUT to run even when the system already exists.
+3. ✅ **Add `--force-sml` to `ensure_system()`:** Allow the SML PUT to run even when the system already exists.
 
-4. **Re-PUT SML** to all 15 systems on the Oracle instance.
+4. ✅ **Re-PUT SML** to all 15 systems on the Oracle instance.
 
-5. **Verify** by fetching `application/sml+json` and confirming nested fields are populated.
+5. ✅ **Verify** by fetching `application/sml+json` and confirming nested fields are populated.
 
 ---
 
@@ -234,3 +234,99 @@ The `useDeployedSystemCard.ts` composable in `csapi-explorer` correctly reads al
 - **Owner / operator** from contacts with `organisationName`
 - **Characteristics table** from nested SWE components
 - **Capabilities table** from capabilities groups
+
+---
+
+## 8. Deployment Findings
+
+### 8.1 Additional Field-Shape Issue: `phone` Must Be an Object
+
+During deployment, the initial NWS SML PUT returned **HTTP 500** from OSH SensorHub.
+
+Binary-search isolation of fields pinpointed the `phone` field in `contacts[].contactInfo`. A flat string value crashes the server:
+
+**Broken (causes HTTP 500):**
+```json
+"contactInfo": {
+    "phone": "+1 (301) 713-0622",
+    "website": "https://www.weather.gov"
+}
+```
+
+**Correct (server accepts):**
+```json
+"contactInfo": {
+    "phone": {
+        "voice": "+1 (301) 713-0622"
+    },
+    "website": "https://www.weather.gov"
+}
+```
+
+The `phone` field must be an **object** with a `voice` key (optionally also `facsimile`), matching the SensorML `CI_Telephone` encoding. Unlike other field-shape mismatches which are silently dropped, a flat `phone` string causes the server to throw an unhandled deserialization exception.
+
+This is a **third class of server behavior** for malformed SML fields:
+
+| Server Behavior | Example |
+|---|---|
+| Silently drops field | `organizationName` (wrong spelling), flat `url` in documents |
+| Returns empty shell | Characteristics without group wrapper |
+| **HTTP 500 crash** | `phone` as flat string instead of `{voice: "..."}` |
+
+### 8.2 SML Retrieval Requires `?f=sml3` Query Parameter
+
+During verification, requesting `GET /systems/{id}` with `Accept: application/sml+json` header alone returns **GeoJSON** (the server default), not SML.
+
+The correct retrieval method:
+```
+GET /systems/{id}?f=sml3
+Accept: application/sml+json
+```
+
+The `?f=sml3` query parameter is required to force SensorML JSON output. Without it, all SML fields (keywords, contacts, documents, etc.) appear as zeros/empty in the GeoJSON response, which can be mistaken for hollow metadata.
+
+---
+
+## 9. Verification Results
+
+All 17 systems verified rich after fix deployment (2025-06-10).
+
+Retrieval method: `GET /systems/{id}?f=sml3` with `Accept: application/sml+json`.
+
+| System | kw | id | cls | contacts (org) | docs (linked) | chars | caps |
+|--------|----|----|-----|----------------|---------------|-------|------|
+| ISS Position (`04og`) | 10 | 4 | 3 | 3 (3) | 5 (5) | 1g / 4i | 1g / 4i |
+| ISS Track (`04p0`) | 8 | 3 | 3 | 2 (2) | 2 (2) | 1g / 3i | 1g / 2i |
+| NWS KTUS (`0520`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NWS KDMA (`052g`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NWS KFHU (`0530`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NWS KLUF (`053g`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NWS KPHX (`0540`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NWS KDCA (`054g`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NWS KIAD (`0550`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NWS KNYG (`055g`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NWS KDAY (`0560`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NWS KFFO (`056g`) | 8 | 4 | 3 | 2 (2) | 7 (7) | 1g / 3i | 1g / 2i |
+| NDBC 44025 (`0570`) | 7 | 4 | 3 | 1 (1) | 8 (8) | 1g / 4i | 1g / 2i |
+| NDBC 41009 (`057g`) | 7 | 4 | 3 | 1 (1) | 8 (8) | 1g / 4i | 1g / 2i |
+| NDBC 42036 (`0580`) | 7 | 4 | 3 | 1 (1) | 8 (8) | 1g / 4i | 1g / 2i |
+| NDBC 46025 (`058g`) | 7 | 4 | 3 | 1 (1) | 8 (8) | 1g / 4i | 1g / 2i |
+| NDBC 46013 (`0590`) | 7 | 4 | 3 | 1 (1) | 8 (8) | 1g / 4i | 1g / 2i |
+
+**Legend:** kw = keywords, id = identifiers, cls = classifiers, g = groups, i = items
+
+All NWS and NDBC systems now match ISS-level metadata richness.
+
+---
+
+## 10. Lessons Learned
+
+1. **OSH SensorHub SML deserialization is fragile and inconsistent** — some malformed fields are silently dropped, some produce empty shells, and at least one (`phone` as flat string) causes an HTTP 500 crash. There is no validation error message to guide the fix.
+
+2. **Always use the ISS bootstrap as the gold-standard reference** for SML JSON field shapes. Its SML was written first and was empirically confirmed to round-trip correctly.
+
+3. **`?f=sml3` is required for SML retrieval** — the `Accept` header alone is insufficient. Without the query parameter, verification returns GeoJSON zeros that look like hollow metadata.
+
+4. **Bootstrap idempotency needs a force option** — the `--force-sml` flag is essential for iterating on SML content after initial system creation.
+
+5. **British spelling matters** — `organisationName` (not `organizationName`) is a silent-drop trap with no server-side error.
