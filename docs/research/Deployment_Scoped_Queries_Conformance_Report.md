@@ -79,7 +79,7 @@ The JSON Schema at [`dataStream.json`](https://github.com/opengeospatial/ogcapi-
 }
 ```
 
-The ControlStream resource has an identical optional `deployment` association (clause 9, "ControlStream Associations table"):
+The ControlStream resource has an identical optional `deployment` association ([clause 9](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_9_requirements_class_controlstreams.adoc), "ControlStream Associations table"):
 
 > | `deployment` | — | The deployment during which the control stream was used. | A single `Deployment` resource. | **Optional** |
 
@@ -127,16 +127,18 @@ Through exhaustive review of the Part 2 specification text and OAS files, the fo
 
 The lack of a `deployment` query parameter on top-level endpoints is particularly significant — it means the **only** standard-defined way to get deployment-scoped datastreams is through the nested endpoint `GET /deployments/{depId}/datastreams`.
 
+The Advanced Filtering requirements class is defined in [`clause_14_requirements_class_advanced_filtering.adoc`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_14_requirements_class_advanced_filtering.adoc). The top-level DataStreams path (showing all accepted query parameters) is defined in [`dataStreams.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/dataStreams.yaml). The top-level Observations path is in [`observations.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/observations.yaml). None include a `deployment` parameter.
+
 ### 2.6  OAS Gap: Missing Path File
 
 The companion OpenAPI Specification YAML in the [`api/part2/openapi/paths/`](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2/openapi/paths) directory includes:
 
 | File | Path Defined |
 |---|---|
-| `systemDataStreams.yaml` | `/systems/{sysId}/datastreams` |
-| `systemControlStreams.yaml` | `/systems/{sysId}/controlstreams` |
-| `dataStreamObservations.yaml` | `/datastreams/{dsId}/observations` |
-| `controlStreamCommands.yaml` | `/controlstreams/{csId}/commands` |
+| [`systemDataStreams.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/systemDataStreams.yaml) | `/systems/{sysId}/datastreams` |
+| [`systemControlStreams.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/systemControlStreams.yaml) | `/systems/{sysId}/controlstreams` |
+| [`dataStreamObservations.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/dataStreamObservations.yaml) | `/datastreams/{dsId}/observations` |
+| [`controlStreamCommands.yaml`](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/controlStreamCommands.yaml) | `/controlstreams/{csId}/commands` |
 
 Notably **absent**:
 
@@ -331,7 +333,7 @@ The reason developers experience these requirements as aspirational rather than 
 
 **Factor 2: The companion OAS YAML files are incomplete.** The normative text says the endpoint SHALL exist, but the non-normative OpenAPI Specification companion files don't include `deploymentDataStreams.yaml` or `deploymentControlStreams.yaml`. Developers who generate client code from the OAS (a standard practice) will never see these endpoints. This creates an internal inconsistency in the published standard materials where the normative text mandates endpoints that the companion OAS doesn't define.
 
-**Factor 3: The standard is newly published.** OGC 23-001/23-002/23-003 are relatively new. The OSH development team (led by Alex Robin at Botts Innovative Research / GeoRobotix) is actively implementing these parts. Some requirements are implemented; some are not yet. This is normal for new standards, but it means the "standard says X" and "software does X" sets have imperfect overlap.
+**Factor 3: The standard is newly published.** OGC 23-001/23-002/23-003 are relatively new. The [OSH development team](https://github.com/opensensorhub) (led by Alex Robin at [Botts Innovative Research / GeoRobotix](https://www.georobotix.com/)) is actively implementing these parts. Some requirements are implemented; some are not yet. This is normal for new standards, but it means the "standard says X" and "software does X" sets have imperfect overlap.
 
 ### 5.3  The Correct Mental Model for Developers
 
@@ -440,9 +442,9 @@ This is not just an OS4CSAPI issue. The OGC CSAPI standard is designed for inter
 
 ### 8.2  For Server Implementors
 
-- OSH's missing implementation of `/req/datastream/ref-from-deployment` is a conformance gap that should be reported to the OSH development team
+- OSH's missing implementation of `/req/datastream/ref-from-deployment` is a conformance gap that should be reported to the [OSH development team](https://github.com/opensensorhub)
 - The absence of `deploymentDataStreams.yaml` and `deploymentControlStreams.yaml` in the OAS companion files may contribute to implementors overlooking these requirements
-- The relevant GitHub issue tracker is: https://github.com/opengeospatial/ogcapi-connected-systems/issues
+- The relevant GitHub issue tracker is: [opengeospatial/ogcapi-connected-systems/issues](https://github.com/opengeospatial/ogcapi-connected-systems/issues)
 
 ### 8.3  For Standards Body Attention
 
@@ -488,20 +490,22 @@ This is not just an OS4CSAPI issue. The OGC CSAPI standard is designed for inter
 
 ## 11  Appendix: Spec Source References
 
-All spec references are from the OGC Connected Systems API GitHub repository at https://github.com/opengeospatial/ogcapi-connected-systems (branch: `master`), which is the normative source for the published standard:
+All spec references are from the OGC Connected Systems API GitHub repository at [opengeospatial/ogcapi-connected-systems](https://github.com/opengeospatial/ogcapi-connected-systems) (branch: `master`), which is the normative source for the published standard:
 
-| Reference | Path in Repository |
+| Reference | Link |
 |---|---|
-| Part 2, Clause 8 (DataStreams & Observations) | `api/part2/standard/sections/clause_8_requirements_class_datastreams.adoc` |
-| Part 2, Clause 9 (ControlStreams & Commands) | `api/part2/standard/sections/clause_9_requirements_class_controlstreams.adoc` |
-| Part 2, Clause 14 (Advanced Filtering) | `api/part2/standard/sections/clause_14_requirements_class_advanced_filtering.adoc` |
-| Part 2, Clause 6 (Overview) | `api/part2/standard/sections/clause_6_overview.adoc` |
-| Part 2, Clause 20 (JSON Encoding) | `api/part2/standard/sections/clause_20_requirements_class_json_encoding.adoc` |
-| DataStream JSON Schema | `api/part2/openapi/schemas/json/dataStream.json` |
-| DataStream Create JSON Schema | `api/part2/openapi/schemas/json/dataStream_create.json` |
-| ControlStream JSON Schema | `api/part2/openapi/schemas/json/controlStream.json` |
-| Top-level DataStreams Path | `api/part2/openapi/paths/dataStreams.yaml` |
-| System DataStreams Path | `api/part2/openapi/paths/systemDataStreams.yaml` |
-| Top-level Observations Path | `api/part2/openapi/paths/observations.yaml` |
-| System ControlStreams Path | `api/part2/openapi/paths/systemControlStreams.yaml` |
-| Part 2 OAS Paths Directory | `api/part2/openapi/paths/` (no deployment-scoped files present) |
+| Part 2, Clause 8 (DataStreams & Observations) | [clause_8_requirements_class_datastreams.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_8_requirements_class_datastreams.adoc) |
+| Part 2, Clause 9 (ControlStreams & Commands) | [clause_9_requirements_class_controlstreams.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_9_requirements_class_controlstreams.adoc) |
+| Part 2, Clause 14 (Advanced Filtering) | [clause_14_requirements_class_advanced_filtering.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_14_requirements_class_advanced_filtering.adoc) |
+| Part 2, Clause 6 (Overview) | [clause_6_overview.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_6_overview.adoc) |
+| Part 2, Clause 20 (JSON Encoding) | [clause_20_requirements_class_json_encoding.adoc](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/standard/sections/clause_20_requirements_class_json_encoding.adoc) |
+| DataStream JSON Schema | [dataStream.json](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/schemas/json/dataStream.json) |
+| DataStream Create JSON Schema | [dataStream_create.json](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/schemas/json/dataStream_create.json) |
+| ControlStream JSON Schema | [controlStream.json](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/schemas/json/controlStream.json) |
+| Top-level DataStreams Path | [dataStreams.yaml](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/dataStreams.yaml) |
+| System DataStreams Path | [systemDataStreams.yaml](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/systemDataStreams.yaml) |
+| Top-level Observations Path | [observations.yaml](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/observations.yaml) |
+| System ControlStreams Path | [systemControlStreams.yaml](https://github.com/opengeospatial/ogcapi-connected-systems/blob/master/api/part2/openapi/paths/systemControlStreams.yaml) |
+| Part 2 OAS Paths Directory | [paths/](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2/openapi/paths) (no deployment-scoped files present) |
+| Part 2 JSON Schemas Directory | [schemas/json/](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2/openapi/schemas/json) |
+| Part 2 Standard Sections Directory | [standard/sections/](https://github.com/opengeospatial/ogcapi-connected-systems/tree/master/api/part2/standard/sections) |
