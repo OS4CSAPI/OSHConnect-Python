@@ -1,8 +1,8 @@
 # All Bootstraps Full-Scope Gap Analysis
 
-**Date:** 2026-03-12  
-**Author:** Codex (GPT-5)  
-**Status:** Full-scope semantics-first gap analysis  
+**Date:** 2026-03-12
+**Author:** Codex (GPT-5)
+**Status:** Full-scope semantics-first gap analysis
 **Scope:** current `OSHConnect-Python` public-data publisher fleet, legacy `csapi-explorer` bootstrap corpus, helper-layer and artifact-state analysis, and official-source review.
 
 ---
@@ -270,64 +270,64 @@ The right move for most of the legacy scenario corpus is not migration into the 
 
 ### 8.1 Tier 1: universal high-priority gaps
 
-1. Restore TLS verification across active runtimes.  
+1. Restore TLS verification across active runtimes.
    Type: `runtime-follow-on`
 
-2. Codify the bootstrap families as first-class shared patterns.  
+2. Codify the bootstrap families as first-class shared patterns.
    Type: `bootstrap-only`
 
-3. Publish and enforce an artifact-state taxonomy for packs, total packs, historical source bases, and research notes.  
+3. Publish and enforce an artifact-state taxonomy for packs, total packs, historical source bases, and research notes.
    Type: `archive/clarify`
 
-4. Standardize provenance manifests and semantic-contract sidecars for every active publisher.  
+4. Standardize provenance manifests and semantic-contract sidecars for every active publisher.
    Type: `metadata-only`
 
-5. Add automated round-trip conformance probes for SensorML and result-schema retrieval.  
+5. Add automated round-trip conformance probes for SensorML and result-schema retrieval.
    Type: `runtime-follow-on`
 
-6. Close the ISS canonical-home gap.  
+6. Close the ISS canonical-home gap.
    Type: `migration`
 
 ### 8.2 Tier 2: publisher-family gaps
 
-1. Extract the station-per-system family builder.  
+1. Extract the station-per-system family builder.
    Type: `bootstrap-only`
 
-2. Define a canonical Pattern C feed-adapter contract.  
+2. Define a canonical Pattern C feed-adapter contract.
    Type: `metadata-only`
 
-3. Define a canonical Pattern A dependency contract for companion datastreams.  
+3. Define a canonical Pattern A dependency contract for companion datastreams.
    Type: `bootstrap-only`
 
-4. Separate scenario-only bootstraps from public-data publisher workflows.  
+4. Separate scenario-only bootstraps from public-data publisher workflows.
    Type: `archive/clarify`
 
 ### 8.3 Tier 3: per-bootstrap target-state work
 
-1. NWS and NDBC: integrate the mature parts of their enrichment work into a verified, canonical runtime-plus-bootstrap state.  
+1. NWS and NDBC: integrate the mature parts of their enrichment work into a verified, canonical runtime-plus-bootstrap state.
    Type: `runtime-follow-on`
 
-2. CO-OPS and Aviation WX: bring them to pack parity with the better-supported publishers.  
+2. CO-OPS and Aviation WX: bring them to pack parity with the better-supported publishers.
    Type: `metadata-only`
 
-3. OpenSky: keep the current model but harden runtime behavior and quality semantics.  
+3. OpenSky: keep the current model but harden runtime behavior and quality semantics.
    Type: `runtime-follow-on`
 
-4. USGS water: reconcile the missing total-pack directory and elevate the statistic-specific semantic contract into a canonical package.  
+4. USGS water: reconcile the missing total-pack directory and elevate the statistic-specific semantic contract into a canonical package.
    Type: `total-pack`
 
-5. USGS NIMS and USGS EQ: extend the already-strong packages into clearer next-stage runtime and semantic guidance.  
+5. USGS NIMS and USGS EQ: extend the already-strong packages into clearer next-stage runtime and semantic guidance.
    Type: `runtime-follow-on`
 
 ### 8.4 Tier 4: legacy migration or archival cleanup
 
-1. Migrate legacy ISS bootstrap into the current publisher repo.  
+1. Migrate legacy ISS bootstrap into the current publisher repo.
    Type: `migration`
 
-2. Archive or clearly label UAS, localizer, v2.5, v3.1, v4, and phase2 as scenario-specific or historical.  
+2. Archive or clearly label UAS, localizer, v2.5, v3.1, v4, and phase2 as scenario-specific or historical.
    Type: `archive/clarify`
 
-3. Preserve reusable ideas from the legacy scenario family without preserving insecure transport and credential patterns.  
+3. Preserve reusable ideas from the legacy scenario family without preserving insecure transport and credential patterns.
    Type: `archive/clarify`
 
 ---

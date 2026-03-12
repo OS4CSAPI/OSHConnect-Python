@@ -2,15 +2,15 @@
 
 ## Appendix B. Current Fleet Dossiers
 
-**Date:** 2026-03-12  
+**Date:** 2026-03-12
 **Scope:** current `OSHConnect-Python` public-data fleet, including the current ISS runtime slot as a missing-bootstrap case.
 
 ---
 
 ## B.1 NWS
 
-**Primary path:** `publishers/nws/bootstrap_nws.py`  
-**Pattern family:** Station-per-system  
+**Primary path:** `publishers/nws/bootstrap_nws.py`
+**Pattern family:** Station-per-system
 **Current topology summary:** one procedure, ten station systems, one weather datastream per station, and a root/group/station deployment tree driven by `publishers/nws/stations.json`.
 
 **Current strengths**
@@ -75,8 +75,8 @@ NWS should become the canonical station-family reference once its mature pack co
 
 ## B.2 NDBC
 
-**Primary path:** `publishers/ndbc/bootstrap_ndbc.py`  
-**Pattern family:** Station-per-system with imagery companion datastream support  
+**Primary path:** `publishers/ndbc/bootstrap_ndbc.py`
+**Pattern family:** Station-per-system with imagery companion datastream support
 **Current topology summary:** one core buoy-observation procedure, one optional BuoyCAM procedure, five buoy systems, one buoy datastream per buoy, optional imagery datastreams, and a root/group/buoy deployment tree driven by `publishers/ndbc/stations.json`.
 
 **Current strengths**
@@ -141,8 +141,8 @@ NDBC should become the canonical "multi-stream station publisher" reference once
 
 ## B.3 CO-OPS
 
-**Primary path:** `publishers/coops/bootstrap_coops.py`  
-**Pattern family:** Station-per-system  
+**Primary path:** `publishers/coops/bootstrap_coops.py`
+**Pattern family:** Station-per-system
 **Current topology summary:** one water-level procedure, five station systems, one coastal-observation datastream per station, and a root/group/station deployment tree driven by `publishers/coops/stations.json`.
 
 **Current strengths**
@@ -207,8 +207,8 @@ CO-OPS should evolve into a stronger coastal-observation reference with clearer 
 
 ## B.4 Aviation WX
 
-**Primary path:** `publishers/aviation_wx/bootstrap_aviation_wx.py`  
-**Pattern family:** Station-per-system  
+**Primary path:** `publishers/aviation_wx/bootstrap_aviation_wx.py`
+**Pattern family:** Station-per-system
 **Current topology summary:** one METAR decoding procedure, five airport systems, one METAR datastream per airport, and a root/group/station deployment tree driven by `publishers/aviation_wx/stations.json`.
 
 **Current strengths**
@@ -273,8 +273,8 @@ Aviation WX should be brought up to the metadata-pack baseline so it is no longe
 
 ## B.5 OpenSky
 
-**Primary path:** `publishers/opensky/bootstrap_opensky.py`  
-**Pattern family:** Pattern C feed adapter  
+**Primary path:** `publishers/opensky/bootstrap_opensky.py`
+**Pattern family:** Pattern C feed adapter
 **Current topology summary:** one ADS-B decoding procedure, one feed-adapter system, one state-vector datastream, and a small root/feed deployment tree driven by `publishers/opensky/config.json`.
 
 **Current strengths**
@@ -339,8 +339,8 @@ OpenSky should serve as the canonical Pattern C reference once runtime hardening
 
 ## B.6 ISS Current Slot
 
-**Primary path:** `publishers/iss/`  
-**Pattern family:** Intended Pattern C / dual-product publisher, but currently a missing canonical bootstrap  
+**Primary path:** `publishers/iss/`
+**Pattern family:** Intended Pattern C / dual-product publisher, but currently a missing canonical bootstrap
 **Current topology summary:** `publishers/iss/iss_publisher.py` and `publishers/iss/Dockerfile` exist, but there is no current bootstrap file and the fleet README still points to `python -m publishers.iss.bootstrap_iss`.
 
 **Current strengths**
@@ -405,8 +405,8 @@ ISS should exist as a first-class current bootstrap in `publishers/iss/`, preser
 
 ## B.7 USGS Water
 
-**Primary path:** `publishers/usgs_water/bootstrap_usgs_water.py`  
-**Pattern family:** Station-per-system with paired parameter streams  
+**Primary path:** `publishers/usgs_water/bootstrap_usgs_water.py`
+**Pattern family:** Station-per-system with paired parameter streams
 **Current topology summary:** one water-observation procedure, eight station systems, two datastreams per station (`usgsDischarge` and `usgsGageHeight`), and a root/group/station deployment tree driven by a comparatively rich `publishers/usgs_water/stations.json`.
 
 **Current strengths**
@@ -471,8 +471,8 @@ USGS water should become the strongest station-family public-data reference afte
 
 ## B.8 USGS NIMS
 
-**Primary path:** `publishers/usgs_nims/bootstrap_usgs_nims.py`  
-**Pattern family:** Pattern A companion datastream  
+**Primary path:** `publishers/usgs_nims/bootstrap_usgs_nims.py`
+**Pattern family:** Pattern A companion datastream
 **Current topology summary:** one imagery procedure, no new systems, one imagery datastream attached to each existing USGS water station system selected in `publishers/usgs_nims/cameras.json`, and a NIMS-specific root/group/station deployment tree.
 
 **Current strengths**
@@ -537,8 +537,8 @@ USGS NIMS should remain the reference Pattern A implementation, with the next st
 
 ## B.9 USGS Earthquake
 
-**Primary path:** `publishers/usgs_eq/bootstrap_usgs_eq.py`  
-**Pattern family:** Pattern C feed adapter  
+**Primary path:** `publishers/usgs_eq/bootstrap_usgs_eq.py`
+**Pattern family:** Pattern C feed adapter
 **Current topology summary:** one feed-normalizer procedure, one feed system, one earthquake-event datastream, and a root/feed deployment tree driven by `publishers/usgs_eq/config.json`.
 
 **Current strengths**

@@ -2,7 +2,7 @@
 
 ## Appendix A. Inventory and Rubric
 
-**Date:** 2026-03-12  
+**Date:** 2026-03-12
 **Scope:** current `OSHConnect-Python` bootstrap fleet, legacy `csapi-explorer` bootstrap corpus, and the adjacent artifacts required to judge bootstrap completeness and semantic maturity.
 
 ---

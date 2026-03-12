@@ -2,7 +2,7 @@
 
 ## Appendix D. Source Corpus and Roadmap
 
-**Date:** 2026-03-12  
+**Date:** 2026-03-12
 **Method note:** external claims in the master report and dossiers are grounded in primary or official sources only. Repo-local artifacts were treated as the source of truth for current implementation state; official public documentation was treated as the source of truth for upstream semantics and service behavior.
 
 ---

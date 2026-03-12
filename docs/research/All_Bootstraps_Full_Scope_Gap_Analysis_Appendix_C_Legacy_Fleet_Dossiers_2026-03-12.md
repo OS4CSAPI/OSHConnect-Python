@@ -2,14 +2,14 @@
 
 ## Appendix C. Legacy Fleet Dossiers
 
-**Date:** 2026-03-12  
+**Date:** 2026-03-12
 **Scope:** legacy bootstraps in `csapi-explorer/scripts` that still matter architecturally, historically, or as migration references.
 
 ---
 
 ## C.1 `bootstrap_iss.py`
 
-**Path:** `scripts/bootstrap_iss.py`  
+**Path:** `scripts/bootstrap_iss.py`
 **Current role classification:** Active precedent and migration candidate
 
 **What still matters architecturally**
@@ -52,7 +52,7 @@ Migrate this script into `publishers/iss/bootstrap_iss.py`, preserve its dual-pr
 
 ## C.2 `bootstrap_uas.py`
 
-**Path:** `scripts/bootstrap_uas.py`  
+**Path:** `scripts/bootstrap_uas.py`
 **Current role classification:** Historical artifact with reusable enrichment ideas
 
 **What still matters architecturally**
@@ -95,7 +95,7 @@ Archive it as a scenario-specific enrichment reference and extract only the reus
 
 ## C.3 `bootstrap_localizer.py`
 
-**Path:** `scripts/bootstrap_localizer.py`  
+**Path:** `scripts/bootstrap_localizer.py`
 **Current role classification:** Scenario-only bootstrap
 
 **What still matters architecturally**
@@ -138,7 +138,7 @@ Keep it only as a scenario-only reference for small focused bootstraps and do no
 
 ## C.4 `bootstrap_v25.py`
 
-**Path:** `scripts/bootstrap_v25.py`  
+**Path:** `scripts/bootstrap_v25.py`
 **Current role classification:** Historical migration bridge
 
 **What still matters architecturally**
@@ -181,7 +181,7 @@ Retain it only as a historical migration bridge and mine it for reusable import 
 
 ## C.5 `bootstrap_v3.1.py`
 
-**Path:** `scripts/bootstrap_v3.1.py`  
+**Path:** `scripts/bootstrap_v3.1.py`
 **Current role classification:** Historical artifact
 
 **What still matters architecturally**
@@ -224,7 +224,7 @@ Archive it as a historical scenario-hierarchy milestone and do not treat it as a
 
 ## C.6 `bootstrap_v4.py`
 
-**Path:** `scripts/bootstrap_v4.py`  
+**Path:** `scripts/bootstrap_v4.py`
 **Current role classification:** Scenario-only authoritative bootstrap
 
 **What still matters architecturally**
