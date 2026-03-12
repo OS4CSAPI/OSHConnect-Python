@@ -66,6 +66,9 @@ USGS_WATER_HOME = "https://waterdata.usgs.gov/"
 USGS_OGC_API = "https://api.waterdata.usgs.gov/ogcapi/v0/"
 USGS_NIMS_CAMERAS = "https://api.waterdata.usgs.gov/nims/v0/cameras"
 USGS_NIMS_LIST_FILES = "https://api.waterdata.usgs.gov/nims/v0/listFiles"
+USGS_NIMS_DOCS = "https://api.waterdata.usgs.gov/nims/v0/docs"
+USGS_NIMS_SITE_DISCOVERY = "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId="
+USGS_NIMS_RAWITEM_NOTE = "https://api.waterdata.usgs.gov/nims/v0/listFiles"
 
 
 def _load_cameras() -> list[dict]:
@@ -98,6 +101,14 @@ def _timelapse_url(cam: dict) -> str:
     return f"{tl_dir}{cam_id}_720.mp4"
 
 
+def _site_cameras_url(nwis_id: str) -> str:
+    return f"{NIMS_API_BASE}cameras?siteId={nwis_id}"
+
+
+def _list_files_rawitem_url(cam_id: str, limit: int = 5) -> str:
+    return f"{NIMS_API_BASE}listFiles?camId={cam_id}&limit={limit}&recent=true&rawItem=true"
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 #  Resource definitions
 # ═══════════════════════════════════════════════════════════════════════════
@@ -110,28 +121,28 @@ PROCEDURE_BODY = {
         "featureType": "sosa:ObservingProcedure",
         "name": "USGS NIMS Station Imagery v1",
         "description": (
-            "Publishes gaging-station imagery from the USGS National Imagery Management "
-            "System (NIMS). The publisher polls each camera's latest image list via the "
-            "NIMS v0 API, resolves stable S3-hosted image URLs for overlay, thumbnail, and "
-            "720px resolutions, and publishes image-reference observations. Each observation "
-            "contains URLs and metadata — not binary image data. Timelapse video URLs are "
-            "included when the camera supports time-lapse generation."
+            "Publishes image-reference observations from the USGS National Imagery Management "
+            "System (NIMS). The current publisher model reuses existing USGS water monitoring "
+            "station systems and attaches one selected imagery datastream per curated camera as "
+            "a Pattern A companion datastream. Runtime polls NIMS listFiles, derives image time, "
+            "constructs stable S3-hosted URLs for multiple image resolutions, and publishes URLs "
+            "and metadata instead of binary image payloads."
         ),
         "keywords": [
             "USGS",
             "NIMS",
-            "gaging station",
-            "camera",
-            "imagery",
-            "streamgage",
-            "visual monitoring",
-            "JPEG",
-            "timelapse",
             "station imagery",
+            "camera discovery",
+            "listFiles",
+            "image reference",
+            "timelapse",
+            "shared system",
+            "Pattern A",
         ],
         "documentation": [
             {"title": "NIMS v0 Camera Discovery", "href": USGS_NIMS_CAMERAS, "rel": "documentation"},
             {"title": "NIMS v0 Image Listing", "href": USGS_NIMS_LIST_FILES, "rel": "documentation"},
+            {"title": "NIMS v0 Swagger Docs", "href": USGS_NIMS_DOCS, "rel": "describedby"},
             {"title": "NIMS Image Bucket (S3)", "href": NIMS_S3_BASE, "rel": "alternate"},
             {"title": "USGS API Registration", "href": USGS_API_REGISTRATION, "rel": "related"},
             {"title": "USGS Water Data Home", "href": USGS_WATER_HOME, "rel": "about"},
@@ -151,33 +162,40 @@ PROCEDURE_BODY = {
         "lineage": {
             "source": "U.S. Geological Survey / National Imagery Management System (NIMS)",
             "upstream": (
-                "Camera metadata comes from the NIMS /cameras endpoint. Image filenames "
-                "come from /listFiles. Full-size, thumbnail, and 720px image URLs are "
-                "constructed from S3 bucket directory paths returned by /cameras."
+                "Camera identity and directory metadata come from NIMS cameras responses. "
+                "Newest image filenames come from listFiles. Resolution-specific URLs are "
+                "constructed from the returned directory paths and filenames."
             ),
             "normalization": (
-                "Publisher extracts timestamp from the image filename pattern "
-                "({camId}___YYYY-MM-DDTHH-mm-ssZ.jpg), constructs resolution-specific "
-                "image URLs, and publishes a JSON observation record referencing the URLs."
+                "The current runtime uses listFiles string-array mode, parses image time from the "
+                "filename pattern, and publishes imageUrl, thumbUrl, smallUrl, filename, mediaType, "
+                "and optional timeLapseUrl in the observation result body."
             ),
         },
         "usageConstraints": {
             "apiKeyNote": (
-                "A USGS API key is recommended for higher rate-limit ceilings. Register at "
-                "https://api.usgs.gov. Pass via query parameter or X-Api-Key header."
+                "A USGS API key is recommended for higher request ceilings. Register at "
+                "https://api.usgs.gov."
             ),
             "nimsVersionNote": (
-                "NIMS v0 is fully supported but classified as legacy. USGS recommends "
-                "migrating to v1 once available. The endpoint version is configurable."
+                "NIMS v0 is the active verified endpoint as of 2026-03-11. The package keeps v0 URLs "
+                "and does not assume a v1 migration path is live yet."
+            ),
+            "sharedSystemNote": (
+                "This publisher uses Pattern A and reuses existing USGS water station systems. "
+                "It does not create NIMS-specific systems."
+            ),
+            "selectionNote": (
+                "The current curated model selects one camera per station system even though some "
+                "NIMS sites now expose multiple live cameras."
+            ),
+            "rawItemNote": (
+                "NIMS listFiles also supports rawItem=true responses with timestamp and file-size "
+                "fields. The current runtime does not yet use that richer mode."
             ),
             "imageryNote": (
-                "NIMS cameras are typically daylight-only with variable refresh intervals "
-                "(15-60 minutes). Images may be stale at night or during outages."
-            ),
-            "disclaimer": (
-                "USGS imagery is provided as-is. Data are released on the condition that "
-                "neither the USGS nor the United States Government may be held liable for "
-                "damages resulting from use."
+                "NIMS cameras may be daylight-only or 24x7. Refresh intervals vary by camera. "
+                "Images may be stale during darkness, outages, or reduced capture windows."
             ),
         },
         "validTime": [VALID_TIME_START, ".."],
@@ -189,19 +207,26 @@ def _imagery_datastream_schema(cam: dict) -> dict:
     """SWE DataRecord schema for the NIMS imagery datastream."""
     cam_id = cam["camId"]
     nwis_id = cam["nwisId"]
+    station_name = cam.get("stationName", cam.get("camName", nwis_id))
+    ingest_period = cam.get("ingestPeriod", "unknown")
+    ingest_interval = cam.get("ingestIntervalMin", "unknown")
+    timelapse_enabled = cam.get("TL_enabled", False)
+
     return {
         "outputName": DS_OUTPUT_NAME,
         "name": "NIMS Station Image",
         "description": (
-            f"Image-reference observations from USGS NIMS camera {cam_id} at gaging "
-            f"station {nwis_id} ({cam.get('stationName', cam.get('camName', ''))})."
-            " Each observation provides stable S3-hosted URLs for overlay (full-size), "
-            "thumbnail, and 720px image resolutions, plus camera metadata and an optional "
-            "timelapse video URL. Result records contain URLs — not binary image data."
+            f"Image-reference observations from selected USGS NIMS camera {cam_id} at gaging "
+            f"station {nwis_id} ({station_name}). This datastream is a Pattern A companion "
+            f"datastream on the shared USGS water station system. Current camera capture mode is "
+            f"{ingest_period} with an approximate {ingest_interval}-minute interval. "
+            f"Timelapse enabled: {str(timelapse_enabled).lower()}."
         ),
         "documentation": [
-            {"title": "NIMS Camera Discovery", "href": USGS_NIMS_CAMERAS, "rel": "documentation"},
+            {"title": "NIMS Camera Discovery", "href": _camera_page_url(cam_id), "rel": "documentation"},
+            {"title": "NIMS Site Discovery", "href": _site_cameras_url(nwis_id), "rel": "documentation"},
             {"title": "NIMS Image Listing", "href": _list_files_url(cam_id, 5), "rel": "documentation"},
+            {"title": "NIMS Raw Item Listing", "href": _list_files_rawitem_url(cam_id, 5), "rel": "documentation"},
             {"title": "NIMS S3 Bucket", "href": NIMS_S3_BASE, "rel": "alternate"},
         ],
         "schema": {
@@ -210,7 +235,7 @@ def _imagery_datastream_schema(cam: dict) -> dict:
                 "type": "DataRecord",
                 "label": "NIMS Image Reference",
                 "description": (
-                    "USGS NIMS gaging-station image metadata and resolution-specific URLs. "
+                    "USGS NIMS image-reference metadata and resolution-specific URLs. "
                     "The time field named timestamp is populated from phenomenonTime and "
                     "must not be included inside the result body."
                 ),
@@ -292,10 +317,11 @@ def _deploy_root() -> dict:
             "description": (
                 "Top-level CSAPI deployment grouping for USGS NIMS gaging-station imagery "
                 "published by OSHConnect-Python. Imagery datastreams are companion datastreams "
-                "on existing USGS water monitoring station systems (Pattern A)."
+                "attached to existing USGS water monitoring station systems under the Pattern A model."
             ),
             "documentation": [
                 {"title": "NIMS Camera Discovery", "href": USGS_NIMS_CAMERAS, "rel": "documentation"},
+                {"title": "NIMS Swagger Docs", "href": USGS_NIMS_DOCS, "rel": "describedby"},
                 {"title": "NIMS S3 Image Bucket", "href": NIMS_S3_BASE, "rel": "alternate"},
                 {"title": "USGS Water Data Home", "href": USGS_WATER_HOME, "rel": "about"},
             ],
@@ -316,12 +342,13 @@ def _deploy_group() -> dict:
             "featureType": "sosa:Deployment",
             "name": "USGS NIMS Camera Stations",
             "description": (
-                "Grouping deployment for the curated set of USGS NIMS camera-equipped "
-                "gaging stations. Each child deployment pairs a camera with the existing "
-                "USGS water monitoring station system."
+                "Grouping deployment for the curated set of USGS NIMS camera-equipped gaging "
+                "stations. Each child deployment represents one selected camera linked to one "
+                "existing USGS water station system."
             ),
             "documentation": [
                 {"title": "NIMS Camera Discovery", "href": USGS_NIMS_CAMERAS, "rel": "documentation"},
+                {"title": "USGS Water OGC API", "href": USGS_OGC_API, "rel": "related"},
             ],
             "validTime": [VALID_TIME_START, ".."],
         },
@@ -343,21 +370,16 @@ def _deploy_camera(cam: dict, system_server_id: str) -> dict:
             "featureType": "sosa:Deployment",
             "name": f"NIMS Camera {nwis_id}",
             "description": (
-                f"CSAPI deployment node for NIMS camera {cam_id} at USGS gaging station "
-                f"{nwis_id} ({station_name}). Links imagery observations to the existing "
-                f"USGS water monitoring station system."
+                f"CSAPI deployment node for selected NIMS camera {cam_id} at USGS gaging station "
+                f"{nwis_id} ({station_name}). This deployment links imagery observations to the "
+                "existing shared USGS water station system rather than creating a separate camera system."
             ),
             "externalLinks": [
-                {
-                    "href": _list_files_url(cam_id, 10),
-                    "title": "NIMS Recent Images",
-                    "rel": "latest-version",
-                },
-                {
-                    "href": _timelapse_url(cam),
-                    "title": "NIMS Timelapse Video",
-                    "rel": "alternate",
-                },
+                {"href": _camera_page_url(cam_id), "title": "NIMS Camera Discovery", "rel": "canonical"},
+                {"href": _site_cameras_url(nwis_id), "title": "NIMS Site Discovery", "rel": "related"},
+                {"href": _list_files_url(cam_id, 10), "title": "NIMS Recent Images", "rel": "latest-version"},
+                {"href": _list_files_rawitem_url(cam_id, 10), "title": "NIMS Recent Images (rawItem)", "rel": "related"},
+                {"href": _timelapse_url(cam), "title": "NIMS Timelapse Video", "rel": "alternate"},
             ],
             "validTime": [VALID_TIME_START, ".."],
             "platform@link": {

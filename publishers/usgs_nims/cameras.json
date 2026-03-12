@@ -33,7 +33,12 @@
       "hideCam": false,
       "locus": "aws",
       "ingestPeriod": "247",
-      "ingestIntervalMin": 15
+      "ingestIntervalMin": 15,
+      "cameraDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=AZ_Colorado_River_at_Lees_Ferry_Upstream",
+      "siteDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=09380000",
+      "listFilesUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=AZ_Colorado_River_at_Lees_Ferry_Upstream&limit=5&recent=true",
+      "listFilesRawItemUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=AZ_Colorado_River_at_Lees_Ferry_Upstream&limit=5&recent=true&rawItem=true",
+      "timelapseUrl": "https://usgs-nims-images.s3.amazonaws.com/timelapse/AZ_Colorado_River_at_Lees_Ferry_Upstream/AZ_Colorado_River_at_Lees_Ferry_Upstream_720.mp4"
     },
     {
       "camId": "CO_WILLOW_CREEK_SL",
@@ -54,7 +59,12 @@
       "hideCam": false,
       "locus": "aws",
       "ingestPeriod": "247",
-      "ingestIntervalMin": 15
+      "ingestIntervalMin": 15,
+      "cameraDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=CO_WILLOW_CREEK_SL",
+      "siteDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=09019850",
+      "listFilesUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=CO_WILLOW_CREEK_SL&limit=5&recent=true",
+      "listFilesRawItemUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=CO_WILLOW_CREEK_SL&limit=5&recent=true&rawItem=true",
+      "timelapseUrl": "https://usgs-nims-images.s3.amazonaws.com/timelapse/CO_WILLOW_CREEK_SL/CO_WILLOW_CREEK_SL_720.mp4"
     },
     {
       "camId": "CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island",
@@ -75,7 +85,12 @@
       "hideCam": false,
       "locus": "aws",
       "ingestPeriod": "247",
-      "ingestIntervalMin": 15
+      "ingestIntervalMin": 15,
+      "cameraDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island",
+      "siteDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=11313433",
+      "listFilesUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island&limit=5&recent=true",
+      "listFilesRawItemUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island&limit=5&recent=true&rawItem=true",
+      "timelapseUrl": "https://usgs-nims-images.s3.amazonaws.com/timelapse/CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island/CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island_720.mp4"
     },
     {
       "camId": "TX_Blanco_River_at_Wimberley",
@@ -96,7 +111,12 @@
       "hideCam": false,
       "locus": "aws",
       "ingestPeriod": "daylight",
-      "ingestIntervalMin": 15
+      "ingestIntervalMin": 15,
+      "cameraDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=TX_Blanco_River_at_Wimberley",
+      "siteDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=08171000",
+      "listFilesUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=TX_Blanco_River_at_Wimberley&limit=5&recent=true",
+      "listFilesRawItemUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=TX_Blanco_River_at_Wimberley&limit=5&recent=true&rawItem=true",
+      "timelapseUrl": "https://usgs-nims-images.s3.amazonaws.com/timelapse/TX_Blanco_River_at_Wimberley/TX_Blanco_River_at_Wimberley_720.mp4"
     },
     {
       "camId": "MD_Sligo_Creek_Near_Takoma_Park",
@@ -117,7 +137,12 @@
       "hideCam": false,
       "locus": "aws",
       "ingestPeriod": "daylight",
-      "ingestIntervalMin": 60
+      "ingestIntervalMin": 60,
+      "cameraDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=MD_Sligo_Creek_Near_Takoma_Park",
+      "siteDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=01650800",
+      "listFilesUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=MD_Sligo_Creek_Near_Takoma_Park&limit=5&recent=true",
+      "listFilesRawItemUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=MD_Sligo_Creek_Near_Takoma_Park&limit=5&recent=true&rawItem=true",
+      "timelapseUrl": "https://usgs-nims-images.s3.amazonaws.com/timelapse/MD_Sligo_Creek_Near_Takoma_Park/MD_Sligo_Creek_Near_Takoma_Park_720.mp4"
     },
     {
       "camId": "MN_Bois_De_Sioux_River_near_Doran",
@@ -138,7 +163,12 @@
       "hideCam": false,
       "locus": "aws",
       "ingestPeriod": "daylight",
-      "ingestIntervalMin": 60
+      "ingestIntervalMin": 60,
+      "cameraDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=MN_Bois_De_Sioux_River_near_Doran",
+      "siteDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=05051300",
+      "listFilesUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=MN_Bois_De_Sioux_River_near_Doran&limit=5&recent=true",
+      "listFilesRawItemUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=MN_Bois_De_Sioux_River_near_Doran&limit=5&recent=true&rawItem=true",
+      "timelapseUrl": "https://usgs-nims-images.s3.amazonaws.com/timelapse/MN_Bois_De_Sioux_River_near_Doran/MN_Bois_De_Sioux_River_near_Doran_720.mp4"
     },
     {
       "camId": "WA_Okanogan_River_at_Zosel_Millpond_at_Oroville",
@@ -159,7 +189,12 @@
       "hideCam": false,
       "locus": "aws",
       "ingestPeriod": "daylight",
-      "ingestIntervalMin": 60
+      "ingestIntervalMin": 60,
+      "cameraDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=WA_Okanogan_River_at_Zosel_Millpond_at_Oroville",
+      "siteDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=12439500",
+      "listFilesUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=WA_Okanogan_River_at_Zosel_Millpond_at_Oroville&limit=5&recent=true",
+      "listFilesRawItemUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=WA_Okanogan_River_at_Zosel_Millpond_at_Oroville&limit=5&recent=true&rawItem=true",
+      "timelapseUrl": "https://usgs-nims-images.s3.amazonaws.com/timelapse/WA_Okanogan_River_at_Zosel_Millpond_at_Oroville/WA_Okanogan_River_at_Zosel_Millpond_at_Oroville_720.mp4"
     },
     {
       "camId": "SC_Little_Pee_Dee_River_at_Galivants_Ferry",
@@ -180,7 +215,12 @@
       "hideCam": false,
       "locus": "aws",
       "ingestPeriod": "daylight",
-      "ingestIntervalMin": 15
+      "ingestIntervalMin": 15,
+      "cameraDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=SC_Little_Pee_Dee_River_at_Galivants_Ferry",
+      "siteDiscoveryUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=02135000",
+      "listFilesUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=SC_Little_Pee_Dee_River_at_Galivants_Ferry&limit=5&recent=true",
+      "listFilesRawItemUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=SC_Little_Pee_Dee_River_at_Galivants_Ferry&limit=5&recent=true&rawItem=true",
+      "timelapseUrl": "https://usgs-nims-images.s3.amazonaws.com/timelapse/SC_Little_Pee_Dee_River_at_Galivants_Ferry/SC_Little_Pee_Dee_River_at_Galivants_Ferry_720.mp4"
     }
   ]
 }
