@@ -112,7 +112,7 @@ def _system_stub(config: dict) -> dict:
         "type": "Feature",
         "geometry": {
             "type": "Point",
-            "coordinates": [0.0, 0.0],  # Global coverage — center of world
+            "coordinates": [-105.2214, 39.7392],  # USGS NEIC, Golden, Colorado
         },
         "properties": {
             "uid": SYSTEM_UID,
@@ -257,7 +257,7 @@ def _system_sml(config: dict) -> dict:
         ],
         "position": {
             "type": "Point",
-            "coordinates": [0.0, 0.0],
+            "coordinates": [-105.2214, 39.7392],  # USGS NEIC, Golden, Colorado
             "srsName": "http://www.opengis.net/def/crs/EPSG/0/4326",
         },
     }
@@ -319,7 +319,7 @@ def _deploy_root() -> dict:
         "type": "Feature",
         "geometry": {
             "type": "Point",
-            "coordinates": [0.0, 0.0],  # Global coverage
+            "coordinates": [-105.2214, 39.7392],  # USGS NEIC, Golden, Colorado
         },
         "properties": {
             "uid": DEPLOY_ROOT_UID,
@@ -345,7 +345,7 @@ def _deploy_feed(system_server_id: str) -> dict:
         "type": "Feature",
         "geometry": {
             "type": "Point",
-            "coordinates": [0.0, 0.0],  # Global coverage
+            "coordinates": [-105.2214, 39.7392],  # USGS NEIC, Golden, Colorado
         },
         "properties": {
             "uid": DEPLOY_FEED_UID,
