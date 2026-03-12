@@ -114,5 +114,15 @@ services:
       # USGS_API_KEY: "${USGS_API_KEY:-}"
     command: ["--interval", "900"]
 
+  # ── USGS Earthquake Feed (60s cadence) ──
+  usgs-eq:
+    build:
+      context: ..
+      dockerfile: publishers/usgs_eq/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+    command: ["--interval", "60"]
+
 volumes:
   buoycam-cache:
