@@ -1,0 +1,16 @@
+{
+  "recommendedDefault": {
+    "feedVariant": "all_day",
+    "pollingIntervalSeconds": 60,
+    "reason": "Balanced volume and good real-time activity for a demo or reference publisher."
+  },
+  "recommendedAlternative": {
+    "feedVariant": "significant_month",
+    "pollingIntervalSeconds": 300,
+    "reason": "Lower volume and higher salience if the consumer wants a calmer event stream."
+  },
+  "notes": [
+    "Changing feed variant should not require bootstrap topology changes.",
+    "If the variant changes, update metadata wording and source URLs to keep the package authoritative."
+  ]
+}

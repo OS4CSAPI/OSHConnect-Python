@@ -1,0 +1,23 @@
+{
+  "verifiedDate": "2026-03-12",
+  "core": {
+    "earthquakeHazardsHome": "https://earthquake.usgs.gov/",
+    "geojsonSummaryDocs": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php",
+    "geojsonDetailDocs": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson_detail.php",
+    "feedLifecyclePolicy": "https://earthquake.usgs.gov/earthquakes/feed/policy.php",
+    "comcatDocs": "https://earthquake.usgs.gov/data/comcat/index.php",
+    "eventTermsDocs": "https://earthquake.usgs.gov/data/comcat/data-eventterms.php",
+    "fdsnEventApiDocs": "https://earthquake.usgs.gov/fdsnws/event/1/"
+  },
+  "workedExamples": {
+    "allDaySummaryFeed": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+    "significantMonthSummaryFeed": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson",
+    "detailEventNc75326262": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/nc75326262.geojson",
+    "fdsnQueryNc75326262": "https://earthquake.usgs.gov/fdsnws/event/1/query.geojson?format=geojson&eventid=nc75326262"
+  },
+  "notes": [
+    "The package intentionally keeps only official USGS earthquake and earthquake.usgs.gov sources here.",
+    "The active GeoJSON summary and detail feed docs remain under the v1.0 feed path as verified on 2026-03-12.",
+    "The FDSN event web service is treated as a companion source for query flexibility and future backfill, not as a required replacement for the current summary-feed runtime."
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "verifiedDate": "2026-03-12",
+  "sourceUrl": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/nc75326262.geojson",
+  "event": {
+    "id": "nc75326262",
+    "mag": 1.12,
+    "place": "1 km NW of The Geysers, CA",
+    "time": 1773275586090,
+    "updated": 1773277037452,
+    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75326262",
+    "status": "automatic",
+    "tsunami": 0,
+    "sig": 19,
+    "net": "nc",
+    "types": ",nearby-cities,origin,phase-data,scitech-link,",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        -122.768501281738,
+        38.7853317260742,
+        2.34999990463257
+      ]
+    }
+  },
+  "products": {
+    "nearby-cities": [
+      {
+        "id": "urn:usgs-product:nc:nearby-cities:nc75326262:1773275681183",
+        "source": "nc",
+        "updateTime": 1773275681183,
+        "contents": {
+          "nearby-cities.json": "https://earthquake.usgs.gov/pdl/products/urn:usgs-product:nc:nearby-cities:nc75326262:1773275681183/contents/nearby-cities.json"
+        }
+      }
+    ],
+    "origin": [
+      {
+        "id": "urn:usgs-product:nc:origin:nc75326262:1773275679000",
+        "source": "nc",
+        "updateTime": 1773275679000,
+        "properties": {
+          "eventtime": "2026-03-12T00:33:06.09Z",
+          "latitude": "38.7853317260742",
+          "longitude": "-122.768501281738",
+          "depth": "2.34999990463257",
+          "magnitude": "1.12",
+          "magnitude-type": "md",
+          "horizontal-error": "0.25",
+          "vertical-error": "0.540000021",
+          "review-status": "automatic"
+        },
+        "contents": {
+          "quakeml.xml": "https://earthquake.usgs.gov/pdl/products/urn:usgs-product:nc:origin:nc75326262:1773275679000/contents/quakeml.xml"
+        }
+      }
+    ],
+    "phase-data": [
+      {
+        "id": "urn:usgs-product:nc:phase-data:nc75326262:1773275679000",
+        "source": "nc",
+        "updateTime": 1773275679000,
+        "properties": {
+          "num-phases-used": "22",
+          "num-stations-used": "22",
+          "minimum-distance": "0.01708",
+          "standard-error": "0.03",
+          "review-status": "automatic"
+        },
+        "contents": {
+          "quakeml.xml": "https://earthquake.usgs.gov/pdl/products/urn:usgs-product:nc:phase-data:nc75326262:1773275679000/contents/quakeml.xml"
+        }
+      }
+    ],
+    "scitech-link": [
+      {
+        "id": "urn:usgs-product:nc:scitech-link:nc75326262-waveform_nc:1773277037452",
+        "source": "nc",
+        "updateTime": 1773277037452,
+        "properties": {
+          "text": "Waveforms",
+          "url": "http://escweb.wr.usgs.gov/waveforms/wavesall/nc75326262/"
+        }
+      }
+    ]
+  },
+  "packageNote": "Selected-fields snapshot derived from the full detail response. The goal is to preserve the enrichment surface concisely, not to mirror every raw field."
+}

@@ -1,0 +1,7 @@
+No official static representative earthquake image is bundled in this package.
+
+Reason:
+
+- the publisher models a global real-time event feed rather than one durable physical asset
+- event-specific maps and pages are generated per earthquake
+- a generic local icon is more appropriate for this package than a single official source image

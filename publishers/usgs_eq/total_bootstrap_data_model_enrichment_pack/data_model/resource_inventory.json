@@ -1,0 +1,40 @@
+{
+  "pattern": "Pattern C",
+  "resources": {
+    "procedure": {
+      "count": 1,
+      "uids": [
+        "urn:os4csapi:procedure:usgs-eq-feed-normalizer:v1"
+      ]
+    },
+    "system": {
+      "count": 1,
+      "uids": [
+        "urn:os4csapi:system:usgs-eq-feed:v1"
+      ]
+    },
+    "datastream": {
+      "count": 1,
+      "outputNames": [
+        "earthquakeEvent"
+      ]
+    },
+    "deployment": {
+      "count": 2,
+      "uids": [
+        "urn:os4csapi:deployment:seismic-monitoring-demo:v1",
+        "urn:os4csapi:deployment:usgs-eq-feed:v1"
+      ]
+    }
+  },
+  "currentConfig": {
+    "feedVariant": "all_day",
+    "pollingIntervalSeconds": 60,
+    "feedUrl": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
+  },
+  "notes": [
+    "The publisher models one global feed adapter and does not create per-event resources.",
+    "Event location is carried in the observation result, not as resource geometry on the datastream or system.",
+    "The current bootstrap uses a conceptual NEIC point geometry for the feed adapter and deployment tree."
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "verifiedDate": "2026-03-12",
+  "source": "https://earthquake.usgs.gov/data/comcat/data-eventterms.php",
+  "terms": [
+    {
+      "field": "alert",
+      "summary": "Summary of expected impact based on PAGER impact estimates.",
+      "officialValues": [
+        "green",
+        "yellow",
+        "orange",
+        "red"
+      ],
+      "packageUse": "Optional future result field or UI badge; not required for every event."
+    },
+    {
+      "field": "net",
+      "summary": "Data contributor code for the preferred event origin.",
+      "packageUse": "High-value provenance field if the result contract is extended."
+    },
+    {
+      "field": "sig",
+      "summary": "Subjective measure of an event's significance used for ranking and display.",
+      "packageUse": "Good optional future field because it helps compare low-magnitude but locally important events."
+    },
+    {
+      "field": "status",
+      "summary": "Review status of the event record.",
+      "packageUse": "Already mapped by the current publisher and should stay documented explicitly."
+    },
+    {
+      "field": "tsunami",
+      "summary": "Binary indicator where 1 means associated with tsunami information and 0 means not associated.",
+      "packageUse": "Simple and high-value optional result field."
+    },
+    {
+      "field": "types",
+      "summary": "Comma-delimited list of product types available for the event.",
+      "packageUse": "Best treated as metadata or selective enrichment guidance unless products are fetched."
+    },
+    {
+      "field": "updated",
+      "summary": "Unix time in milliseconds when the event was most recently updated.",
+      "packageUse": "Critical dedupe and revision field; already a core runtime dependency."
+    }
+  ],
+  "notes": [
+    "This file captures only the fields most relevant to enrichment decisions for the current publisher.",
+    "The terms source is the authoritative place to document semantics rather than guessing from field names."
+  ]
+}

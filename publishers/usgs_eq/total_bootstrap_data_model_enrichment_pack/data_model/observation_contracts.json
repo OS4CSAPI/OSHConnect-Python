@@ -1,0 +1,107 @@
+{
+  "currentObservationEnvelope": {
+    "phenomenonTime": "ISO 8601 instant derived from properties.time",
+    "resultTime": "publisher clock at publication time",
+    "result": "DataRecord aligned with the earthquake datastream schema"
+  },
+  "currentResultFields": [
+    {
+      "name": "eventId",
+      "source": "feature.id",
+      "purpose": "Stable event identity and dedupe key component"
+    },
+    {
+      "name": "magnitude",
+      "source": "properties.mag",
+      "purpose": "Reported event magnitude"
+    },
+    {
+      "name": "magType",
+      "source": "properties.magType",
+      "purpose": "Magnitude scale identifier"
+    },
+    {
+      "name": "place",
+      "source": "properties.place",
+      "purpose": "Human-readable location description"
+    },
+    {
+      "name": "eventTime",
+      "source": "properties.time",
+      "purpose": "Original event time in epoch milliseconds"
+    },
+    {
+      "name": "updatedTime",
+      "source": "properties.updated",
+      "purpose": "Revision-sensitive update time in epoch milliseconds"
+    },
+    {
+      "name": "latitude",
+      "source": "geometry.coordinates[1]",
+      "purpose": "Event latitude"
+    },
+    {
+      "name": "longitude",
+      "source": "geometry.coordinates[0]",
+      "purpose": "Event longitude"
+    },
+    {
+      "name": "depth_km",
+      "source": "geometry.coordinates[2]",
+      "purpose": "Event depth in kilometers"
+    },
+    {
+      "name": "status",
+      "source": "properties.status",
+      "purpose": "USGS review state"
+    },
+    {
+      "name": "eventType",
+      "source": "properties.type",
+      "purpose": "Earthquake or related event classification"
+    },
+    {
+      "name": "title",
+      "source": "properties.title",
+      "purpose": "Short display label"
+    },
+    {
+      "name": "detailUrl",
+      "source": "properties.detail",
+      "purpose": "Link to richer event detail"
+    }
+  ],
+  "dedupeKey": {
+    "primaryComponents": [
+      "feature.id",
+      "properties.updated"
+    ],
+    "description": "Skip unchanged tuples and re-publish revised events when updatedTime changes."
+  },
+  "safeMetadataOnlyEnrichment": [
+    "Document omitted summary-feed fields such as url, sig, alert, tsunami, net, nst, dmin, rms, gap, ids, sources, and types",
+    "Link the datastream and procedure to official summary, detail, lifecycle, and FDSN docs",
+    "Document feed-variant strategy and production-feed lifecycle expectations"
+  ],
+  "optionalFutureRuntimeFields": [
+    "eventPageUrl",
+    "significance",
+    "tsunami",
+    "alertLevel",
+    "network",
+    "gap",
+    "rms",
+    "numStations",
+    "minimumDistance"
+  ],
+  "knownRuntimeNotes": [
+    "The current publisher emits the string NaN when magnitude is null; this avoids invalid JSON but does not match an ideal numeric null-handling strategy.",
+    "The current resultTime is the publisher clock, not the feed metadata.generated time.",
+    "The current dedupe cache is in-memory only and does not survive process restart."
+  ],
+  "nonGoals": [
+    "Do not create one system per earthquake",
+    "Do not fetch every detail document on every cycle by default",
+    "Do not mirror the full products structure into the default observation result"
+  ]
+}

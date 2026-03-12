@@ -1,0 +1,16 @@
+{
+  "verifiedDate": "2026-03-12",
+  "eventId": "nc75326262",
+  "comparedSources": [
+    "https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/nc75326262.geojson",
+    "https://earthquake.usgs.gov/fdsnws/event/1/query.geojson?format=geojson&eventid=nc75326262"
+  ],
+  "alignment": {
+    "topLevelType": "same",
+    "topLevelId": "same",
+    "geometry": "same",
+    "summaryStyleProperties": "same",
+    "productsBlock": "same product types and same contributor-specific structure for this event"
+  },
+  "implication": "The FDSN query.geojson endpoint is a practical companion source for selective event retrieval or backfill, but the current summary-feed-plus-detail-link model remains sufficient for the default runtime."
+}

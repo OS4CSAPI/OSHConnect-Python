@@ -1,0 +1,156 @@
+{
+  "summaryFeedFields": [
+    {
+      "upstream": "feature.id",
+      "currentTarget": "result.eventId",
+      "status": "mapped",
+      "notes": "Stable event identifier used in dedupe."
+    },
+    {
+      "upstream": "properties.mag",
+      "currentTarget": "result.magnitude",
+      "status": "mapped",
+      "notes": "Current runtime uses summary-feed magnitude directly."
+    },
+    {
+      "upstream": "properties.magType",
+      "currentTarget": "result.magType",
+      "status": "mapped",
+      "notes": "Magnitude scale label such as md or mw."
+    },
+    {
+      "upstream": "properties.place",
+      "currentTarget": "result.place",
+      "status": "mapped",
+      "notes": "Primary human-readable place text."
+    },
+    {
+      "upstream": "properties.time",
+      "currentTarget": "phenomenonTime and result.eventTime",
+      "status": "mapped",
+      "notes": "Used both as the event instant and as the raw epoch-ms field."
+    },
+    {
+      "upstream": "properties.updated",
+      "currentTarget": "result.updatedTime",
+      "status": "mapped",
+      "notes": "Critical dedupe and revision field."
+    },
+    {
+      "upstream": "geometry.coordinates[0]",
+      "currentTarget": "result.longitude",
+      "status": "mapped",
+      "notes": "Longitude component of the event point."
+    },
+    {
+      "upstream": "geometry.coordinates[1]",
+      "currentTarget": "result.latitude",
+      "status": "mapped",
+      "notes": "Latitude component of the event point."
+    },
+    {
+      "upstream": "geometry.coordinates[2]",
+      "currentTarget": "result.depth_km",
+      "status": "mapped",
+      "notes": "Depth in kilometers."
+    },
+    {
+      "upstream": "properties.status",
+      "currentTarget": "result.status",
+      "status": "mapped",
+      "notes": "USGS review state."
+    },
+    {
+      "upstream": "properties.type",
+      "currentTarget": "result.eventType",
+      "status": "mapped",
+      "notes": "Event category such as earthquake or quarry blast."
+    },
+    {
+      "upstream": "properties.title",
+      "currentTarget": "result.title",
+      "status": "mapped",
+      "notes": "Display-ready title."
+    },
+    {
+      "upstream": "properties.detail",
+      "currentTarget": "result.detailUrl",
+      "status": "mapped",
+      "notes": "Per-event detail feed URL."
+    }
+  ],
+  "availableButNotCurrentlyMapped": [
+    {
+      "upstream": "properties.url",
+      "recommendedTarget": "result.eventPageUrl",
+      "reason": "Direct event page URL is useful to clients and distinct from detailUrl."
+    },
+    {
+      "upstream": "properties.sig",
+      "recommendedTarget": "result.significance",
+      "reason": "Official significance score is often more informative than magnitude alone."
+    },
+    {
+      "upstream": "properties.alert",
+      "recommendedTarget": "result.alertLevel",
+      "reason": "High-value operational indicator for significant events."
+    },
+    {
+      "upstream": "properties.tsunami",
+      "recommendedTarget": "result.tsunami",
+      "reason": "Simple binary flag with high user value."
+    },
+    {
+      "upstream": "properties.net",
+      "recommendedTarget": "result.network",
+      "reason": "Contributor network is useful provenance and debugging context."
+    },
+    {
+      "upstream": "properties.nst",
+      "recommendedTarget": "result.numStations",
+      "reason": "Useful quality context for some events."
+    },
+    {
+      "upstream": "properties.dmin",
+      "recommendedTarget": "result.minimumDistance",
+      "reason": "Distance-to-nearest-station quality indicator."
+    },
+    {
+      "upstream": "properties.rms",
+      "recommendedTarget": "result.rms",
+      "reason": "Residual RMS quality metric."
+    },
+    {
+      "upstream": "properties.gap",
+      "recommendedTarget": "result.gap",
+      "reason": "Azimuthal gap quality context."
+    },
+    {
+      "upstream": "properties.types",
+      "recommendedTarget": "metadata only",
+      "reason": "Best documented at datastream or client-enrichment layer unless products are fetched."
+    }
+  ],
+  "detailOnlyOptionalEnrichment": [
+    {
+      "upstream": "properties.products.origin[0].properties.review-status",
+      "recommendedTarget": "result.reviewStatus or metadata sidecar",
+      "reason": "More precise than the summary-feed status in some workflows."
+    },
+    {
+      "upstream": "properties.products.origin[0].properties.horizontal-error",
+      "recommendedTarget": "optional extended result",
+      "reason": "Uncertainty field not available in the current summary result contract."
+    },
+    {
+      "upstream": "properties.products.phase-data[0].contents.quakeml.xml.url",
+      "recommendedTarget": "metadata sidecar only",
+      "reason": "Useful provenance link but too heavy for the default observation body."
+    },
+    {
+      "upstream": "properties.products.scitech-link[*]",
+      "recommendedTarget": "metadata sidecar only",
+      "reason": "Contributor-specific related resources vary by event and are not baseline contract fields."
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "verifiedDate": "2026-03-12",
+  "currentRecommendedVariant": {
+    "variant": "all_day",
+    "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+    "reason": "Good balance for demo and operations: rich enough to show real activity without producing week-or-month volume."
+  },
+  "lowVolumeAlternative": {
+    "variant": "significant_month",
+    "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson",
+    "reason": "Useful if the UI or downstream consumers need lower event volume and more salient events."
+  },
+  "officialExamples": [
+    {
+      "variant": "all_hour",
+      "description": "All earthquakes, past hour"
+    },
+    {
+      "variant": "all_day",
+      "description": "All earthquakes, past day"
+    },
+    {
+      "variant": "all_week",
+      "description": "All earthquakes, past week"
+    },
+    {
+      "variant": "all_month",
+      "description": "All earthquakes, past month"
+    },
+    {
+      "variant": "significant_hour",
+      "description": "Significant earthquakes, past hour"
+    },
+    {
+      "variant": "significant_day",
+      "description": "Significant earthquakes, past day"
+    },
+    {
+      "variant": "significant_week",
+      "description": "Significant earthquakes, past week"
+    },
+    {
+      "variant": "significant_month",
+      "description": "Significant earthquakes, past month"
+    },
+    {
+      "variant": "1.0_hour",
+      "description": "Magnitude 1.0+, past hour"
+    },
+    {
+      "variant": "2.5_day",
+      "description": "Magnitude 2.5+, past day"
+    },
+    {
+      "variant": "4.5_week",
+      "description": "Magnitude 4.5+, past week"
+    }
+  ],
+  "packRecommendation": {
+    "default": "Keep the current publisher on all_day unless operational volume or UI clarity requires a lower-volume alternative.",
+    "metadata": "Document the official variant matrix in the procedure and datastream metadata so future config changes stay traceable.",
+    "runtime": "Treat feed variant as a configuration choice, not a new data model."
+  }
+}
