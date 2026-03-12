@@ -9,20 +9,26 @@
 
 ## D.1 Standards Corpus
 
+**Correction note (2026-03-12):** an earlier revision of this appendix pointed to outdated or incorrect standards URLs, including one SSN/SOSA entry that actually resolved to an unrelated OGC document. This section was revalidated against the current Connected Systems standards index and the OGC SSN discovery page, then corrected to the current normative references listed below.
+
 | Standard / Reference | Official URL | Why It Was Used |
 |---|---|---|
-| OGC API Connected Systems landing page | <https://ogcapi.ogc.org/connectedsystems/> | High-level reference point for the CSAPI resource model the bootstraps are targeting. |
-| SensorML JSON Encoding Standard | <https://docs.ogc.org/is/23-000r6/23-000r6.html> | Primary reference for judging SensorML body shape, identifiers, contacts, documents, and rich system metadata. |
-| Semantic Sensor Network / SOSA | <https://docs.ogc.org/is/17-002r1/17-002r1.html> | Reference for procedure, system, observation, and deployment intent. |
-| SWE Common Data Model 2.0 | <https://docs.ogc.org/is/08-094r1/08-094r1.html> | Reference for result-record structure, field typing, units, and DataRecord-style result schemas. |
-| Observations and Measurements 2.0 | <https://docs.ogc.org/is/10-004r3/10-004r3.html> | Conceptual reference for observation/result intent, even where the implementation is CSAPI-first rather than OM-encoded. |
+| OGC API - Connected Systems index | <https://ogcapi.ogc.org/connectedsystems/> | Canonical discovery anchor for the current Connected Systems standards set and related guidance. |
+| OGC API - Connected Systems - Part 1: Feature Resources 1.0.0 | <https://docs.ogc.org/is/23-001/23-001.html> | Primary reference for systems, procedures, deployments, sampling features, and other feature-resource semantics. |
+| OGC API - Connected Systems - Part 2: Dynamic Data 1.0.0 | <https://docs.ogc.org/is/23-002/23-002.html> | Primary reference for datastream, observation, command, system event, and dynamic-data resource intent. |
+| OGC SensorML Encoding Standard 3.0 | <https://docs.ogc.org/is/23-000/23-000.html> | Primary reference for SensorML JSON bodies, identifiers, contacts, documents, characteristics, capabilities, and deployment encoding. |
+| OGC SWE Common Data Model Encoding Standard 3.0 | <https://docs.ogc.org/is/24-014/24-014.html> | Primary reference for result-record structure, field typing, units, vectors, records, arrays, and schema-level data typing. |
+| OGC Abstract Specification Topic 20: Observations, measurements and samples 3.0.0 | <https://docs.ogc.org/as/20-082r4/20-082r4.html> | Conceptual reference for observation, result, feature-of-interest, and sampling semantics where the implementation is CSAPI-first rather than OMS-encoded. |
+| OGC Semantic Sensor Network Ontology discovery page | <https://www.ogc.org/standards/semantic-sensor-network-ontology/> | Official OGC discovery anchor showing the current SSN standard context used by Connected Systems. |
+| W3C Semantic Sensor Network Ontology (SSN) and Sensor, Observation, Sample, and Actuator (SOSA) | <https://www.w3.org/TR/vocab-ssn/> | Normative ontology reference for system, deployment, observation, procedure, feature-of-interest, and related semantic relationships. |
 
 ### D.1.1 How the standards corpus affected scoring
 
-- `SensorML quality` scores were most influenced by the SensorML JSON encoding standard and the known NWS/NDBC field-shape incident.
-- `Procedure`, `system`, and `deployment` scores were strongly influenced by SOSA/SSN intent.
-- `Datastream semantics` and `field semantics` scores were strongly influenced by SWE Common result-structure expectations.
-- `Standards conformance` scores were not legal conformance claims; they are design-intent maturity judgments against the standards listed above.
+- `SensorML quality` scores were most influenced by SensorML 3.0 and the known NWS/NDBC field-shape incident.
+- `Procedure`, `system`, `deployment`, and feature-of-interest judgments were primarily influenced by Connected Systems Part 1 together with W3C SSN/SOSA.
+- `Datastream semantics`, `observation intent`, and `field semantics` scores were primarily influenced by Connected Systems Part 2, SWE Common 3.0, and OMS 3.0.
+- `Standards conformance` scores were not legal conformance claims; they are design-intent maturity judgments against the corrected standards corpus listed above.
+- After revalidation against the corrected corpus, the score values in the master report and appendices were not changed; the correction affects the citation basis and terminology, not the underlying repo-state findings.
 
 ---
 

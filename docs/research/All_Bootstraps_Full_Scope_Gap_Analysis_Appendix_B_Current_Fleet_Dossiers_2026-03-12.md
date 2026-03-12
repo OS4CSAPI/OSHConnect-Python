@@ -5,6 +5,8 @@
 **Date:** 2026-03-12
 **Scope:** current `OSHConnect-Python` public-data fleet, including the current ISS runtime slot as a missing-bootstrap case.
 
+**Standards note:** the `Standards conformance` row in each matrix was revalidated on 2026-03-12 against the corrected standards corpus in Appendix D, using current Connected Systems Part 1 and Part 2, SensorML 3.0, SWE Common 3.0, OMS 3.0, and W3C SSN/SOSA references.
+
 ---
 
 ## B.1 NWS

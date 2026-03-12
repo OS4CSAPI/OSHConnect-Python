@@ -56,6 +56,8 @@ This report is based on five evidence classes:
 4. official standards review for CSAPI-connected design intent, SensorML, SOSA/SSN, SWE Common, and OM concepts;
 5. official upstream source review for NWS, NDBC, CO-OPS, AviationWeather, OpenSky, CelesTrak, USGS Water, USGS NIMS, and USGS Earthquake resources.
 
+The standards corpus in Appendix D was revalidated on 2026-03-12 against the current Connected Systems standards index, the current OGC SSN discovery page, the current normative Connected Systems Part 1 and Part 2 standards, SensorML 3.0, SWE Common 3.0, OMS 3.0, and the W3C SSN/SOSA recommendation. That correction fixed bad standards URLs from an earlier revision, but it did not change the report's repo-state findings or any score values.
+
 The report is intentionally `semantics first`.
 
 That means a bootstrap was not scored highly simply because it creates resources successfully. It had to communicate the right meaning, provenance, field semantics, and artifact maturity for that success to be durable.

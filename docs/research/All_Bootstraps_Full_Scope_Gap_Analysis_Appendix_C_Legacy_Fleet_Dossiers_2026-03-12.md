@@ -5,6 +5,8 @@
 **Date:** 2026-03-12
 **Scope:** legacy bootstraps in `csapi-explorer/scripts` that still matter architecturally, historically, or as migration references.
 
+**Standards note:** the `Standards conformance` row in each matrix was revalidated on 2026-03-12 against the corrected standards corpus in Appendix D, using current Connected Systems, SensorML 3.0, SWE Common 3.0, OMS 3.0, and W3C SSN/SOSA references where applicable.
+
 ---
 
 ## C.1 `bootstrap_iss.py`
