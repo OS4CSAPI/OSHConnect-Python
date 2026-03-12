@@ -67,6 +67,38 @@ USGS_EQ_ABOUT = "https://earthquake.usgs.gov/aboutus/"
 USGS_EQ_GLOSSARY = "https://earthquake.usgs.gov/data/comcat/index.php"
 USGS_EQ_FEED_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
 
+# ── Enrichment Pack URLs (2026-03-12) ────────────────────────────────────
+USGS_EQ_DETAIL_DOC = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson_detail.php"
+USGS_EQ_LIFECYCLE = "https://earthquake.usgs.gov/earthquakes/feed/policy.php"
+USGS_EQ_EVENT_TERMS = "https://earthquake.usgs.gov/data/comcat/data-eventterms.php"
+USGS_EQ_FDSN_EVENT_API = "https://earthquake.usgs.gov/fdsnws/event/1/"
+
+USGS_EQ_FEED_VARIANTS = {
+    "all_hour": "All earthquakes, past hour",
+    "all_day": "All earthquakes, past day",
+    "all_week": "All earthquakes, past week",
+    "all_month": "All earthquakes, past month",
+    "significant_hour": "Significant earthquakes, past hour",
+    "significant_day": "Significant earthquakes, past day",
+    "significant_week": "Significant earthquakes, past week",
+    "significant_month": "Significant earthquakes, past month",
+    "1.0_hour": "Magnitude 1.0+, past hour",
+    "2.5_day": "Magnitude 2.5+, past day",
+    "4.5_week": "Magnitude 4.5+, past week",
+}
+
+
+def _summary_feed_url(variant: str) -> str:
+    return f"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/{variant}.geojson"
+
+
+def _detail_url(event_id: str) -> str:
+    return f"https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/{event_id}.geojson"
+
+
+def _fdsn_query_url(event_id: str) -> str:
+    return f"https://earthquake.usgs.gov/fdsnws/event/1/query.geojson?format=geojson&eventid={event_id}"
+
 # ── Contact ──────────────────────────────────────────────────────────────
 USGS_CONTACT_ORG = "U.S. Geological Survey (USGS)"
 USGS_CONTACT_URL = "https://www.usgs.gov/"
@@ -90,17 +122,26 @@ PROCEDURE_BODY = {
         "featureType": "sml:SimpleProcess",
         "name": "USGS Earthquake Feed Normalizer",
         "description": (
-            "Procedure describing how the OSHConnect-Python USGS Earthquake publisher "
-            "normalizes GeoJSON earthquake events from the USGS Earthquake Hazards Program "
-            "into individual CSAPI observations. The publisher polls the USGS GeoJSON summary "
-            "feed, extracts each earthquake feature, and publishes a normalized observation "
-            "with event metadata (magnitude, location, depth, status) to a single CSAPI "
-            "datastream. Deduplication uses (event ID, updated timestamp) tuples."
+            "Procedure describing how the OSHConnect-Python USGS earthquake publisher "
+            "polls an official USGS GeoJSON summary feed, normalizes each feature into "
+            "one CSAPI observation, and exposes a per-event detail link for richer "
+            "drill-down. The baseline runtime uses the summary feed only; detail-feed "
+            "and FDSN resources are documented as selective enrichment companions."
         ),
         "documentation": [
             {"title": "USGS Earthquake Hazards Program", "href": USGS_EQ_HOME, "rel": "about"},
             {"title": "GeoJSON Summary Feed", "href": USGS_EQ_FEED_DOC, "rel": "documentation"},
-            {"title": "ComCat Data Glossary", "href": USGS_EQ_GLOSSARY, "rel": "describedby"},
+            {"title": "GeoJSON Detail Feed", "href": USGS_EQ_DETAIL_DOC, "rel": "documentation"},
+            {"title": "Feed Lifecycle Policy", "href": USGS_EQ_LIFECYCLE, "rel": "policy"},
+            {"title": "ComCat Documentation", "href": USGS_EQ_GLOSSARY, "rel": "describedby"},
+            {"title": "Event Terms", "href": USGS_EQ_EVENT_TERMS, "rel": "describedby"},
+            {"title": "FDSN Event API", "href": USGS_EQ_FDSN_EVENT_API, "rel": "service"},
+        ],
+        "characteristics": [
+            {"label": "Observation Pattern", "value": "Pattern C feed adapter"},
+            {"label": "Default Feed Variant", "value": "all_day"},
+            {"label": "Variant Strategy", "value": "Feed variant is configurable and should be treated as runtime policy, not a different data model"},
+            {"label": "Detail Enrichment Policy", "value": "Optional and selective; not required for every polling cycle"},
         ],
     },
 }
@@ -179,10 +220,13 @@ def _system_sml(config: dict) -> dict:
             },
         ],
         "documents": [
-            {"name": "USGS Earthquake Hazards Program", "description": "Data source homepage", "link": {"href": USGS_EQ_HOME}},
-            {"name": "GeoJSON Summary Feed Documentation", "description": "Feed format and variant documentation", "link": {"href": USGS_EQ_FEED_DOC}},
-            {"name": "ComCat Data Glossary", "description": "Parameter definitions and data catalog", "link": {"href": USGS_EQ_GLOSSARY}},
-            {"name": "USGS About", "description": "About the U.S. Geological Survey", "link": {"href": USGS_EQ_ABOUT}},
+            {"name": "USGS Earthquake Hazards Program", "description": "Program home", "link": {"href": USGS_EQ_HOME}},
+            {"name": "GeoJSON Summary Feed Documentation", "description": "Summary feed format and variant documentation", "link": {"href": USGS_EQ_FEED_DOC}},
+            {"name": "GeoJSON Detail Feed Documentation", "description": "Detail feed structure and product documentation", "link": {"href": USGS_EQ_DETAIL_DOC}},
+            {"name": "Feed Lifecycle Policy", "description": "Production feed availability and deprecation policy", "link": {"href": USGS_EQ_LIFECYCLE}},
+            {"name": "ComCat Documentation", "description": "Catalog and product documentation", "link": {"href": USGS_EQ_GLOSSARY}},
+            {"name": "Event Terms", "description": "Official field semantics", "link": {"href": USGS_EQ_EVENT_TERMS}},
+            {"name": "FDSN Event API", "description": "Official query interface for targeted retrieval and future backfill", "link": {"href": USGS_EQ_FDSN_EVENT_API}},
         ],
         "characteristics": [
             {
@@ -219,6 +263,25 @@ def _system_sml(config: dict) -> dict:
                     {"type": "Text", "name": "md", "label": "md", "value": "Duration magnitude"},
                 ],
             },
+            {
+                "name": "feed_surface",
+                "type": "DataRecord",
+                "label": "Feed Surface",
+                "fields": [
+                    {"type": "Text", "name": "runtime_surface", "label": "Runtime Surface", "value": "GeoJSON summary feed"},
+                    {"type": "Text", "name": "companion_surface", "label": "Companion Surface", "value": "GeoJSON detail feed and FDSN query.geojson"},
+                    {"type": "Text", "name": "modeling_note", "label": "Modeling Note", "value": "The system is a global feed adapter and not a physical seismic station"},
+                ],
+            },
+            {
+                "name": "feed_lifecycle",
+                "type": "DataRecord",
+                "label": "Feed Lifecycle",
+                "fields": [
+                    {"type": "Text", "name": "production_availability", "label": "Production Availability", "value": "Official policy states production feeds remain available for at least six months in production or deprecated form"},
+                    {"type": "Text", "name": "deprecation_notice", "label": "Deprecation Notice", "value": "Official policy states at least 30 days notice before deprecation and removal"},
+                ],
+            },
         ],
         "capabilities": [
             {
@@ -252,6 +315,12 @@ def _system_sml(config: dict) -> dict:
                         "label": "Event Types",
                         "value": "earthquake, quarry blast, explosion, ice quake, other",
                     },
+                    {
+                        "type": "Text",
+                        "name": "enrichment_policy",
+                        "label": "Enrichment Policy",
+                        "value": "Summary feed by default, detail and FDSN only when stronger per-event context is needed",
+                    },
                 ],
             },
         ],
@@ -276,16 +345,19 @@ def _datastream_schema() -> dict:
             "per new or revised earthquake."
         ),
         "documentation": [
-            {"title": "USGS Earthquake Hazards Program", "href": USGS_EQ_HOME, "rel": "about"},
             {"title": "GeoJSON Summary Feed", "href": USGS_EQ_FEED_DOC, "rel": "documentation"},
-            {"title": "ComCat Data Glossary", "href": USGS_EQ_GLOSSARY, "rel": "describedby"},
+            {"title": "GeoJSON Detail Feed", "href": USGS_EQ_DETAIL_DOC, "rel": "documentation"},
+            {"title": "Feed Lifecycle Policy", "href": USGS_EQ_LIFECYCLE, "rel": "policy"},
+            {"title": "Event Terms", "href": USGS_EQ_EVENT_TERMS, "rel": "describedby"},
+            {"title": "FDSN Event API", "href": USGS_EQ_FDSN_EVENT_API, "rel": "service"},
         ],
         "characteristics": [
             {"label": "Observation Model", "value": "One observation per earthquake event"},
-            {"label": "Coverage", "value": "Global — all earthquakes worldwide"},
-            {"label": "Feed Variant", "value": "all_day (200-400 events per fetch, ~300 KB)"},
-            {"label": "Deduplication", "value": "Skip unchanged (id, updated) tuples; re-publish revised events"},
-            {"label": "Magnitude Types", "value": "ml, mb, ms, mw, mww, md (reported by magType field)"},
+            {"label": "Default Runtime Surface", "value": "GeoJSON summary feed"},
+            {"label": "Selective Enrichment Surface", "value": "GeoJSON detail feed and FDSN query.geojson"},
+            {"label": "Coverage", "value": "Global"},
+            {"label": "Dedupe", "value": "Use (eventId, updatedTime) to skip unchanged events and republish revisions"},
+            {"label": "Omitted But Available Summary Fields", "value": "url, sig, alert, tsunami, net, types, nst, dmin, rms, gap"},
         ],
         "schema": {
             "obsFormat": "application/om+json",
@@ -332,7 +404,9 @@ def _deploy_root() -> dict:
             ),
             "documentation": [
                 {"title": "USGS Earthquake Hazards Program", "href": USGS_EQ_HOME, "rel": "about"},
-                {"title": "GeoJSON Summary Feed", "href": USGS_EQ_FEED_DOC, "rel": "documentation"},
+                {"title": "GeoJSON Summary Feed Docs", "href": USGS_EQ_FEED_DOC, "rel": "documentation"},
+                {"title": "GeoJSON Detail Feed Docs", "href": USGS_EQ_DETAIL_DOC, "rel": "documentation"},
+                {"title": "Feed Lifecycle Policy", "href": USGS_EQ_LIFECYCLE, "rel": "policy"},
             ],
             "validTime": [VALID_TIME_START, ".."],
         },
@@ -352,9 +426,11 @@ def _deploy_feed(system_server_id: str) -> dict:
             "featureType": "sosa:Deployment",
             "name": "USGS Earthquake Feed",
             "description": (
-                "Configured USGS earthquake feed-adapter deployment. Polls the all_day "
-                "GeoJSON feed every 60 seconds, publishing one observation per earthquake "
-                "event. Global coverage — 200-400 events per feed cycle."
+                "Configured USGS earthquake feed-adapter deployment. Polls one official "
+                "USGS GeoJSON summary feed variant on a fixed cadence and publishes one "
+                "observation per earthquake event. The deployment documents the detail "
+                "feed and FDSN event service as optional enrichment companions rather than "
+                "baseline polling dependencies."
             ),
             "validTime": [VALID_TIME_START, ".."],
             "platform@link": {
@@ -363,9 +439,10 @@ def _deploy_feed(system_server_id: str) -> dict:
                 "title": "USGS Earthquake Feed",
             },
             "links": [
-                {"rel": "about", "title": "USGS Earthquake Hazards Program", "href": USGS_EQ_HOME},
-                {"rel": "documentation", "title": "GeoJSON Feed Docs", "href": USGS_EQ_FEED_DOC},
-                {"rel": "describedby", "title": "ComCat Glossary", "href": USGS_EQ_GLOSSARY},
+                {"rel": "documentation", "title": "GeoJSON Summary Feed Docs", "href": USGS_EQ_FEED_DOC},
+                {"rel": "documentation", "title": "GeoJSON Detail Feed Docs", "href": USGS_EQ_DETAIL_DOC},
+                {"rel": "describedby", "title": "Event Terms", "href": USGS_EQ_EVENT_TERMS},
+                {"rel": "service", "title": "FDSN Event API", "href": USGS_EQ_FDSN_EVENT_API},
             ],
         },
     }
