@@ -8,10 +8,11 @@ WORKDIR /app
 COPY publishers/ /app/publishers/
 
 # Default: 5min cadence (METARs update every ~5 min)
-ENV OSH_ADDRESS=os4csapi-osh.duckdns.org
+# Server credentials must be supplied via docker-compose.yml or .env
+ENV OSH_ADDRESS=
 ENV OSH_PORT=443
-ENV OSH_USER=os4csapi
-ENV OSH_PASS=ogc134mm
+ENV OSH_USER=
+ENV OSH_PASS=
 
 ENTRYPOINT ["python", "-m", "publishers.aviation_wx.aviation_wx_publisher"]
 CMD ["--interval", "300"]

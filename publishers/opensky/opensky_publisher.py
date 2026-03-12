@@ -21,10 +21,10 @@ OpenSky Network API:
 Configuration is read from config.json (same directory).
 
 Configure via environment variables:
-    OSH_ADDRESS        Server hostname            (default: os4csapi-osh.duckdns.org)
+    OSH_ADDRESS        Server hostname            (required)
     OSH_PORT           Server port                (default: 443)
-    OSH_USER           Auth username              (default: os4csapi)
-    OSH_PASS           Auth password              (default: ogc134mm)
+    OSH_USER           Auth username              (required)
+    OSH_PASS           Auth password              (required)
 
 Usage:
     python -m publishers.opensky.opensky_publisher                    # run forever (5min cadence)
@@ -193,11 +193,16 @@ class OpenSkyPublisher:
         self.config = _load_config()
         self.bbox = self.config["bounding_box"]
 
-        self.osh_address = os.environ.get("OSH_ADDRESS", "os4csapi-osh.duckdns.org")
+        self.osh_address = os.environ.get("OSH_ADDRESS", "")
         self.osh_port = int(os.environ.get("OSH_PORT", "443"))
-        self.osh_user = os.environ.get("OSH_USER", "os4csapi")
-        self.osh_pass = os.environ.get("OSH_PASS", "ogc134mm")
+        self.osh_user = os.environ.get("OSH_USER", "")
+        self.osh_pass = os.environ.get("OSH_PASS", "")
         self.osh_root = os.environ.get("OSH_ROOT", "sensorhub")
+        if not self.osh_address or not self.osh_user or not self.osh_pass:
+            raise SystemExit(
+                "ERROR: OSH_ADDRESS, OSH_USER, and OSH_PASS must be set.\n"
+                "  Copy publishers/.env.example → .env and set your server details."
+            )
 
         self._ds_id: str | None = None
         self.stats = {"published": 0, "errors": 0, "reconnects": 0, "skipped": 0, "aircraft_seen": 0}

@@ -6,10 +6,10 @@ Migrated from csapi-explorer/scripts/iss_publisher_v3.py to use the common
 publisher framework. Publishes position fixes from CelesTrak TLE + SGP4.
 
 Configure via environment variables:
-    OSH_ADDRESS        Server hostname            (default: os4csapi-osh.duckdns.org)
+    OSH_ADDRESS        Server hostname            (required)
     OSH_PORT           Server port                (default: 443)
-    OSH_USER           Auth username              (default: os4csapi)
-    OSH_PASS           Auth password              (default: ogc134mm)
+    OSH_USER           Auth username              (required)
+    OSH_PASS           Auth password              (required)
     POS_SYSTEM_UID     Position system URN        (default: urn:os4csapi:system:iss-position-publisher:v1)
     POS_DS_NAME        Position datastream name   (default: ISS Position (SGP4))
     NORAD_ID           NORAD catalog number       (default: 25544)

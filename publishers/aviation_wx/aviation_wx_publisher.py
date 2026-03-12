@@ -15,10 +15,10 @@ AviationWeather.gov API:
             rawOb, lat, lon, elev, name, cover, clouds[], fltCat, obsTime
 
 Configure via environment variables:
-    OSH_ADDRESS        Server hostname            (default: os4csapi-osh.duckdns.org)
+    OSH_ADDRESS        Server hostname            (required)
     OSH_PORT           Server port                (default: 443)
-    OSH_USER           Auth username              (default: os4csapi)
-    OSH_PASS           Auth password              (default: ogc134mm)
+    OSH_USER           Auth username              (required)
+    OSH_PASS           Auth password              (required)
 
 Usage:
     python -m publishers.aviation_wx.aviation_wx_publisher                    # run forever (5min cadence)
@@ -206,11 +206,16 @@ class AviationWxPublisher:
             filt = set(s.strip().upper() for s in station_filter)
             self.stations = [s for s in self.stations if s["icao_id"] in filt]
 
-        self.osh_address = os.environ.get("OSH_ADDRESS", "os4csapi-osh.duckdns.org")
+        self.osh_address = os.environ.get("OSH_ADDRESS", "")
         self.osh_port = int(os.environ.get("OSH_PORT", "443"))
-        self.osh_user = os.environ.get("OSH_USER", "os4csapi")
-        self.osh_pass = os.environ.get("OSH_PASS", "ogc134mm")
+        self.osh_user = os.environ.get("OSH_USER", "")
+        self.osh_pass = os.environ.get("OSH_PASS", "")
         self.osh_root = os.environ.get("OSH_ROOT", "sensorhub")
+        if not self.osh_address or not self.osh_user or not self.osh_pass:
+            raise SystemExit(
+                "ERROR: OSH_ADDRESS, OSH_USER, and OSH_PASS must be set.\n"
+                "  Copy publishers/.env.example → .env and set your server details."
+            )
 
         # station icao_id → datastream server ID
         self._ds_ids: dict[str, str] = {}

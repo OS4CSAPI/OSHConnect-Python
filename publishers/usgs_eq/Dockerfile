@@ -10,9 +10,10 @@ COPY publishers/usgs_eq/ publishers/usgs_eq/
 
 # No pip install needed — stdlib only
 
-ENV OSH_ADDRESS=os4csapi-osh.duckdns.org \
+# Server credentials must be supplied via docker-compose.yml or .env
+ENV OSH_ADDRESS= \
     OSH_PORT=443 \
-    OSH_USER=os4csapi \
-    OSH_PASS=ogc134mm
+    OSH_USER= \
+    OSH_PASS=
 
 CMD ["python", "-u", "-m", "publishers.usgs_eq.usgs_eq_publisher", "--interval", "60"]

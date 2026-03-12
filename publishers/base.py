@@ -61,11 +61,16 @@ class PublisherBase:
     reconnect_threshold: int = 5
 
     def __init__(self):
-        self.osh_address = os.environ.get("OSH_ADDRESS", "os4csapi-osh.duckdns.org")
+        self.osh_address = os.environ.get("OSH_ADDRESS", "")
         self.osh_port = int(os.environ.get("OSH_PORT", "443"))
-        self.osh_user = os.environ.get("OSH_USER", "os4csapi")
-        self.osh_pass = os.environ.get("OSH_PASS", "ogc134mm")
+        self.osh_user = os.environ.get("OSH_USER", "")
+        self.osh_pass = os.environ.get("OSH_PASS", "")
         self.osh_root = os.environ.get("OSH_ROOT", "sensorhub")
+        if not self.osh_address or not self.osh_user or not self.osh_pass:
+            raise SystemExit(
+                "ERROR: OSH_ADDRESS, OSH_USER, and OSH_PASS must be set.\n"
+                "  Copy publishers/.env.example → .env and set your server details."
+            )
         self.stats = {"published": 0, "errors": 0, "reconnects": 0}
 
     # ── Abstract methods (subclass MUST implement) ───────────────────

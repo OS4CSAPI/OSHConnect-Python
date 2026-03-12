@@ -33,21 +33,38 @@ from urllib.request import Request, urlopen
 # ═══════════════════════════════════════════════════════════════════════════
 
 def get_config():
-    """Return server config dict from environment variables."""
+    """Return server config dict from environment variables.
+
+    Uses the same OSH_ADDRESS / OSH_PORT / OSH_ROOT env vars as the
+    publishers so only one set of credentials needs to be configured.
+    BOOTSTRAP_URL can optionally override the derived URL.
+    """
+    addr = os.environ.get("OSH_ADDRESS", "")
+    port = os.environ.get("OSH_PORT", "443")
+    root = os.environ.get("OSH_ROOT", "sensorhub")
+    user = os.environ.get("OSH_USER", "")
+    password = os.environ.get("OSH_PASS", "")
+
+    if not addr or not user or not password:
+        sys.exit(
+            "ERROR: OSH_ADDRESS, OSH_USER, and OSH_PASS must be set.\n"
+            "  Copy publishers/.env.example → .env and set your server details."
+        )
+
+    scheme = "http" if port == "80" else "https"
+    default_url = f"{scheme}://{addr}/{root}/api"
+    base_url = os.environ.get("BOOTSTRAP_URL", default_url)
+
     return {
-        "base_url": os.environ.get(
-            "BOOTSTRAP_URL",
-            "https://os4csapi-osh.duckdns.org/sensorhub/api"),
-        "user": os.environ.get("OSH_USER", "os4csapi"),
-        "password": os.environ.get("OSH_PASS", "ogc134mm"),
+        "base_url": base_url,
+        "user": user,
+        "password": password,
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  SSL + DNS workarounds (same as bootstrap_iss.py)
+#  SSL + DNS workarounds
 # ═══════════════════════════════════════════════════════════════════════════
-
-ORACLE_IP = "129.80.248.53"
 
 _ssl_ctx = _ssl.create_default_context()
 _ssl_ctx.check_hostname = True
@@ -55,13 +72,20 @@ _ssl_ctx.verify_mode = _ssl.CERT_REQUIRED
 
 _original_getaddrinfo = socket.getaddrinfo
 
-def _patched_getaddrinfo(host, port, *args, **kwargs):
-    """Force DNS resolution for DuckDNS to the known Oracle IP."""
-    if isinstance(host, str) and "os4csapi-osh.duckdns.org" in host:
-        return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (ORACLE_IP, port or 443))]
-    return _original_getaddrinfo(host, port, *args, **kwargs)
+# Optional DNS override — set OSH_FORCE_IP to bypass DNS for the server hostname.
+# Useful behind NAT / split-DNS or when DuckDNS is unreachable from the host.
+_FORCE_IP = os.environ.get("OSH_FORCE_IP", "")
 
-socket.getaddrinfo = _patched_getaddrinfo
+if _FORCE_IP:
+    _FORCE_HOST = os.environ.get("OSH_ADDRESS", "")
+
+    def _patched_getaddrinfo(host, port, *args, **kwargs):
+        """Force DNS resolution for the configured server to OSH_FORCE_IP."""
+        if isinstance(host, str) and _FORCE_HOST and _FORCE_HOST in host:
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (_FORCE_IP, port or 443))]
+        return _original_getaddrinfo(host, port, *args, **kwargs)
+
+    socket.getaddrinfo = _patched_getaddrinfo
 
 
 # ═══════════════════════════════════════════════════════════════════════════

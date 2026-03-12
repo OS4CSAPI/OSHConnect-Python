@@ -8,13 +8,14 @@ WORKDIR /app
 COPY publishers/ /app/publishers/
 
 # Default: 15min cadence
-ENV OSH_ADDRESS=os4csapi-osh.duckdns.org
+# Server credentials must be supplied via docker-compose.yml or .env
+ENV OSH_ADDRESS=
 ENV OSH_PORT=443
-ENV OSH_USER=os4csapi
-ENV OSH_PASS=ogc134mm
+ENV OSH_USER=
+ENV OSH_PASS=
 # BuoyCAM cache directory (mount a volume for persistence)
 ENV BUOYCAM_CACHE_ROOT=/var/www/buoycam
-ENV BUOYCAM_CACHE_BASE_URL=https://os4csapi-osh.duckdns.org/buoycam
+ENV BUOYCAM_CACHE_BASE_URL=
 
 ENTRYPOINT ["python", "-m", "publishers.ndbc.ndbc_buoycam_publisher"]
 CMD ["--interval", "900"]

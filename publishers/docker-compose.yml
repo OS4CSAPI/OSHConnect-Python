@@ -8,14 +8,15 @@
 #   docker compose ps                 # check status
 #
 # All publishers share the same OSH server credentials via the x-osh-env anchor.
-# All 9 publishers run as persistent services with automatic restart.
+# Set these values in publishers/.env or export them before running docker compose.
+# See publishers/.env.example for a template.
 
 x-osh-env: &osh-env
-  OSH_ADDRESS: os4csapi-osh.duckdns.org
-  OSH_PORT: "443"
-  OSH_USER: os4csapi
-  OSH_PASS: ogc134mm
-  OSH_ROOT: sensorhub
+  OSH_ADDRESS: ${OSH_ADDRESS:?Set OSH_ADDRESS in .env}
+  OSH_PORT: "${OSH_PORT:-443}"
+  OSH_USER: ${OSH_USER:?Set OSH_USER in .env}
+  OSH_PASS: ${OSH_PASS:?Set OSH_PASS in .env}
+  OSH_ROOT: ${OSH_ROOT:-sensorhub}
 
 services:
   # ── ISS Satellite Tracking (30s cadence) ──
@@ -57,7 +58,7 @@ services:
     environment:
       <<: *osh-env
       BUOYCAM_CACHE_ROOT: /var/www/buoycam
-      BUOYCAM_CACHE_BASE_URL: https://os4csapi-osh.duckdns.org/buoycam
+      BUOYCAM_CACHE_BASE_URL: ${BUOYCAM_CACHE_BASE_URL:-}
     volumes:
       - buoycam-cache:/var/www/buoycam
     command: ["--interval", "900"]

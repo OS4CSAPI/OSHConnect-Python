@@ -10,7 +10,7 @@ Directory layout:
   /var/www/buoycam/<stationId>/<YYYY>/<MM>/<DD>/<YYYYMMDD>T<HHMMSS>Z.jpg
 
 Public URL:
-  https://os4csapi-osh.duckdns.org/buoycam/<stationId>/<YYYY>/<MM>/<DD>/<YYYYMMDD>T<HHMMSS>Z.jpg
+  https://<your-server>/buoycam/<stationId>/<YYYY>/<MM>/<DD>/<YYYYMMDD>T<HHMMSS>Z.jpg
 """
 
 import os
@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 CACHE_ROOT = os.environ.get("BUOYCAM_CACHE_ROOT", "/var/www/buoycam")
 CACHE_BASE_URL = os.environ.get(
     "BUOYCAM_CACHE_BASE_URL",
-    "https://os4csapi-osh.duckdns.org/buoycam",
+    "",
 )
 
 
@@ -38,7 +38,7 @@ def immutable_path(station_id: str, fetch_time: datetime) -> str:
 def immutable_url(station_id: str, fetch_time: datetime) -> str:
     """Build the public URL for a cached image.
 
-    Returns e.g. https://os4csapi-osh.duckdns.org/buoycam/46025/2026/03/10/20260310T181500Z.jpg
+    Returns e.g. https://<your-server>/buoycam/46025/2026/03/10/20260310T181500Z.jpg
     """
     ts = fetch_time.strftime("%Y%m%dT%H%M%SZ")
     ymd = fetch_time.strftime("%Y/%m/%d")

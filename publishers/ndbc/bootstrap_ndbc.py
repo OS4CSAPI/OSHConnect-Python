@@ -61,7 +61,7 @@ BUOYCAM_DS_OUTPUT_NAME = "ndbcBuoyCamImage"
 # BuoyCAM-specific URLs
 NDBC_BUOYCAM_HOME = "https://www.ndbc.noaa.gov/buoycams.shtml"
 NDBC_BUOYCAM_STATUS = "https://www.ndbc.noaa.gov/buoycam_status.php"
-BUOYCAM_CACHE_BASE = "https://os4csapi-osh.duckdns.org/buoycam"
+BUOYCAM_CACHE_BASE = os.environ.get("BUOYCAM_CACHE_BASE_URL", "")
 
 # ── NDBC Official URLs ────────────────────────────────────────────────────
 NDBC_HOME = "https://www.ndbc.noaa.gov/"

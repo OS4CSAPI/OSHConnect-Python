@@ -10,10 +10,11 @@ RUN pip install --no-cache-dir sgp4 \
 COPY publishers/ /app/publishers/
 
 # Default: 30s cadence
-ENV OSH_ADDRESS=os4csapi-osh.duckdns.org
+# Server credentials must be supplied via docker-compose.yml or .env
+ENV OSH_ADDRESS=
 ENV OSH_PORT=443
-ENV OSH_USER=os4csapi
-ENV OSH_PASS=ogc134mm
+ENV OSH_USER=
+ENV OSH_PASS=
 
 ENTRYPOINT ["python", "-m", "publishers.iss.iss_publisher"]
 CMD ["--interval", "30"]
