@@ -1,0 +1,40 @@
+{
+  "verifiedDate": "2026-03-11",
+  "publisherPath": "publishers/usgs_nims",
+  "curatedCameraCount": 8,
+  "resourceInventory": {
+    "procedures": {
+      "count": 1,
+      "uids": [
+        "urn:os4csapi:procedure:usgs-nims-imagery:v1"
+      ]
+    },
+    "sharedSystems": {
+      "count": 8,
+      "uidPattern": "urn:os4csapi:system:usgs-water:{nwisId}:v1",
+      "ownership": "Created by the USGS water bootstrap and reused by the NIMS bootstrap"
+    },
+    "datastreams": {
+      "count": 8,
+      "perCuratedCamera": 1,
+      "outputName": "usgsNimsImage",
+      "modelNote": "Current package assumes one selected camera per shared station system"
+    },
+    "deployments": {
+      "count": 10,
+      "rootUid": "urn:os4csapi:deployment:usgs-nims-demo:v1",
+      "groupUid": "urn:os4csapi:deployment:usgs-nims-cameras:v1",
+      "leafUidPattern": "urn:os4csapi:deployment:usgs-nims-{nwisId}:v1"
+    }
+  },
+  "upstreamEndpoints": [
+    "cameras",
+    "listFiles",
+    "NIMS S3 image bucket"
+  ],
+  "notes": [
+    "This is a shared-system Pattern A publisher.",
+    "No NIMS-specific systems are created.",
+    "Some curated NWIS sites currently expose more than one live camera, so the one-camera-per-station rule is a real selection policy."
+  ]
+}

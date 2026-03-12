@@ -1,0 +1,51 @@
+{
+  "currentRuntimeContract": {
+    "outputName": "usgsNimsImage",
+    "resultFieldsInOrder": [
+      "stationId",
+      "camId",
+      "imageUrl",
+      "thumbUrl",
+      "smallUrl",
+      "mediaType",
+      "filename",
+      "timeLapseUrl"
+    ],
+    "omEnvelope": {
+      "phenomenonTime": "derived from the timestamp encoded in the image filename",
+      "resultTime": "publisher clock time"
+    },
+    "timeFieldNote": "The SWE DataRecord time field named timestamp is mapped from phenomenonTime and is intentionally omitted from the result body."
+  },
+  "upstreamFieldsDocumentedButNotCurrentlyEmitted": [
+    "camName",
+    "camDesc",
+    "createdDate",
+    "modifiedDate",
+    "newestImageDT",
+    "TL_enabled",
+    "ingest.period",
+    "ingest.intr",
+    "locus",
+    "fs"
+  ],
+  "recommendedConservativeEnrichment": {
+    "approach": "Keep the runtime result body unchanged and enrich metadata at the datastream, deployment, and camera-sidecar levels.",
+    "reasons": [
+      "The current result body already contains the fields a renderer needs for live imagery.",
+      "Keeping the result body small reduces downstream contract churn.",
+      "Camera cadence, selection, and provenance fit better as metadata than as repeated observation fields."
+    ]
+  },
+  "futureOptionalRuntimeExtensions": {
+    "candidateFields": [
+      "fileSizeBytes",
+      "cameraName",
+      "captureMode",
+      "ingestIntervalMin",
+      "upstreamTimestamp"
+    ],
+    "adoptionGuidance": "Add only if a real consumer needs richer audit, selection, or display behavior than the current URL-focused observation contract provides."
+  },
+  "importantConstraint": "Current dedupe is keyed by nwisId and the outputName is fixed, so the runtime contract assumes one selected camera per station system."
+}

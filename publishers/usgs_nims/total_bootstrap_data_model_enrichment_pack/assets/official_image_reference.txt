@@ -1,0 +1,16 @@
+No single official image is bundled in this package.
+
+Reason:
+
+- the NIMS publisher is itself an image-reference publisher whose payload points
+  to live upstream imagery
+- the most authoritative "official image" is dynamic and camera-specific
+- bundling one camera image into the package would overfit the package to one
+  moment and one site
+
+This package therefore includes a local generic SVG:
+
+- `assets/usgs_nims_camera_generic.svg`
+
+Use that asset for documentation, demos, or placeholder rendering unless you
+choose to render live NIMS imagery directly.

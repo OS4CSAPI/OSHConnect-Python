@@ -1,0 +1,92 @@
+{
+  "verifiedDate": "2026-03-11",
+  "selectedFieldsCompared": [
+    "nwisId",
+    "ingest.period",
+    "ingest.intr",
+    "TL_enabled"
+  ],
+  "rows": [
+    {
+      "camId": "AZ_Colorado_River_at_Lees_Ferry_Upstream",
+      "nwisIdLocal": "09380000",
+      "nwisIdLive": "09380000",
+      "ingestPeriodLocal": "247",
+      "ingestPeriodLive": "247",
+      "ingestIntervalLocal": 15,
+      "ingestIntervalLive": 15,
+      "timelapseEnabledLive": true
+    },
+    {
+      "camId": "CO_WILLOW_CREEK_SL",
+      "nwisIdLocal": "09019850",
+      "nwisIdLive": "09019850",
+      "ingestPeriodLocal": "247",
+      "ingestPeriodLive": "247",
+      "ingestIntervalLocal": 15,
+      "ingestIntervalLive": 15,
+      "timelapseEnabledLive": true
+    },
+    {
+      "camId": "CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island",
+      "nwisIdLocal": "11313433",
+      "nwisIdLive": "11313433",
+      "ingestPeriodLocal": "247",
+      "ingestPeriodLive": "247",
+      "ingestIntervalLocal": 15,
+      "ingestIntervalLive": 15,
+      "timelapseEnabledLive": true
+    },
+    {
+      "camId": "TX_Blanco_River_at_Wimberley",
+      "nwisIdLocal": "08171000",
+      "nwisIdLive": "08171000",
+      "ingestPeriodLocal": "daylight",
+      "ingestPeriodLive": "daylight",
+      "ingestIntervalLocal": 15,
+      "ingestIntervalLive": 15,
+      "timelapseEnabledLive": true
+    },
+    {
+      "camId": "MD_Sligo_Creek_Near_Takoma_Park",
+      "nwisIdLocal": "01650800",
+      "nwisIdLive": "01650800",
+      "ingestPeriodLocal": "daylight",
+      "ingestPeriodLive": "daylight",
+      "ingestIntervalLocal": 60,
+      "ingestIntervalLive": 60,
+      "timelapseEnabledLive": true
+    },
+    {
+      "camId": "MN_Bois_De_Sioux_River_near_Doran",
+      "nwisIdLocal": "05051300",
+      "nwisIdLive": "05051300",
+      "ingestPeriodLocal": "daylight",
+      "ingestPeriodLive": "daylight",
+      "ingestIntervalLocal": 60,
+      "ingestIntervalLive": 60,
+      "timelapseEnabledLive": true
+    },
+    {
+      "camId": "WA_Okanogan_River_at_Zosel_Millpond_at_Oroville",
+      "nwisIdLocal": "12439500",
+      "nwisIdLive": "12439500",
+      "ingestPeriodLocal": "daylight",
+      "ingestPeriodLive": "daylight",
+      "ingestIntervalLocal": 60,
+      "ingestIntervalLive": 60,
+      "timelapseEnabledLive": true
+    },
+    {
+      "camId": "SC_Little_Pee_Dee_River_at_Galivants_Ferry",
+      "nwisIdLocal": "02135000",
+      "nwisIdLive": "02135000",
+      "ingestPeriodLocal": "daylight",
+      "ingestPeriodLive": "daylight",
+      "ingestIntervalLocal": 15,
+      "ingestIntervalLive": 15,
+      "timelapseEnabledLive": true
+    }
+  ],
+  "summary": "For the selected compared fields, the curated camera config remains aligned with live upstream responses for the current curated camera IDs."
+}

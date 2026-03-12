@@ -1,0 +1,40 @@
+{
+  "cameraObjectToMetadata": {
+    "camId": "datastream identity and camera-sidecar identity",
+    "nwisId": "shared-system linkage",
+    "camName": "recommended datastream name/description support",
+    "camDesc": "recommended datastream description support",
+    "lat": "deployment geometry verification",
+    "lng": "deployment geometry verification",
+    "stateAbrv": "camera-sidecar metadata",
+    "tz": "camera-sidecar metadata",
+    "createdDate": "camera provenance",
+    "modifiedDate": "camera provenance",
+    "newestImageDT": "availability/cadence note",
+    "TL_enabled": "timelapse capability note",
+    "overlayDir": "full-size image URL base",
+    "thumbDir": "thumbnail URL base",
+    "smallDir": "720px URL base",
+    "tlDir": "timelapse URL base",
+    "ingest.period": "capture cadence semantics",
+    "ingest.intr": "capture interval in minutes",
+    "locus": "delivery/storage provenance"
+  },
+  "listFilesToObservationPayload": {
+    "filename": "filename",
+    "timestamp": "phenomenonTime if rawItem mode is adopted",
+    "string array newest item": "filename parsing source for current runtime"
+  },
+  "constructedUrlOutputs": {
+    "overlayDir + filename": "imageUrl",
+    "thumbDir + filename": "thumbUrl",
+    "smallDir + filename": "smallUrl",
+    "tlDir + camId + _720.mp4": "timeLapseUrl"
+  },
+  "documentOnlyFields": {
+    "fs": "useful file-size signal, currently best kept out of the result body",
+    "newestImageDT": "useful availability signal, currently best treated as metadata",
+    "hideCam": "selection and inventory field, not currently part of the observation contract"
+  },
+  "importantCaveat": "Site-based discovery can return multiple cameras for one NWIS site. The current publisher model selects one camera per shared station system and does not yet generalize to many-camera-per-site publication."
+}

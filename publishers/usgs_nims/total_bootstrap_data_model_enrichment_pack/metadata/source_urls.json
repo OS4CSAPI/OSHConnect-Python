@@ -1,0 +1,26 @@
+{
+  "verifiedDate": "2026-03-11",
+  "core": {
+    "nimsApiBase": "https://api.waterdata.usgs.gov/nims/v0/",
+    "nimsDocs": "https://api.waterdata.usgs.gov/nims/v0/docs",
+    "cameraDiscovery": "https://api.waterdata.usgs.gov/nims/v0/cameras",
+    "imageListing": "https://api.waterdata.usgs.gov/nims/v0/listFiles",
+    "nimsS3Base": "https://usgs-nims-images.s3.amazonaws.com",
+    "usgsApiRegistration": "https://api.usgs.gov/",
+    "usgsWaterHome": "https://waterdata.usgs.gov/",
+    "usgsWaterOgcApi": "https://api.waterdata.usgs.gov/ogcapi/v0/"
+  },
+  "workedExamples": {
+    "cameraAzUpstream": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=AZ_Colorado_River_at_Lees_Ferry_Upstream",
+    "site09380000": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=09380000",
+    "listFilesAzUpstream": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=AZ_Colorado_River_at_Lees_Ferry_Upstream&limit=3&recent=true",
+    "listFilesRawItemAzUpstream": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=AZ_Colorado_River_at_Lees_Ferry_Upstream&limit=2&recent=true&rawItem=true",
+    "inventorySample": "https://api.waterdata.usgs.gov/nims/v0/cameras?limit=5"
+  },
+  "notes": [
+    "The package intentionally keeps only official USGS and USGS-hosted NIMS sources here.",
+    "The active NIMS API path verified on 2026-03-11 is v0.",
+    "Camera discovery has multiple useful query modes including camId and siteId.",
+    "Image and timelapse URLs are resolved from S3 paths returned by camera discovery."
+  ]
+}

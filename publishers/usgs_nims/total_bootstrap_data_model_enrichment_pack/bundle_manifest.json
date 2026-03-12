@@ -1,0 +1,32 @@
+{
+  "name": "USGS NIMS Total Bootstrap, Data Model, and Enrichment Pack",
+  "packageVersion": "2026-03-11",
+  "publisherPath": "publishers/usgs_nims",
+  "generatedDate": "2026-03-11",
+  "purpose": [
+    "Document the current USGS NIMS imagery publisher architecture",
+    "Provide live-verified source references and worked examples",
+    "Deliver a metadata enrichment pack for NIMS bootstrap resources",
+    "Package the result as a shareable zip artifact"
+  ],
+  "artifactGroups": [
+    "notes",
+    "data_model",
+    "metadata",
+    "assets",
+    "patches"
+  ],
+  "upstreamVerifiedOn": "2026-03-11",
+  "currentLocalInputs": [
+    "publishers/usgs_nims/bootstrap_usgs_nims.py",
+    "publishers/usgs_nims/usgs_nims_publisher.py",
+    "publishers/usgs_nims/cameras.json",
+    "docs/research/USGS_API_Reconnaissance_Notes.md",
+    "docs/research/USGS_NIMS_Follow_On_Publishers_Plan.md"
+  ],
+  "notes": [
+    "This package is Pattern A specific and assumes reuse of existing USGS water systems.",
+    "Live verification confirms that some curated NWIS sites currently expose more than one NIMS camera.",
+    "The zip archive for this package is created as a sibling artifact under publishers/usgs_nims."
+  ]
+}

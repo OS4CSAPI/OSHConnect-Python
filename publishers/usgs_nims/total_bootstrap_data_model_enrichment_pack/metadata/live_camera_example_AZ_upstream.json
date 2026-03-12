@@ -1,0 +1,30 @@
+{
+  "verifiedDate": "2026-03-11",
+  "sourceUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?camId=AZ_Colorado_River_at_Lees_Ferry_Upstream",
+  "camera": {
+    "camId": "AZ_Colorado_River_at_Lees_Ferry_Upstream",
+    "nwisId": "09380000",
+    "camName": "Colorado River at Lees Ferry Upstream",
+    "camDesc": "The USGS HiVis camera at Lees Ferry provides real time visual monitoring of Colorado River conditions to support situational awareness.",
+    "lat": "36.864333333333335",
+    "lng": "-111.58787222222222",
+    "stateAbrv": "AZ",
+    "tz": "US/Mountain",
+    "createdDate": "2026-02-25T21:19:00.252Z",
+    "modifiedDate": "2026-02-25T21:19:00.252Z",
+    "newestImageDT": "2026-03-11T23:45:05Z",
+    "TL_enabled": true,
+    "TL_lastGeneratedDT": "2026-03-11T21:41:34.703Z",
+    "TL_lastImageUsedDT": "2026-03-11T21:30:05Z",
+    "overlayDir": "https://usgs-nims-images.s3.amazonaws.com/overlay/AZ_Colorado_River_at_Lees_Ferry_Upstream/",
+    "thumbDir": "https://usgs-nims-images.s3.amazonaws.com/thumbnail/AZ_Colorado_River_at_Lees_Ferry_Upstream/",
+    "smallDir": "https://usgs-nims-images.s3.amazonaws.com/720/AZ_Colorado_River_at_Lees_Ferry_Upstream/",
+    "tlDir": "https://usgs-nims-images.s3.amazonaws.com/timelapse/AZ_Colorado_River_at_Lees_Ferry_Upstream/",
+    "ingest": {
+      "period": "247",
+      "intr": 15,
+      "specificArr": []
+    },
+    "locus": "aws"
+  }
+}

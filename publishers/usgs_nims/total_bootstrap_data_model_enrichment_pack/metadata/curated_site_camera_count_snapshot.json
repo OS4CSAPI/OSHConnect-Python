@@ -1,0 +1,70 @@
+[
+  {
+    "nwisId": "09380000",
+    "curatedCamId": "AZ_Colorado_River_at_Lees_Ferry_Upstream",
+    "liveCameraCount": 2,
+    "liveCamIds": [
+      "AZ_Colorado_River_at_Lees_Ferry",
+      "AZ_Colorado_River_at_Lees_Ferry_Upstream"
+    ]
+  },
+  {
+    "nwisId": "09019850",
+    "curatedCamId": "CO_WILLOW_CREEK_SL",
+    "liveCameraCount": 4,
+    "liveCamIds": [
+      "CO_WILLOW_CREEK_HU2",
+      "CO_WILLOW_CREEK_VI",
+      "CO_WILLOW_CREEK_HU",
+      "CO_WILLOW_CREEK_SL"
+    ]
+  },
+  {
+    "nwisId": "11313433",
+    "curatedCamId": "CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island",
+    "liveCameraCount": 1,
+    "liveCamIds": [
+      "CA_Dutch_Slough_below_Jersey_Island_Road_at_Jersey_Island"
+    ]
+  },
+  {
+    "nwisId": "08171000",
+    "curatedCamId": "TX_Blanco_River_at_Wimberley",
+    "liveCameraCount": 1,
+    "liveCamIds": [
+      "TX_Blanco_River_at_Wimberley"
+    ]
+  },
+  {
+    "nwisId": "01650800",
+    "curatedCamId": "MD_Sligo_Creek_Near_Takoma_Park",
+    "liveCameraCount": 1,
+    "liveCamIds": [
+      "MD_Sligo_Creek_Near_Takoma_Park"
+    ]
+  },
+  {
+    "nwisId": "05051300",
+    "curatedCamId": "MN_Bois_De_Sioux_River_near_Doran",
+    "liveCameraCount": 1,
+    "liveCamIds": [
+      "MN_Bois_De_Sioux_River_near_Doran"
+    ]
+  },
+  {
+    "nwisId": "12439500",
+    "curatedCamId": "WA_Okanogan_River_at_Zosel_Millpond_at_Oroville",
+    "liveCameraCount": 1,
+    "liveCamIds": [
+      "WA_Okanogan_River_at_Zosel_Millpond_at_Oroville"
+    ]
+  },
+  {
+    "nwisId": "02135000",
+    "curatedCamId": "SC_Little_Pee_Dee_River_at_Galivants_Ferry",
+    "liveCameraCount": 1,
+    "liveCamIds": [
+      "SC_Little_Pee_Dee_River_at_Galivants_Ferry"
+    ]
+  }
+]

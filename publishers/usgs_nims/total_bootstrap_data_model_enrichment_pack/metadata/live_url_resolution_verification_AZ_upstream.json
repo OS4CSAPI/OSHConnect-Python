@@ -1,0 +1,27 @@
+{
+  "verifiedDate": "2026-03-11",
+  "cameraId": "AZ_Colorado_River_at_Lees_Ferry_Upstream",
+  "filename": "AZ_Colorado_River_at_Lees_Ferry_Upstream___2026-03-11T23-45-05Z.jpg",
+  "checks": [
+    {
+      "url": "https://usgs-nims-images.s3.amazonaws.com/overlay/AZ_Colorado_River_at_Lees_Ferry_Upstream/AZ_Colorado_River_at_Lees_Ferry_Upstream___2026-03-11T23-45-05Z.jpg",
+      "status": 200,
+      "contentType": "image/jpeg"
+    },
+    {
+      "url": "https://usgs-nims-images.s3.amazonaws.com/thumbnail/AZ_Colorado_River_at_Lees_Ferry_Upstream/AZ_Colorado_River_at_Lees_Ferry_Upstream___2026-03-11T23-45-05Z.jpg",
+      "status": 200,
+      "contentType": "image/jpeg"
+    },
+    {
+      "url": "https://usgs-nims-images.s3.amazonaws.com/720/AZ_Colorado_River_at_Lees_Ferry_Upstream/AZ_Colorado_River_at_Lees_Ferry_Upstream___2026-03-11T23-45-05Z.jpg",
+      "status": 200,
+      "contentType": "image/jpeg"
+    },
+    {
+      "url": "https://usgs-nims-images.s3.amazonaws.com/timelapse/AZ_Colorado_River_at_Lees_Ferry_Upstream/AZ_Colorado_River_at_Lees_Ferry_Upstream_720.mp4",
+      "status": 200,
+      "contentType": "video/mp4"
+    }
+  ]
+}

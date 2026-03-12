@@ -1,0 +1,22 @@
+{
+  "verifiedDate": "2026-03-11",
+  "sourceUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=AZ_Colorado_River_at_Lees_Ferry_Upstream&limit=2&recent=true&rawItem=true",
+  "items": [
+    {
+      "camId": "AZ_Colorado_River_at_Lees_Ferry_Upstream",
+      "filename": "AZ_Colorado_River_at_Lees_Ferry_Upstream___2026-03-11T23-45-05Z.jpg",
+      "timestamp": "2026-03-11T23:45:05Z",
+      "fs": 512362
+    },
+    {
+      "camId": "AZ_Colorado_River_at_Lees_Ferry_Upstream",
+      "filename": "AZ_Colorado_River_at_Lees_Ferry_Upstream___2026-03-11T23-30-05Z.jpg",
+      "timestamp": "2026-03-11T23:30:05Z",
+      "fs": 606042
+    }
+  ],
+  "notes": [
+    "This is a richer live response mode than the current runtime uses.",
+    "It exposes file size and server-supplied timestamp fields without relying solely on filename parsing."
+  ]
+}

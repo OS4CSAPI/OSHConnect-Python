@@ -1,0 +1,29 @@
+{
+  "verifiedDate": "2026-03-11",
+  "sourceUrl": "https://api.waterdata.usgs.gov/nims/v0/cameras?siteId=09380000",
+  "cameras": [
+    {
+      "camId": "AZ_Colorado_River_at_Lees_Ferry",
+      "nwisId": "09380000",
+      "camName": "Colorado River at Lees Ferry Downstream",
+      "newestImageDT": "2026-03-11T23:45:02Z",
+      "TL_enabled": true,
+      "ingest": {
+        "period": "247",
+        "intr": 15
+      }
+    },
+    {
+      "camId": "AZ_Colorado_River_at_Lees_Ferry_Upstream",
+      "nwisId": "09380000",
+      "camName": "Colorado River at Lees Ferry Upstream",
+      "newestImageDT": "2026-03-11T23:45:05Z",
+      "TL_enabled": true,
+      "ingest": {
+        "period": "247",
+        "intr": 15
+      }
+    }
+  ],
+  "importantFinding": "Live site-based discovery can return multiple cameras for one NWIS site, so the current one-camera-per-station curated model is a selection policy rather than a natural API limitation."
+}

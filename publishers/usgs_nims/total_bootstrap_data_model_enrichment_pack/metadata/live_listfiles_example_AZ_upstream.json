@@ -1,0 +1,13 @@
+{
+  "verifiedDate": "2026-03-11",
+  "sourceUrl": "https://api.waterdata.usgs.gov/nims/v0/listFiles?camId=AZ_Colorado_River_at_Lees_Ferry_Upstream&limit=3&recent=true",
+  "filenames": [
+    "AZ_Colorado_River_at_Lees_Ferry_Upstream___2026-03-11T23-45-05Z.jpg",
+    "AZ_Colorado_River_at_Lees_Ferry_Upstream___2026-03-11T23-30-05Z.jpg",
+    "AZ_Colorado_River_at_Lees_Ferry_Upstream___2026-03-11T23-15-02Z.jpg"
+  ],
+  "notes": [
+    "This is the plain listFiles response mode used by the current runtime.",
+    "The current publisher derives phenomenonTime from the filename timestamp."
+  ]
+}
