@@ -10,7 +10,7 @@
 
 OS4CSAPI has deployed a second Connected Systems API server — [connected-systems-go](https://github.com/OS4CSAPI/connected-systems-go) — alongside the existing OSH SensorHub. This report documents the integration effort: server architecture, behavioral differences discovered during live testing, workarounds applied, publishers migrated to date, and the plan to complete the remaining fleet.
 
-**Final state:** 10 of 10 publishers dual-publishing on the Go server. 37 systems, 58 datastreams, 11 procedures, 58 deployments bootstrapped. All services running as systemd units with observations flowing. 6 GitHub issues filed against the Go server, plus 4 additional behavioral differences discovered during fleet-wide migration.
+**Final state:** 10 of 10 publishers dual-publishing on the Go server. 37 systems, 58 datastreams, 11 procedures, 58 deployments bootstrapped. All services running as systemd units with observations flowing. 10 GitHub issues filed against the Go server covering bugs, behavioral differences, and missing features. BuoyCAM image URL fix deployed (absolute URLs via `BUOYCAM_CACHE_BASE_URL` env var).
 
 ---
 
@@ -57,7 +57,7 @@ The [ogc-csapi-explorer](https://github.com/OS4CSAPI/ogc-csapi-explorer) demo ap
 
 ## 3  Behavioral Differences Discovered
 
-During live integration testing, we identified 6 differences between connected-systems-go and OSH SensorHub. These have been filed as GitHub issues on [OS4CSAPI/connected-systems-go](https://github.com/OS4CSAPI/connected-systems-go/issues).
+During live integration testing, we identified 10+ differences between connected-systems-go and OSH SensorHub. These have been filed as GitHub issues on [OS4CSAPI/connected-systems-go](https://github.com/OS4CSAPI/connected-systems-go/issues).
 
 ### 3.1  Bugs (P1–P2)
 
@@ -131,7 +131,7 @@ During live integration testing, we identified 6 differences between connected-s
 
 ### 3.3  Additional Behavioral Differences (Discovered During Fleet Migration)
 
-These were discovered during the full fleet migration and are not yet filed as issues.
+These were discovered during the full fleet migration. Key items have since been filed as GitHub issues.
 
 #### Unique constraint on datastream `unique_identifier` (global scope)
 
@@ -139,16 +139,27 @@ These were discovered during the full fleet migration and are not yet filed as i
 - **Problem:** PostgreSQL `idx_datastreams_unique_identifier` enforces global uniqueness across ALL datastreams, not just within a system. Multi-station publishers initially shared one UID template (e.g., `urn:os4csapi:datastream:nws:nwsSurfaceObs:v1`) for all stations — the second station's datastream creation failed.
 - **Workaround:** All multi-station publishers now generate per-station UIDs: `urn:os4csapi:datastream:nws:{station_id}:nwsSurfaceObs:v1`.
 - **Files changed:** `bootstrap_nws.py`, `bootstrap_ndbc.py`, `bootstrap_coops.py`, `bootstrap_aviation_wx.py`, `bootstrap_usgs_water.py`, `bootstrap_usgs_nims.py`.
+- **Note:** Related to Issue #1 (UID handling). Not filed as a separate issue.
 
 #### `?uid=` query parameter ignored
 
+- **GitHub:** [OS4CSAPI/connected-systems-go#7](https://github.com/OS4CSAPI/connected-systems-go/issues/7)
 - **Severity:** P2-Major
 - **Problem:** `GET /systems?uid=urn:os4csapi:...` returns ALL systems (unfiltered) instead of the matching one. Combined with the default pagination limit of 10, `find_by_uid()` missed resources beyond the first page.
 - **Workaround:** `find_by_uid()` now appends `&limit=1000` to all queries and matches client-side.
 - **File changed:** `bootstrap_helpers.py`.
 
+#### Default pagination limit too low
+
+- **GitHub:** [OS4CSAPI/connected-systems-go#9](https://github.com/OS4CSAPI/connected-systems-go/issues/9)
+- **Severity:** P2-Major
+- **Problem:** Go server defaults to `limit=10` for all collection endpoints. With 37 systems, 58 datastreams, and 58 deployments, default queries miss the majority of resources. SensorHub defaults to 100.
+- **Workaround:** All client code appends explicit `&limit=100` or `&limit=1000` to queries.
+- **Impact:** Affects Explorer UI (map shows only 10 of 37 systems), bootstrap scripts, and library consumers.
+
 #### `/deployments` only returns top-level deployments
 
+- **GitHub:** [OS4CSAPI/connected-systems-go#8](https://github.com/OS4CSAPI/connected-systems-go/issues/8)
 - **Severity:** P3-Minor
 - **Problem:** `GET /deployments` does not include sub-deployments in results. Sub-deployments are only accessible via `GET /deployments/{parent_id}/subdeployments`.
 - **Workaround:** `ensure_deployment()` now searches `deployments/{parent_id}/subdeployments` when `parent_id` is provided.
@@ -160,6 +171,16 @@ These were discovered during the full fleet migration and are not yet filed as i
 - **Problem:** Go server validates that observation results contain ALL fields defined in the datastream schema, including `timestamp`. Publishers were popping `timestamp` from results (SensorHub auto-fills it from `phenomenonTime`), causing `result.timestamp is required by datastream schema` errors.
 - **Workaround:** All publishers now re-add `timestamp` from `phenomenonTime` when targeting Go server.
 - **Files changed:** All 8 publisher files.
+- **Note:** Extension of Issue #5. Not filed as a separate issue.
+
+#### SensorML `documents` array silently dropped
+
+- **GitHub:** [OS4CSAPI/connected-systems-go#10](https://github.com/OS4CSAPI/connected-systems-go/issues/10)
+- **Severity:** P2-Major
+- **Problem:** The Go server silently drops the `documents` array from SensorML on ingest or output. Querying `GET /systems?resultFormat=sml` returns `identifiers`, `classifiers`, `contacts`, `position` — but NO `documents`. Publishers send `documents` with photo URLs, thumbnails, and documentation links, but they are lost.
+- **Impact:** System thumbnails broken in the Explorer (`extractSmlMedia()` reads `sml.documents`). Any media links, datasheets, or documentation URLs attached to systems are inaccessible.
+- **Workaround:** None available (requires Go server code fix). Explorer shows blank thumbnails for all Go server systems.
+- **Verification:** `GET /systems?resultFormat=sml` on Go server — response has no `documents` field. Same query on SensorHub returns full `documents` array with photo URLs.
 
 ### 3.4  Full Behavioral Comparison
 
@@ -171,10 +192,11 @@ These were discovered during the full fleet migration and are not yet filed as i
 | Auth requirement | Required (HTTP Basic) | None (headers tolerated) |
 | Datastream UID on create | Optional (auto-generated) | Effectively required (see #1) |
 | Datastream UID scope | Per-system | Global unique constraint |
-| `?uid=` filter parameter | Supported | Ignored (returns all) |
-| Default pagination limit | 100 | 10 |
-| `/deployments` listing | All (flat) | Top-level only |
+| `?uid=` filter parameter | Supported | Ignored (returns all) — #7 |
+| Default pagination limit | 100 | 10 — #9 |
+| `/deployments` listing | All (flat) | Top-level only — #8 |
 | `result.timestamp` field | Auto-filled from phenomenonTime | Required in result body |
+| SensorML `documents` array | Preserved on ingest/output | Silently dropped — #10 |
 
 ---
 
@@ -254,6 +276,7 @@ These were discovered during the full fleet migration and are not yet filed as i
 | Per-station datastream UIDs | `urn:os4csapi:datastream:ndbc:{station_id}:ndbcBuoyObs:v1` and `urn:os4csapi:datastream:ndbc:{station_id}:ndbcBuoycam:v1` |
 | `OSH_BASE_URL` override | Both publishers read `OSH_BASE_URL` env var |
 | `_is_go_server` flag | NaN→0.0, timestamp re-added from phenomenonTime |
+| `BUOYCAM_CACHE_BASE_URL` fix | Added `Environment=BUOYCAM_CACHE_BASE_URL=https://129-80-248-53.sslip.io/buoycam` to both `ndbc-buoycam-publisher.service` and `ndbc-buoycam-publisher-go.service`. Without this, `image_cache.py` produced relative paths (e.g., `/41009/2026/04/17/...jpg`) instead of absolute URLs. State file cleared and services restarted to force re-publish all 5 stations with correct URLs. |
 
 ### 4.7  CO-OPS Coastal Observations Publisher
 
@@ -411,7 +434,7 @@ All 10 publishers are dual-publishing on both SensorHub and the Go server.
 | 3 | ISS | `iss-publisher` | `iss-publisher-go` | 30s | CelesTrak TLE fetch may timeout (transient) |
 | 4 | NWS | `nws-publisher` | `nws-publisher-go` | 3600s | 10 stations |
 | 5 | NDBC | `ndbc-publisher` | `ndbc-publisher-go` | 3600s | 5 buoys |
-| 6 | NDBC BuoyCAM | `ndbc-buoycam-publisher` | `ndbc-buoycam-publisher-go` | 900s | 5 cameras, image observations |
+| 6 | NDBC BuoyCAM | `ndbc-buoycam-publisher` | `ndbc-buoycam-publisher-go` | 900s | 5 cameras, `BUOYCAM_CACHE_BASE_URL` fix applied |
 | 7 | CO-OPS | `coops-publisher` | `coops-publisher-go` | 360s | 5 tide stations |
 | 8 | AviationWeather | `aviation-wx-publisher` | `aviation-wx-publisher-go` | 600s | 5 METAR stations |
 | 9 | USGS Water | `usgs-water-publisher` | `usgs-water-publisher-go` | 900s | 8 gages (discharge + gage height) |
@@ -439,6 +462,29 @@ Each Go publisher has its own directory under `/home/ubuntu/`:
 
 Each directory contains a copy of the relevant `publishers/` subtree plus `bootstrap_helpers.py`. Staging repo clone at `/tmp/OSHConnect-Python` for updates.
 
+### 7.2  BuoyCAM Image Cache
+
+BuoyCAM images are cached on disk at `/var/www/buoycam/` and served by Caddy:
+
+```
+# Caddy config
+handle_path /buoycam/* {
+    root * /var/www/buoycam
+    header Access-Control-Allow-Origin *
+    file_server browse
+}
+```
+
+The `image_cache.py` module builds image URLs using:
+```python
+CACHE_BASE_URL = os.environ.get("BUOYCAM_CACHE_BASE_URL", "")
+# → f"{CACHE_BASE_URL}/{station_id}/{ymd}/{ts}.jpg"
+```
+
+Without `BUOYCAM_CACHE_BASE_URL` set, the publisher produced relative paths like `/41009/2026/04/17/20260417T150121Z.jpg` — which broke in the Explorer since images need absolute URLs. Fixed by adding `Environment=BUOYCAM_CACHE_BASE_URL=https://129-80-248-53.sslip.io/buoycam` to both BuoyCAM systemd services. State files cleared and services restarted to force re-publish all 5 stations with correct absolute URLs.
+
+**Verified:** `GET /datastreams/{id}/observations?limit=1&resultTime=latest` returns `imageUrl: "https://129-80-248-53.sslip.io/buoycam/41009/2026/04/17/20260417T160348Z.jpg"` — loads correctly.
+
 ---
 
 ## 8  GitHub Issues Filed
@@ -453,8 +499,14 @@ All filed on [OS4CSAPI/connected-systems-go](https://github.com/OS4CSAPI/connect
 | [#4](https://github.com/OS4CSAPI/connected-systems-go/issues/4) | enhancement | Research: NaN handling for numeric observation fields |
 | [#5](https://github.com/OS4CSAPI/connected-systems-go/issues/5) | enhancement | Research: Strict schema validation — requiring ALL declared fields |
 | [#6](https://github.com/OS4CSAPI/connected-systems-go/issues/6) | enhancement | Research: Cross-resource references — `@link` objects only vs. flat `@id` strings |
+| [#7](https://github.com/OS4CSAPI/connected-systems-go/issues/7) | bug | `?uid=` query parameter silently ignored — returns all resources unfiltered |
+| [#8](https://github.com/OS4CSAPI/connected-systems-go/issues/8) | bug | Subdeployments hidden from top-level `/deployments` listing |
+| [#9](https://github.com/OS4CSAPI/connected-systems-go/issues/9) | bug | Default pagination limit of 10 too low — most resources hidden |
+| [#10](https://github.com/OS4CSAPI/connected-systems-go/issues/10) | bug | SensorML `documents` array silently dropped — system thumbnails/media links lost |
 
-Related library issue: [ogc-client-CSAPI_2#166](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/166) — Library parsers need `@link.href` fallback.
+Related library issues:
+- [ogc-client-CSAPI_2#166](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/166) — Library parsers need `@link.href` fallback.
+- [ogc-client-CSAPI_2#167](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/167) — `buildQueryString()` should not apply a default `limit` parameter.
 
 ---
 
@@ -507,16 +559,22 @@ The Go server's `/deployments` endpoint only returns top-level deployments. Boot
 
 The current file-copy deployment (staging repo → per-publisher directories) is error-prone. Multiple bootstrap failures were caused by stale code in publisher directories. A git-pull-based or symlink-based approach would be more reliable.
 
+### 10.6  Environment Variables Must Be Explicitly Set in Systemd
+
+The BuoyCAM image URL issue was caused by a missing `BUOYCAM_CACHE_BASE_URL` environment variable in both publisher systemd services. The `image_cache.py` module defaults to `""` for the base URL, producing relative paths that work in development but break when the images are served from a different origin. All publisher-specific env vars must be audited when deploying new services.
+
 ---
 
 ## 11  Future Work
 
-- **File GitHub issues** for the 4 newly discovered Go server behaviors (§3.3)
+- ~~**File GitHub issues** for the 4 newly discovered Go server behaviors (§3.3)~~ — Done: #7, #8, #9 filed; #10 filed for new `documents` issue
+- **Go server SensorML `documents` support** — Issue #10 tracks this. System thumbnails and media links will remain broken until the Go server preserves the `documents` array on ingest/output. No client-side workaround available.
 - **Explorer smoke test** against Go server to verify map visualization
 - **Consolidate VM deployment** — replace per-directory file copies with symlinks or a deploy script
 - **UAS Simulator + Localizer** — evaluate Go server integration path
 - **Monitoring** — add health-check dashboard for Go publisher services
 - **CelesTrak resilience** — add retry/fallback for ISS TLE fetch timeouts
+- **Audit publisher env vars** — ensure all required environment variables (e.g., `BUOYCAM_CACHE_BASE_URL`) are set in every systemd service file
 
 ---
 
@@ -551,4 +609,19 @@ usgs-nims-publisher-go.service
 
 # Other
 simulator.service
+```
+
+### Appendix A.1 — BuoyCAM Service Environment Variables
+
+Both BuoyCAM publisher services now include the image cache base URL:
+
+```ini
+# /etc/systemd/system/ndbc-buoycam-publisher-go.service (excerpt)
+[Service]
+Environment="OSH_BASE_URL=https://129-80-248-53.sslip.io/csapi-go"
+Environment="BUOYCAM_CACHE_BASE_URL=https://129-80-248-53.sslip.io/buoycam"
+
+# /etc/systemd/system/ndbc-buoycam-publisher.service (excerpt)
+[Service]
+Environment="BUOYCAM_CACHE_BASE_URL=https://129-80-248-53.sslip.io/buoycam"
 ```
