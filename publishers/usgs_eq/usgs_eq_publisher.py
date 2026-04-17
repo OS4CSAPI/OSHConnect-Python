@@ -139,8 +139,8 @@ def parse_earthquake(feature: dict) -> dict | None:
             "magnitude": float(mag) if mag is not None else "NaN",
             "magType": mag_type or "unknown",
             "place": place or "Unknown location",
-            "eventTime": str(event_time_ms),
-            "updatedTime": str(updated_ms),
+            "eventTime": event_time_ms,
+            "updatedTime": updated_ms,
             "latitude": float(lat),
             "longitude": float(lon),
             "depth_km": float(depth_km) if depth_km is not None else 0.0,
@@ -204,6 +204,7 @@ class USGSEarthquakePublisher:
             "OSH_BASE_URL",
             f"https://{self.osh_address}/{self.osh_root}/api",
         )
+        self._coerce_time_to_str = "csapi-go" in self._base_url
         self._auth = "Basic " + base64.b64encode(
             f"{self.osh_user}:{self.osh_pass}".encode()).decode()
 
@@ -242,6 +243,13 @@ class USGSEarthquakePublisher:
     def _post_observation(self, obs: dict):
         """POST an observation to the server."""
         import ssl
+
+        # Go CSAPI server requires Time fields as strings
+        if self._coerce_time_to_str:
+            r = obs.get("result", {})
+            for key in ("eventTime", "updatedTime"):
+                if key in r and not isinstance(r[key], str):
+                    r[key] = str(r[key])
 
         url = f"{self._base_url}/datastreams/{self._ds_id}/observations"
         body = json.dumps(obs).encode()
