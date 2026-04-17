@@ -177,7 +177,11 @@ class USGSNimsPublisher:
         self._last_filename: dict[str, str] = {}
 
         # REST config
-        self._base_url = f"https://{self.osh_address}/{self.osh_root}/api"
+        self._base_url = os.environ.get(
+            "OSH_BASE_URL",
+            f"https://{self.osh_address}/{self.osh_root}/api",
+        )
+        self._is_go_server = "csapi-go" in self._base_url
         self._auth = "Basic " + base64.b64encode(
             f"{self.osh_user}:{self.osh_pass}".encode()).decode()
 

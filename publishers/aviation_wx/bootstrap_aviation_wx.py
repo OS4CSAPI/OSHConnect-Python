@@ -337,6 +337,7 @@ def _datastream_schema() -> dict:
       raw_metar       - Raw METAR text
     """
     return {
+        "uid": "urn:os4csapi:datastream:awx-station:metarObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "METAR Observation",
         "description": (

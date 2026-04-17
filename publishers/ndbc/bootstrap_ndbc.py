@@ -436,6 +436,7 @@ def _datastream_schema() -> dict:
       TIDE  - Water level (ft)
     """
     return {
+        "uid": "urn:os4csapi:datastream:ndbc-buoy:ndbcBuoyObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "Buoy Observation",
         "description": (
@@ -551,6 +552,7 @@ BUOYCAM_PROCEDURE_BODY = {
 def _buoycam_datastream_schema() -> dict:
     """SWE DataRecord schema for BuoyCAM image-reference datastream."""
     return {
+        "uid": "urn:os4csapi:datastream:ndbc-buoy:ndbcBuoyCamImage:v1",
         "outputName": BUOYCAM_DS_OUTPUT_NAME,
         "name": "BuoyCAM Image",
         "description": (

@@ -195,6 +195,24 @@ class ISSPublisher(PublisherBase):
                                 "urn:os4csapi:system:iss-position-publisher:v1")
     ds_name = os.environ.get("POS_DS_NAME", "ISS Position (SGP4)")
 
+    def __init__(self):
+        # REST-only mode: bypass OSHConnect SDK when OSH_BASE_URL is set
+        self._rest_mode = bool(os.environ.get("OSH_BASE_URL"))
+        if self._rest_mode:
+            import base64
+            self.osh_address = os.environ.get("OSH_ADDRESS", "")
+            self.osh_user = os.environ.get("OSH_USER", "")
+            self.osh_pass = os.environ.get("OSH_PASS", "")
+            self._base_url = os.environ["OSH_BASE_URL"]
+            self._is_go_server = "csapi-go" in self._base_url
+            self._auth = "Basic " + base64.b64encode(
+                f"{self.osh_user}:{self.osh_pass}".encode()).decode()
+            self._ds_id: str | None = None
+            self.stats = {"published": 0, "errors": 0, "reconnects": 0}
+        else:
+            super().__init__()
+            self._is_go_server = False
+
     def configure_cli(self, parser: argparse.ArgumentParser):
         parser.add_argument("--tle-refresh", type=float, default=3600.0,
                             help="Seconds between TLE refreshes (default: 3600)")
@@ -211,6 +229,58 @@ class ISSPublisher(PublisherBase):
         except Exception as e:
             print(f"  FATAL: Could not fetch TLE: {e}")
             sys.exit(1)
+
+    def connect(self):
+        """Connect to server. Uses REST mode when OSH_BASE_URL is set, SDK otherwise."""
+        if self._rest_mode:
+            from publishers.bootstrap_helpers import api_get, find_by_uid
+            sys_id = find_by_uid(self._base_url, self._auth, "systems", self.system_uid)
+            if not sys_id:
+                raise RuntimeError(f"System '{self.system_uid}' not found on server")
+            ds_list = api_get(self._base_url, f"systems/{sys_id}/datastreams", self._auth)
+            if ds_list:
+                for item in ds_list.get("items", []):
+                    if item.get("outputName") == "issPosition":
+                        self._ds_id = item.get("id")
+                        break
+            if not self._ds_id:
+                raise RuntimeError(f"Datastream 'issPosition' not found under system {sys_id}")
+            print(f"  Connected (REST): sys={sys_id} ds={self._ds_id}")
+        else:
+            return super().connect()
+
+    def publish_obs(self, obs: dict) -> bool:
+        """POST observation. Uses REST when in REST mode, SDK otherwise."""
+        if self._rest_mode:
+            import ssl
+            url = f"{self._base_url}/datastreams/{self._ds_id}/observations"
+
+            # Go server: coerce numeric timestamp to string
+            if self._is_go_server:
+                r = obs.get("result", {})
+                if "timestamp" in r and not isinstance(r["timestamp"], str):
+                    r["timestamp"] = str(r["timestamp"])
+
+            body = json.dumps(obs).encode()
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            req = Request(url, data=body, method="POST", headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Authorization": self._auth,
+            })
+            try:
+                with urlopen(req, timeout=30, context=ctx) as resp:
+                    if resp.status not in (200, 201, 204):
+                        raise RuntimeError(f"HTTP {resp.status}")
+                self.stats["published"] += 1
+                return True
+            except Exception as e:
+                self.stats["errors"] += 1
+                raise
+        else:
+            return super().publish_obs(obs)
 
     def fetch(self) -> Any:
         sat = get_satrec()

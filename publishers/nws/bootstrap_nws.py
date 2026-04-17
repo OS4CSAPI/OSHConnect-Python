@@ -341,6 +341,7 @@ def _datastream_schema() -> dict:
       { name, outputName, schema: { obsFormat, resultSchema: { ... } } }
     """
     return {
+        "uid": "urn:os4csapi:datastream:nws-station:nwsSurfaceObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "Surface Observation",
         "description": (

@@ -533,6 +533,7 @@ def _datastream_schema() -> dict:
       pressure_hpa   - Barometric pressure (hPa / mb)
     """
     return {
+        "uid": "urn:os4csapi:datastream:coops-station:coopsCoastalObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "Coastal Observation",
         "description": (

@@ -226,7 +226,11 @@ class AviationWxPublisher:
 
         # REST config
         import base64
-        self._base_url = f"https://{self.osh_address}/{self.osh_root}/api"
+        self._base_url = os.environ.get(
+            "OSH_BASE_URL",
+            f"https://{self.osh_address}/{self.osh_root}/api",
+        )
+        self._is_go_server = "csapi-go" in self._base_url
         self._auth = "Basic " + base64.b64encode(
             f"{self.osh_user}:{self.osh_pass}".encode()).decode()
 
@@ -277,6 +281,16 @@ class AviationWxPublisher:
     def _post_observation(self, ds_id: str, obs: dict):
         """POST an observation to the server using direct REST (allows NaN serialization)."""
         import ssl
+
+        # Go server workarounds
+        if self._is_go_server:
+            r = obs.get("result", {})
+            for key, val in list(r.items()):
+                if val == "NaN":
+                    r[key] = 0.0
+            # Coerce numeric timestamp to string
+            if "timestamp" in r and not isinstance(r["timestamp"], str):
+                r["timestamp"] = str(r["timestamp"])
 
         url = f"{self._base_url}/datastreams/{ds_id}/observations"
         body = json.dumps(obs).encode()

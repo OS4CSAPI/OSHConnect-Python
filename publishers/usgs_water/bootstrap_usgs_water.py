@@ -531,6 +531,7 @@ def _system_sml(station: dict) -> dict:
 def _discharge_datastream_schema() -> dict:
     """SWE DataRecord schema for the discharge (streamflow) datastream."""
     return {
+        "uid": "urn:os4csapi:datastream:usgs-water:usgsDischarge:v1",
         "outputName": DS_DISCHARGE_OUTPUT,
         "name": "Discharge",
         "description": (
@@ -598,6 +599,7 @@ def _discharge_datastream_schema() -> dict:
 def _gage_height_datastream_schema() -> dict:
     """SWE DataRecord schema for the gage height (water level) datastream."""
     return {
+        "uid": "urn:os4csapi:datastream:usgs-water:usgsGageHeight:v1",
         "outputName": DS_GAGE_HEIGHT_OUTPUT,
         "name": "Gage Height",
         "description": (
