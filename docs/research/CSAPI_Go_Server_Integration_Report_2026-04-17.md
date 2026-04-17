@@ -1,7 +1,7 @@
 # CSAPI-Go Server Integration Report
 
 **Date:** 2026-04-17
-**Status:** In Progress
+**Status:** Complete
 **Scope:** Dual-publish the entire OS4CSAPI publisher fleet to the connected-systems-go server
 
 ---
@@ -10,7 +10,7 @@
 
 OS4CSAPI has deployed a second Connected Systems API server — [connected-systems-go](https://github.com/OS4CSAPI/connected-systems-go) — alongside the existing OSH SensorHub. This report documents the integration effort: server architecture, behavioral differences discovered during live testing, workarounds applied, publishers migrated to date, and the plan to complete the remaining fleet.
 
-**Current state:** 2 of 10 publishers dual-publishing. 6 GitHub issues filed against the Go server.
+**Final state:** 10 of 10 publishers dual-publishing on the Go server. 37 systems, 58 datastreams, 11 procedures, 58 deployments bootstrapped. All services running as systemd units with observations flowing. 6 GitHub issues filed against the Go server, plus 4 additional behavioral differences discovered during fleet-wide migration.
 
 ---
 
@@ -129,7 +129,39 @@ During live integration testing, we identified 6 differences between connected-s
 - **Workaround (Explorer):** `extractSystemId()` helper with `system@link.href` fallback. Pushed as commit `2f0869a`.
 - **Workaround (Library):** `parseBaseStream()` in `part2.ts` checks `system@link.href` → `system@id` chain. Filed as [ogc-client-CSAPI_2#166](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/166).
 
-### 3.3  Other Go Server Characteristics
+### 3.3  Additional Behavioral Differences (Discovered During Fleet Migration)
+
+These were discovered during the full fleet migration and are not yet filed as issues.
+
+#### Unique constraint on datastream `unique_identifier` (global scope)
+
+- **Severity:** P2-Major
+- **Problem:** PostgreSQL `idx_datastreams_unique_identifier` enforces global uniqueness across ALL datastreams, not just within a system. Multi-station publishers initially shared one UID template (e.g., `urn:os4csapi:datastream:nws:nwsSurfaceObs:v1`) for all stations — the second station's datastream creation failed.
+- **Workaround:** All multi-station publishers now generate per-station UIDs: `urn:os4csapi:datastream:nws:{station_id}:nwsSurfaceObs:v1`.
+- **Files changed:** `bootstrap_nws.py`, `bootstrap_ndbc.py`, `bootstrap_coops.py`, `bootstrap_aviation_wx.py`, `bootstrap_usgs_water.py`, `bootstrap_usgs_nims.py`.
+
+#### `?uid=` query parameter ignored
+
+- **Severity:** P2-Major
+- **Problem:** `GET /systems?uid=urn:os4csapi:...` returns ALL systems (unfiltered) instead of the matching one. Combined with the default pagination limit of 10, `find_by_uid()` missed resources beyond the first page.
+- **Workaround:** `find_by_uid()` now appends `&limit=1000` to all queries and matches client-side.
+- **File changed:** `bootstrap_helpers.py`.
+
+#### `/deployments` only returns top-level deployments
+
+- **Severity:** P3-Minor
+- **Problem:** `GET /deployments` does not include sub-deployments in results. Sub-deployments are only accessible via `GET /deployments/{parent_id}/subdeployments`.
+- **Workaround:** `ensure_deployment()` now searches `deployments/{parent_id}/subdeployments` when `parent_id` is provided.
+- **File changed:** `bootstrap_helpers.py`.
+
+#### Strict result schema validation (timestamp required)
+
+- **Severity:** P3-Minor (extends Issue #5)
+- **Problem:** Go server validates that observation results contain ALL fields defined in the datastream schema, including `timestamp`. Publishers were popping `timestamp` from results (SensorHub auto-fills it from `phenomenonTime`), causing `result.timestamp is required by datastream schema` errors.
+- **Workaround:** All publishers now re-add `timestamp` from `phenomenonTime` when targeting Go server.
+- **Files changed:** All 8 publisher files.
+
+### 3.4  Full Behavioral Comparison
 
 | Behavior | SensorHub | connected-systems-go |
 |---|---|---|
@@ -138,6 +170,11 @@ During live integration testing, we identified 6 differences between connected-s
 | ID format | Short numeric | UUID |
 | Auth requirement | Required (HTTP Basic) | None (headers tolerated) |
 | Datastream UID on create | Optional (auto-generated) | Effectively required (see #1) |
+| Datastream UID scope | Per-system | Global unique constraint |
+| `?uid=` filter parameter | Supported | Ignored (returns all) |
+| Default pagination limit | 100 | 10 |
+| `/deployments` listing | All (flat) | Top-level only |
+| `result.timestamp` field | Auto-filled from phenomenonTime | Required in result body |
 
 ---
 
@@ -145,12 +182,12 @@ During live integration testing, we identified 6 differences between connected-s
 
 ### 4.1  Shared Infrastructure — `bootstrap_helpers.py`
 
-**`find_by_uid()`** — Updated to check both `items` and `features` keys in collection responses, since the Go server wraps geo-resources in GeoJSON `features` arrays:
-
-```python
-# Support both GeoJSON (features) and flat JSON (items) collections
-items = result.get("items", []) or result.get("features", [])
-```
+| Change | Detail | Commit |
+|---|---|---|
+| GeoJSON support | `find_by_uid()` checks both `items` and `features` keys | `e022ef2` |
+| `OSH_BASE_URL` | `get_config()` reads `OSH_BASE_URL` env var as server URL fallback | `906ae33` |
+| Pagination fix | `find_by_uid()` appends `&limit=1000` to all queries | `92f584b` |
+| Subdeployment search | `ensure_deployment()` searches `deployments/{parent_id}/subdeployments` when `parent_id` set | `3a02268` |
 
 ### 4.2  USGS Earthquake Publisher
 
@@ -186,19 +223,109 @@ items = result.get("items", []) or result.get("features", [])
 
 **Confirmed:** ~170 published, 0 errors per cycle on both servers.
 
+### 4.4  ISS Publisher
+
+**Files created:** `publishers/iss/bootstrap_iss.py` (new)
+**Files changed:** `publishers/iss/iss_publisher.py`
+
+| Change | Detail |
+|---|---|
+| Bootstrap script | Created `bootstrap_iss.py` using `bootstrap_helpers.py` — 2 systems (position + track), 2 datastreams, 2 procedures, 1 deployment |
+| `OSH_BASE_URL` override | Publisher reads `OSH_BASE_URL` env var |
+| `_is_go_server` flag | Detects Go server from URL |
+| Timestamp in result | Re-adds `timestamp` from `phenomenonTime` when missing |
+
+### 4.5  NWS Surface Observations Publisher
+
+**Files changed:** `bootstrap_nws.py`, `nws_publisher.py`
+
+| Change | Detail |
+|---|---|
+| Per-station datastream UID | `urn:os4csapi:datastream:nws:{station_id}:nwsSurfaceObs:v1` |
+| `OSH_BASE_URL` override | Publisher reads `OSH_BASE_URL` env var |
+| `_is_go_server` flag | NaN→0.0, timestamp re-added from phenomenonTime |
+
+### 4.6  NDBC Buoy Publisher
+
+**Files changed:** `bootstrap_ndbc.py`, `ndbc_publisher.py`, `ndbc_buoycam_publisher.py`
+
+| Change | Detail |
+|---|---|
+| Per-station datastream UIDs | `urn:os4csapi:datastream:ndbc:{station_id}:ndbcBuoyObs:v1` and `urn:os4csapi:datastream:ndbc:{station_id}:ndbcBuoycam:v1` |
+| `OSH_BASE_URL` override | Both publishers read `OSH_BASE_URL` env var |
+| `_is_go_server` flag | NaN→0.0, timestamp re-added from phenomenonTime |
+
+### 4.7  CO-OPS Coastal Observations Publisher
+
+**Files changed:** `bootstrap_coops.py`, `coops_publisher.py`
+
+| Change | Detail |
+|---|---|
+| Per-station datastream UID | `urn:os4csapi:datastream:coops:{station_id}:coopsCoastalObs:v1` |
+| `OSH_BASE_URL` override | Publisher reads `OSH_BASE_URL` env var |
+| `_is_go_server` flag | NaN→0.0, timestamp re-added from phenomenonTime |
+
+### 4.8  AviationWeather METAR Publisher
+
+**Files changed:** `bootstrap_aviation_wx.py`, `aviation_wx_publisher.py`
+
+| Change | Detail |
+|---|---|
+| Per-station datastream UID | `urn:os4csapi:datastream:awx:{icao_id}:metarObs:v1` |
+| `OSH_BASE_URL` override | Publisher reads `OSH_BASE_URL` env var |
+| `_is_go_server` flag | NaN→0.0, timestamp re-added from phenomenonTime |
+
+### 4.9  USGS Water Publisher
+
+**Files changed:** `bootstrap_usgs_water.py`, `usgs_water_publisher.py`
+
+| Change | Detail |
+|---|---|
+| Per-station datastream UIDs | `urn:os4csapi:datastream:usgs-water:{nwis_id}:usgsDischarge:v1` and `urn:os4csapi:datastream:usgs-water:{nwis_id}:usgsGageHeight:v1` |
+| Station key fix | Fixed `st["id"]` → `nwis_id` (station dict uses `nwisId` key) |
+| `OSH_BASE_URL` override | Publisher reads `OSH_BASE_URL` env var |
+| `_is_go_server` flag | Timestamp re-added from phenomenonTime |
+
+### 4.10  USGS NIMS Imagery Publisher
+
+**Files changed:** `bootstrap_usgs_nims.py`, `usgs_nims_publisher.py`
+
+| Change | Detail |
+|---|---|
+| Per-camera datastream UID | `urn:os4csapi:datastream:usgs-nims:{cam_id}:usgsNimsImage:v1` |
+| `OSH_BASE_URL` override | Publisher reads `OSH_BASE_URL` env var |
+| `_is_go_server` flag | Timestamp re-added from phenomenonTime |
+| Companion pattern | NIMS creates datastreams on USGS Water systems (depends on Water bootstrap) |
+
 ---
 
 ## 5  Go Server Resource Inventory
 
-After bootstrapping USGS EQ and OpenSky on the Go server:
+Final resource counts after complete fleet migration:
 
-| Resource Type | Count | Examples |
-|---|---|---|
-| Systems | 2 | USGS Earthquake Feed, OpenSky ADS-B Feed |
-| Datastreams | 2 | earthquakeEvent, adsbState |
-| Deployments | 2 | USGS EQ deployment, OpenSky deployment |
-| Procedures | 2 | USGS EQ procedure, OpenSky procedure |
-| Observations | Growing | ~300 EQ events/cycle, ~170 aircraft states/cycle |
+| Resource Type | Count |
+|---|---|
+| Systems | 37 |
+| Datastreams | 58 |
+| Procedures | 11 |
+| Deployments | 58 |
+| Observations | Growing (561+ at first verification) |
+
+### 5.1  Breakdown by Publisher
+
+| Publisher | Systems | Datastreams | Procedures | Deployments |
+|---|---|---|---|---|
+| NWS | 10 | 10 | 1 | 12 |
+| NDBC (obs) | 5 | 5 | 1 | 7 |
+| NDBC (buoycam) | — | 5 | 1 | — |
+| CO-OPS | 5 | 5 | 1 | 7 |
+| AviationWeather | 5 | 5 | 1 | 7 |
+| USGS Water | 8 | 16 | 1 | 10 |
+| USGS NIMS | — | 8 | 1 | 10 |
+| USGS Earthquake | 1 | 1 | 1 | 2 |
+| OpenSky ADS-B | 1 | 1 | 1 | 2 |
+| ISS | 2 | 2 | 2 | 1 |
+| **Total** | **37** | **58** | **11** | **58** |
 
 ---
 
@@ -275,22 +402,42 @@ The established pattern for adding Go server support to any publisher:
 
 ## 7  Publisher Fleet Status
 
-| # | Publisher | SensorHub | Go Server | Notes |
-|---|-----------|:---------:|:---------:|-------|
-| 1 | USGS Earthquake | ✅ Running | ✅ Running | First dual-publish. 300 obs/cycle. |
-| 2 | OpenSky ADS-B | ✅ Running | ✅ Running | ~170 obs/cycle. NaN→0.0 workaround. |
-| 3 | ISS | ✅ Running | ❌ Not started | 1 system, 2 DS. Low complexity. |
-| 4 | NWS | ✅ Running | ❌ Not started | 10 stations. Medium complexity. |
-| 5 | NDBC | ✅ Running | ❌ Not started | 5 buoys. Medium complexity. |
-| 6 | NDBC BuoyCAM | ✅ Running | ❌ Not started | 5 cameras. Image observations — may need special handling. |
-| 7 | CO-OPS | ✅ Running | ❌ Not started | 5 tide stations. Medium complexity. |
-| 8 | AviationWeather | ✅ Running | ❌ Not started | 5 METAR stations. Medium complexity. |
-| 9 | USGS Water | ✅ Running | ❌ Not started | 8 stations. Medium complexity. |
-| 10 | USGS NIMS | ✅ Running | ❌ Not started | 8 cameras. Image observations. |
+All 10 publishers are dual-publishing on both SensorHub and the Go server.
+
+| # | Publisher | SH Service | Go Service | Interval | Notes |
+|---|-----------|------------|------------|----------|-------|
+| 1 | USGS Earthquake | `usgs-eq-publisher` | `usgs-eq-publisher-go` | 60s | 300 obs/cycle |
+| 2 | OpenSky ADS-B | `opensky-publisher` | `opensky-publisher-go` | ~300s | ~170 obs/cycle, NaN→0.0 |
+| 3 | ISS | `iss-publisher` | `iss-publisher-go` | 30s | CelesTrak TLE fetch may timeout (transient) |
+| 4 | NWS | `nws-publisher` | `nws-publisher-go` | 3600s | 10 stations |
+| 5 | NDBC | `ndbc-publisher` | `ndbc-publisher-go` | 3600s | 5 buoys |
+| 6 | NDBC BuoyCAM | `ndbc-buoycam-publisher` | `ndbc-buoycam-publisher-go` | 900s | 5 cameras, image observations |
+| 7 | CO-OPS | `coops-publisher` | `coops-publisher-go` | 360s | 5 tide stations |
+| 8 | AviationWeather | `aviation-wx-publisher` | `aviation-wx-publisher-go` | 600s | 5 METAR stations |
+| 9 | USGS Water | `usgs-water-publisher` | `usgs-water-publisher-go` | 900s | 8 gages (discharge + gage height) |
+| 10 | USGS NIMS | `usgs-nims-publisher` | `usgs-nims-publisher-go` | 900s | 8 cameras, companion datastream pattern |
 
 **Excluded from dual-publish:**
 - **UAS Simulator** — FastAPI service, not a publisher in the same sense; separate integration path.
 - **Localizer** — Depends on UAS simulator data; separate integration path.
+
+### 7.1  VM Deployment Layout
+
+Each Go publisher has its own directory under `/home/ubuntu/`:
+
+```
+/home/ubuntu/nws-publisher-go/
+/home/ubuntu/ndbc-publisher-go/          # Also serves ndbc-buoycam-publisher-go
+/home/ubuntu/coops-publisher-go/
+/home/ubuntu/aviation-wx-publisher-go/
+/home/ubuntu/usgs-water-publisher-go/
+/home/ubuntu/usgs-nims-publisher-go/
+/home/ubuntu/iss-publisher-go/
+/home/ubuntu/usgs-eq-publisher/           # Shared dir (no -go suffix)
+/home/ubuntu/OSHConnect-Python/          # OpenSky uses main repo clone
+```
+
+Each directory contains a copy of the relevant `publishers/` subtree plus `bootstrap_helpers.py`. Staging repo clone at `/tmp/OSHConnect-Python` for updates.
 
 ---
 
@@ -311,11 +458,11 @@ Related library issue: [ogc-client-CSAPI_2#166](https://github.com/OS4CSAPI/ogc-
 
 ---
 
-## 9  Git Status
+## 9  Git History
 
 ### OSHConnect-Python (this repo)
 
-6 unpushed commits (`e022ef2`..`eed2e4d`) on `main`:
+All commits pushed to `main`:
 
 | Commit | Description |
 |--------|-------------|
@@ -325,8 +472,12 @@ Related library issue: [ogc-client-CSAPI_2#166](https://github.com/OS4CSAPI/ogc-
 | `63c5201` | OpenSky: add OSH_BASE_URL override, uid on datastream, fix display URL |
 | `d331433` | OpenSky: keep timestamp field for Go server (schema validation requires it) |
 | `eed2e4d` | OpenSky: replace NaN strings with 0.0 for Go server (strict JSON validation) |
-
-**Action needed:** Push to origin before continuing.
+| `b7e551f` | feat: dual-publish support for all 8 remaining publishers |
+| `906ae33` | feat: ISS bootstrap + bootstrap_helpers OSH_BASE_URL fix |
+| `e7f792a` | fix: per-station unique datastream UIDs for Go server bootstraps |
+| `92f584b` | fix: add limit=1000 to find_by_uid for Go server pagination |
+| `3a02268` | fix: search subdeployments under parent, fix USGS Water station key |
+| `62b78a3` | fix: ensure result.timestamp present for Go server schema validation |
 
 ### ogc-csapi-explorer
 
@@ -334,34 +485,38 @@ Commit `2f0869a` (Go server `@link.href` compat) already pushed.
 
 ---
 
-## 10  Next Steps — Remaining Publisher Migration
+## 10  Lessons Learned
 
-### Phase 1: Push existing work
-1. Push 6 unpushed OSHConnect-Python commits to GitHub
+### 10.1  Go Server Requires Explicit Everything
 
-### Phase 2: Migrate remaining publishers (8)
-For each publisher, apply the dual-publish pattern (§6):
+SensorHub is lenient — auto-generating UIDs, accepting partial results, filling timestamps from envelope fields. The Go server enforces strict PostgreSQL constraints and JSON schema validation. Every field must be explicit.
 
-| Priority | Publisher | Rationale |
-|----------|-----------|-----------|
-| 1 | ISS | Simplest (1 system, 2 DS). Quick win to validate pattern. |
-| 2 | NWS | 10 stations, well-tested bootstrap. Good stress test. |
-| 3 | NDBC | 5 buoys, similar structure to NWS. |
-| 4 | CO-OPS | 5 tide stations, similar structure. |
-| 5 | AviationWeather | 5 METAR stations, similar structure. |
-| 6 | USGS Water | 8 stations, similar structure. |
-| 7 | NDBC BuoyCAM | Image observations — may require Go server testing for binary/URL payloads. |
-| 8 | USGS NIMS | Image observations — same considerations as BuoyCAM. |
+### 10.2  Bootstrap Idempotency Requires Reliable `find_by_uid`
 
-### Phase 3: Verification
-- Confirm all Go server services running with 0 errors
-- Run Explorer smoke test against Go server
-- Update health-check dashboard to monitor Go server publishers
+The `find_by_uid()` pattern (check if exists, skip or create) breaks when the server ignores the `uid` query parameter and pagination hides existing resources. The `&limit=1000` workaround is fragile for large deployments.
 
-### Phase 4: Documentation
-- Update this report with final status
-- Update `Publisher_Fleet_Portability_Plan.md` to reference dual-publish capability
-- Update `README.md` with Go server instructions
+### 10.3  Multi-Station Publishers Need Per-Station UIDs
+
+SensorHub treats datastream UIDs as optional and per-system scoped. The Go server's global `UNIQUE` constraint on `unique_identifier` means every datastream across the entire database must have a distinct UID.
+
+### 10.4  Subdeployment Hierarchy Is Not Transparent
+
+The Go server's `/deployments` endpoint only returns top-level deployments. Bootstraps that create child deployments must search under the parent explicitly.
+
+### 10.5  VM Deployment Workflow
+
+The current file-copy deployment (staging repo → per-publisher directories) is error-prone. Multiple bootstrap failures were caused by stale code in publisher directories. A git-pull-based or symlink-based approach would be more reliable.
+
+---
+
+## 11  Future Work
+
+- **File GitHub issues** for the 4 newly discovered Go server behaviors (§3.3)
+- **Explorer smoke test** against Go server to verify map visualization
+- **Consolidate VM deployment** — replace per-directory file copies with symlinks or a deploy script
+- **UAS Simulator + Localizer** — evaluate Go server integration path
+- **Monitoring** — add health-check dashboard for Go publisher services
+- **CelesTrak resilience** — add retry/fallback for ISS TLE fetch timeouts
 
 ---
 
@@ -370,7 +525,7 @@ For each publisher, apply the dual-publish pattern (§6):
 Services running on `129.80.248.53` as of 2026-04-17:
 
 ```
-# SensorHub publishers (12)
+# SensorHub publishers (10)
 iss-publisher.service
 nws-publisher.service
 ndbc-publisher.service
@@ -382,9 +537,17 @@ usgs-eq-publisher.service
 usgs-water-publisher.service
 usgs-nims-publisher.service
 
-# Go server publishers (2)
-usgs-eq-publisher-go.service
+# Go server publishers (10)
+iss-publisher-go.service
+nws-publisher-go.service
+ndbc-publisher-go.service
+ndbc-buoycam-publisher-go.service
+coops-publisher-go.service
+aviation-wx-publisher-go.service
 opensky-publisher-go.service
+usgs-eq-publisher-go.service
+usgs-water-publisher-go.service
+usgs-nims-publisher-go.service
 
 # Other
 simulator.service
