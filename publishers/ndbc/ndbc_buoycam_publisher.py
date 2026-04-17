@@ -212,6 +212,15 @@ class BuoyCamPublisher:
 
     def _post_observation(self, ds_id: str, obs: dict):
         """POST an observation to the server."""
+        # Go server workarounds
+        if self._is_go_server:
+            r = obs.get("result", {})
+            # Go server requires timestamp in result (schema validation)
+            if "timestamp" not in r:
+                r["timestamp"] = obs.get("phenomenonTime", "")
+            elif not isinstance(r["timestamp"], str):
+                r["timestamp"] = str(r["timestamp"])
+
         url = f"{self._base_url}/datastreams/{ds_id}/observations"
         body = json.dumps(obs).encode()
 

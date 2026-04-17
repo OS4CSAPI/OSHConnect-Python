@@ -255,10 +255,13 @@ class ISSPublisher(PublisherBase):
             import ssl
             url = f"{self._base_url}/datastreams/{self._ds_id}/observations"
 
-            # Go server: coerce numeric timestamp to string
-            if self._is_go_server:
-                r = obs.get("result", {})
-                if "timestamp" in r and not isinstance(r["timestamp"], str):
+# Go server workarounds
+        if self._is_go_server:
+            r = obs.get("result", {})
+            # Go server requires timestamp in result (schema validation)
+            if "timestamp" not in r:
+                r["timestamp"] = obs.get("phenomenonTime", "")
+            elif not isinstance(r["timestamp"], str):
                     r["timestamp"] = str(r["timestamp"])
 
             body = json.dumps(obs).encode()

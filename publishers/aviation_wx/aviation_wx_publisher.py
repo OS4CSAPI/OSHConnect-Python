@@ -288,8 +288,10 @@ class AviationWxPublisher:
             for key, val in list(r.items()):
                 if val == "NaN":
                     r[key] = 0.0
-            # Coerce numeric timestamp to string
-            if "timestamp" in r and not isinstance(r["timestamp"], str):
+            # Go server requires timestamp in result (schema validation)
+            if "timestamp" not in r:
+                r["timestamp"] = obs.get("phenomenonTime", "")
+            elif not isinstance(r["timestamp"], str):
                 r["timestamp"] = str(r["timestamp"])
 
         url = f"{self._base_url}/datastreams/{ds_id}/observations"
