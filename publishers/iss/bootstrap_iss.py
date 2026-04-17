@@ -288,7 +288,9 @@ def main():
     add_bootstrap_args(parser)
     args = parser.parse_args()
 
-    base_url, auth = get_config()
+    config = get_config()
+    base_url = config["base_url"]
+    auth = _auth_header(config["user"], config["password"])
     dry_run = args.dry_run
     stats = {"created": 0, "skipped": 0, "deleted": 0, "errors": 0}
 

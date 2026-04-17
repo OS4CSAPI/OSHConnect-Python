@@ -53,7 +53,8 @@ def get_config():
 
     scheme = "http" if port == "80" else "https"
     default_url = f"{scheme}://{addr}/{root}/api"
-    base_url = os.environ.get("BOOTSTRAP_URL", default_url)
+    base_url = os.environ.get("BOOTSTRAP_URL",
+               os.environ.get("OSH_BASE_URL", default_url))
 
     return {
         "base_url": base_url,
