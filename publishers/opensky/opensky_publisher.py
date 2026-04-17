@@ -216,6 +216,7 @@ class OpenSkyPublisher:
             "OSH_BASE_URL",
             f"https://{self.osh_address}/{self.osh_root}/api",
         )
+        self._is_go_server = "csapi-go" in self._base_url
         self._auth = "Basic " + base64.b64encode(
             f"{self.osh_user}:{self.osh_pass}".encode()).decode()
 
@@ -312,7 +313,12 @@ class OpenSkyPublisher:
 
             # Build observation envelope
             phenomenon_time = obs_data.pop("phenomenonTime")
-            obs_data.pop("timestamp", None)
+            if self._is_go_server:
+                # Go server validates all schema fields are present;
+                # keep timestamp but coerce to string (Time type requirement)
+                obs_data["timestamp"] = str(obs_data["timestamp"])
+            else:
+                obs_data.pop("timestamp", None)
             obs = {
                 "phenomenonTime": phenomenon_time,
                 "resultTime": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
