@@ -416,7 +416,7 @@ def _system_sml(station: dict) -> dict:
     }
 
 
-def _datastream_schema() -> dict:
+def _datastream_schema(station_id: str = "") -> dict:
     """SWE DataRecord schema for buoy observation datastream.
 
     NDBC fields (SI units, already in source data):
@@ -435,8 +435,9 @@ def _datastream_schema() -> dict:
       PTDY  - Pressure tendency (hPa)
       TIDE  - Water level (ft)
     """
+    uid_suffix = f":{station_id}" if station_id else ""
     return {
-        "uid": "urn:os4csapi:datastream:ndbc-buoy:ndbcBuoyObs:v1",
+        "uid": f"urn:os4csapi:datastream:ndbc{uid_suffix}:ndbcBuoyObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "Buoy Observation",
         "description": (
@@ -549,10 +550,11 @@ BUOYCAM_PROCEDURE_BODY = {
 }
 
 
-def _buoycam_datastream_schema() -> dict:
+def _buoycam_datastream_schema(station_id: str = "") -> dict:
     """SWE DataRecord schema for BuoyCAM image-reference datastream."""
+    uid_suffix = f":{station_id}" if station_id else ""
     return {
-        "uid": "urn:os4csapi:datastream:ndbc-buoy:ndbcBuoyCamImage:v1",
+        "uid": f"urn:os4csapi:datastream:ndbc{uid_suffix}:ndbcBuoyCamImage:v1",
         "outputName": BUOYCAM_DS_OUTPUT_NAME,
         "name": "BuoyCAM Image",
         "description": (
@@ -749,14 +751,14 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
         if sys_id or dry_run:
             ensure_datastream(base_url, auth, sys_id or "pending", DS_OUTPUT_NAME,
-                              _datastream_schema(),
+                              _datastream_schema(st["id"]),
                               dry_run=dry_run, stats=stats)
 
             # BuoyCAM datastream (only for camera-equipped stations)
             if st.get("has_buoycam"):
                 ensure_datastream(base_url, auth, sys_id or "pending",
                                   BUOYCAM_DS_OUTPUT_NAME,
-                                  _buoycam_datastream_schema(),
+                                  _buoycam_datastream_schema(st["id"]),
                                   dry_run=dry_run, stats=stats)
 
     # ── Deployment tree ───────────────────────────────────────────────

@@ -213,7 +213,7 @@ def _imagery_datastream_schema(cam: dict) -> dict:
     timelapse_enabled = cam.get("TL_enabled", False)
 
     return {
-        "uid": "urn:os4csapi:datastream:usgs-nims:usgsNimsImage:v1",
+        "uid": f"urn:os4csapi:datastream:usgs-nims:{cam_id}:usgsNimsImage:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "NIMS Station Image",
         "description": (

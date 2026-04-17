@@ -518,7 +518,7 @@ def _system_sml(station: dict) -> dict:
     }
 
 
-def _datastream_schema() -> dict:
+def _datastream_schema(station_id: str = "") -> dict:
     """SWE DataRecord schema for coastal observation datastream.
 
     CO-OPS fields (metric units via API request):
@@ -532,8 +532,9 @@ def _datastream_schema() -> dict:
       wind_gust_ms   - Wind gust (m/s)
       pressure_hpa   - Barometric pressure (hPa / mb)
     """
+    uid_suffix = f":{station_id}" if station_id else ""
     return {
-        "uid": "urn:os4csapi:datastream:coops-station:coopsCoastalObs:v1",
+        "uid": f"urn:os4csapi:datastream:coops{uid_suffix}:coopsCoastalObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "Coastal Observation",
         "description": (
@@ -747,7 +748,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
         if sys_id or dry_run:
             ensure_datastream(base_url, auth, sys_id or "pending", DS_OUTPUT_NAME,
-                              _datastream_schema(),
+                              _datastream_schema(st["id"]),
                               dry_run=dry_run, stats=stats)
 
     # ── Deployment tree ───────────────────────────────────────────────

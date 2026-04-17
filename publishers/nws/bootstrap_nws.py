@@ -334,14 +334,15 @@ def _system_sml(station: dict) -> dict:
     }
 
 
-def _datastream_schema() -> dict:
+def _datastream_schema(station_id: str = "") -> dict:
     """SWE DataRecord schema for surface observation datastream.
 
     Format must match CSAPI POST systems/{id}/datastreams spec:
       { name, outputName, schema: { obsFormat, resultSchema: { ... } } }
     """
+    uid_suffix = f":{station_id}" if station_id else ""
     return {
-        "uid": "urn:os4csapi:datastream:nws-station:nwsSurfaceObs:v1",
+        "uid": f"urn:os4csapi:datastream:nws{uid_suffix}:nwsSurfaceObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "Surface Observation",
         "description": (
@@ -528,7 +529,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
         if sys_id or dry_run:
             ensure_datastream(base_url, auth, sys_id or "pending", DS_OUTPUT_NAME,
-                              _datastream_schema(),
+                              _datastream_schema(st["id"]),
                               dry_run=dry_run, stats=stats)
 
     # ── Deployment tree ───────────────────────────────────────────────

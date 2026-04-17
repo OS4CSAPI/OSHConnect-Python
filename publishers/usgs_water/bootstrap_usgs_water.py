@@ -528,10 +528,11 @@ def _system_sml(station: dict) -> dict:
     }
 
 
-def _discharge_datastream_schema() -> dict:
+def _discharge_datastream_schema(site_no: str = "") -> dict:
     """SWE DataRecord schema for the discharge (streamflow) datastream."""
+    uid_suffix = f":{site_no}" if site_no else ""
     return {
-        "uid": "urn:os4csapi:datastream:usgs-water:usgsDischarge:v1",
+        "uid": f"urn:os4csapi:datastream:usgs-water{uid_suffix}:usgsDischarge:v1",
         "outputName": DS_DISCHARGE_OUTPUT,
         "name": "Discharge",
         "description": (
@@ -596,10 +597,11 @@ def _discharge_datastream_schema() -> dict:
     }
 
 
-def _gage_height_datastream_schema() -> dict:
+def _gage_height_datastream_schema(site_no: str = "") -> dict:
     """SWE DataRecord schema for the gage height (water level) datastream."""
+    uid_suffix = f":{site_no}" if site_no else ""
     return {
-        "uid": "urn:os4csapi:datastream:usgs-water:usgsGageHeight:v1",
+        "uid": f"urn:os4csapi:datastream:usgs-water{uid_suffix}:usgsGageHeight:v1",
         "outputName": DS_GAGE_HEIGHT_OUTPUT,
         "name": "Gage Height",
         "description": (
@@ -838,14 +840,14 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
             if "00060" in st.get("parameterCodes", []):
                 ensure_datastream(base_url, auth, sys_id or "pending",
                                   DS_DISCHARGE_OUTPUT,
-                                  _discharge_datastream_schema(),
+                                  _discharge_datastream_schema(st["id"]),
                                   dry_run=dry_run, stats=stats)
 
             # Create gage height datastream
             if "00065" in st.get("parameterCodes", []):
                 ensure_datastream(base_url, auth, sys_id or "pending",
                                   DS_GAGE_HEIGHT_OUTPUT,
-                                  _gage_height_datastream_schema(),
+                                  _gage_height_datastream_schema(st["id"]),
                                   dry_run=dry_run, stats=stats)
 
     # -- Deployment tree --

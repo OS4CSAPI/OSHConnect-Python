@@ -320,7 +320,7 @@ def _system_sml(station: dict) -> dict:
     }
 
 
-def _datastream_schema() -> dict:
+def _datastream_schema(icao_id: str = "") -> dict:
     """SWE DataRecord schema for METAR observation datastream.
 
     AviationWeather METAR fields:
@@ -336,8 +336,9 @@ def _datastream_schema() -> dict:
       cloud_base_ft   - Lowest cloud base (feet AGL)
       raw_metar       - Raw METAR text
     """
+    uid_suffix = f":{icao_id.lower()}" if icao_id else ""
     return {
-        "uid": "urn:os4csapi:datastream:awx-station:metarObs:v1",
+        "uid": f"urn:os4csapi:datastream:awx{uid_suffix}:metarObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "METAR Observation",
         "description": (
@@ -532,7 +533,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
         if sys_id or dry_run:
             ensure_datastream(base_url, auth, sys_id or "pending", DS_OUTPUT_NAME,
-                              _datastream_schema(),
+                              _datastream_schema(st["icao_id"]),
                               dry_run=dry_run, stats=stats)
 
     # ── Deployment tree ───────────────────────────────────────────────
