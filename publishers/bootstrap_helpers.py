@@ -349,7 +349,12 @@ def ensure_deployment(base_url: str, auth: str, uid: str, body: dict,
                       parent_id: str | None = None,
                       *, dry_run: bool = False, stats: dict = None) -> str | None:
     """Create a deployment node if it doesn't exist. Returns server ID."""
+    # Check top-level deployments first
     existing = find_by_uid(base_url, auth, "deployments", uid)
+    if not existing and parent_id:
+        # Go server only lists subdeployments under parent endpoint
+        existing = find_by_uid(base_url, auth,
+                               f"deployments/{parent_id}/subdeployments", uid)
     if existing:
         print(f"  [SKIP] Deployment {uid} already exists (id={existing})")
         if stats:

@@ -840,14 +840,14 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
             if "00060" in st.get("parameterCodes", []):
                 ensure_datastream(base_url, auth, sys_id or "pending",
                                   DS_DISCHARGE_OUTPUT,
-                                  _discharge_datastream_schema(st["id"]),
+                                  _discharge_datastream_schema(nwis_id),
                                   dry_run=dry_run, stats=stats)
 
             # Create gage height datastream
             if "00065" in st.get("parameterCodes", []):
                 ensure_datastream(base_url, auth, sys_id or "pending",
                                   DS_GAGE_HEIGHT_OUTPUT,
-                                  _gage_height_datastream_schema(st["id"]),
+                                  _gage_height_datastream_schema(nwis_id),
                                   dry_run=dry_run, stats=stats)
 
     # -- Deployment tree --
