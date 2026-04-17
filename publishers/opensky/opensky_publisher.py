@@ -256,6 +256,13 @@ class OpenSkyPublisher:
         """POST an observation to the server using direct REST (allows NaN serialization)."""
         import ssl
 
+        # Go server rejects "NaN" strings — replace with 0.0 for numeric fields
+        if self._is_go_server:
+            r = obs.get("result", {})
+            for key, val in r.items():
+                if val == "NaN":
+                    r[key] = 0.0
+
         url = f"{self._base_url}/datastreams/{self._ds_id}/observations"
         body = json.dumps(obs).encode()
 
