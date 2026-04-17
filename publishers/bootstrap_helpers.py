@@ -214,7 +214,7 @@ def find_by_uid(base_url: str, auth: str, collection: str, uid: str) -> str | No
     if cache_key in _uid_cache:
         return _uid_cache[cache_key]
 
-    result = api_get(base_url, f"{collection}?uid={uid}", auth)
+    result = api_get(base_url, f"{collection}?uid={uid}&limit=1000", auth)
     if result:
         # Support both GeoJSON (features) and flat JSON (items) collections
         items = result.get("items", []) or result.get("features", [])
