@@ -358,7 +358,7 @@ class USGSEarthquakePublisher:
         print("=" * 70)
         print(f"  {self.name}")
         print("=" * 70)
-        print(f"  Server:    https://{self.osh_address}:{self.osh_port}/{self.osh_root}/api")
+        print(f"  Server:    {self._base_url}")
         print(f"  Feed URL:  {self.feed_url}")
         print(f"  Interval:  {interval}s")
         print(f"  Dry run:   {dry_run}")
