@@ -139,8 +139,8 @@ def parse_earthquake(feature: dict) -> dict | None:
             "magnitude": float(mag) if mag is not None else "NaN",
             "magType": mag_type or "unknown",
             "place": place or "Unknown location",
-            "eventTime": event_time_ms,
-            "updatedTime": updated_ms,
+            "eventTime": str(event_time_ms),
+            "updatedTime": str(updated_ms),
             "latitude": float(lat),
             "longitude": float(lon),
             "depth_km": float(depth_km) if depth_km is not None else 0.0,
@@ -200,7 +200,10 @@ class USGSEarthquakePublisher:
 
         # REST config
         import base64
-        self._base_url = f"https://{self.osh_address}/{self.osh_root}/api"
+        self._base_url = os.environ.get(
+            "OSH_BASE_URL",
+            f"https://{self.osh_address}/{self.osh_root}/api",
+        )
         self._auth = "Basic " + base64.b64encode(
             f"{self.osh_user}:{self.osh_pass}".encode()).decode()
 

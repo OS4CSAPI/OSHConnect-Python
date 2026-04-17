@@ -214,8 +214,10 @@ def find_by_uid(base_url: str, auth: str, collection: str, uid: str) -> str | No
         return _uid_cache[cache_key]
 
     result = api_get(base_url, f"{collection}?uid={uid}", auth)
-    if result and "items" in result:
-        for item in result["items"]:
+    if result:
+        # Support both GeoJSON (features) and flat JSON (items) collections
+        items = result.get("items", []) or result.get("features", [])
+        for item in items:
             props = item.get("properties", item)
             if props.get("uid") == uid:
                 item_id = item.get("id") or props.get("id")

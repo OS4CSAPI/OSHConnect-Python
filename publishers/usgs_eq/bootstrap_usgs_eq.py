@@ -335,6 +335,7 @@ def _system_sml(config: dict) -> dict:
 def _datastream_schema() -> dict:
     """SWE DataRecord schema for earthquake event datastream."""
     return {
+        "uid": "urn:os4csapi:datastream:usgs-eq-feed:earthquakeEvent:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "Earthquake Events",
         "description": (
