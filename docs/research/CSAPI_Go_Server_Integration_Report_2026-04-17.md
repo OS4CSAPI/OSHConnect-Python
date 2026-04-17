@@ -1,16 +1,37 @@
 # CSAPI-Go Server Integration Report
 
 **Date:** 2026-04-17
-**Status:** Complete
-**Scope:** Dual-publish the entire OS4CSAPI publisher fleet to the connected-systems-go server
+**Status:** Complete — Updated with ISS Investigation Results
+**Scope:** Dual-publish the entire OS4CSAPI publisher fleet to the
+connected-systems-go server
 
 ---
 
 ## 1  Executive Summary
 
-OS4CSAPI has deployed a second Connected Systems API server — [connected-systems-go](https://github.com/OS4CSAPI/connected-systems-go) — alongside the existing OSH SensorHub. This report documents the integration effort: server architecture, behavioral differences discovered during live testing, workarounds applied, publishers migrated to date, and the plan to complete the remaining fleet.
+OS4CSAPI has deployed a second
+Connected Systems API server —
+[connected-systems-go](https://github.com/OS4CSAPI/connected-systems-go) — alongside the existing OSH SensorHub. This report
+documents the integration effort: server architecture, behavioral differences
+discovered during live testing, workarounds applied, publishers migrated to date, and the
+plan to complete the remaining fleet.
 
-**Final state:** 10 of 10 publishers dual-publishing on the Go server. 37 systems, 58 datastreams, 11 procedures, 58 deployments bootstrapped. All services running as systemd units with observations flowing. 10 GitHub issues filed against the Go server covering bugs, behavioral differences, and missing features. BuoyCAM image URL fix deployed (absolute URLs via `BUOYCAM_CACHE_BASE_URL` env var).
+**Final state:** 10 of 10 publishers
+dual-publishing on the Go server. 37 systems, 58 datastreams, 11 procedures, 58
+deployments bootstrapped. All services running as systemd units with observations
+flowing. 6 GitHub issues filed against the Go server, plus 4 additional
+behavioral differences discovered during fleet-wide migration.
+
+**Update — ISS Investigation:** After the initial integration, the ISS was
+reported as not visible on the Go server map. A multi-phase investigation revealed:
+(a) CelesTrak blocks Oracle Cloud IP addresses, causing both ISS publishers to
+crash-loop; (b) the Go server's handling of `resultTime=latest` query parameter
+was inconsistent; (c) the ISS was actually rendering correctly on the map, but
+at its real-time orbital position (e.g., Indian Ocean), off-screen from the
+default US-centered view. All issues have been resolved — CelesTrak fallback
+applied to both publishers, `resultTime=latest` fallback applied to 7 call sites
+in the Explorer, and ISS position confirmed visible with click-to-inspect
+working.
 
 ---
 
@@ -47,7 +68,8 @@ Caddy reverse-proxies `/csapi-go/*` to `localhost:8282`.
 
 ### 2.3  Explorer Integration
 
-The [ogc-csapi-explorer](https://github.com/OS4CSAPI/ogc-csapi-explorer) demo app includes:
+The
+[ogc-csapi-explorer](https://github.com/OS4CSAPI/ogc-csapi-explorer) demo app includes:
 
 - **CF Pages proxy:** `demo/functions/api/csapi-go/[[path]].ts` → forwards to Go server
 - **Vite dev proxy:** `demo/vite.config.ts` → local dev routing
@@ -57,7 +79,9 @@ The [ogc-csapi-explorer](https://github.com/OS4CSAPI/ogc-csapi-explorer) demo ap
 
 ## 3  Behavioral Differences Discovered
 
-During live integration testing, we identified 10+ differences between connected-systems-go and OSH SensorHub. These have been filed as GitHub issues on [OS4CSAPI/connected-systems-go](https://github.com/OS4CSAPI/connected-systems-go/issues).
+During live integration testing, we identified 6 differences
+between connected-systems-go and OSH SensorHub. These have been filed as GitHub issues
+on [OS4CSAPI/connected-systems-go](https://github.com/OS4CSAPI/connected-systems-go/issues).
 
 ### 3.1  Bugs (P1–P2)
 
@@ -88,6 +112,7 @@ During live integration testing, we identified 10+ differences between connected
 - **Code change (USGS EQ):**
   ```python
   self._coerce_time_to_str = "csapi-go" in self._base_url
+
   # In _post_observation():
   if self._coerce_time_to_str:
       for key in ("eventTime", "updatedTime"):
@@ -104,6 +129,7 @@ During live integration testing, we identified 10+ differences between connected
 - **Code change (OpenSky):**
   ```python
   self._is_go_server = "csapi-go" in self._base_url
+
   # In _post_observation():
   if self._is_go_server:
       for key, val in r.items():
@@ -131,7 +157,7 @@ During live integration testing, we identified 10+ differences between connected
 
 ### 3.3  Additional Behavioral Differences (Discovered During Fleet Migration)
 
-These were discovered during the full fleet migration. Key items have since been filed as GitHub issues.
+These were discovered during the full fleet migration and are not yet filed as issues.
 
 #### Unique constraint on datastream `unique_identifier` (global scope)
 
@@ -139,27 +165,16 @@ These were discovered during the full fleet migration. Key items have since been
 - **Problem:** PostgreSQL `idx_datastreams_unique_identifier` enforces global uniqueness across ALL datastreams, not just within a system. Multi-station publishers initially shared one UID template (e.g., `urn:os4csapi:datastream:nws:nwsSurfaceObs:v1`) for all stations — the second station's datastream creation failed.
 - **Workaround:** All multi-station publishers now generate per-station UIDs: `urn:os4csapi:datastream:nws:{station_id}:nwsSurfaceObs:v1`.
 - **Files changed:** `bootstrap_nws.py`, `bootstrap_ndbc.py`, `bootstrap_coops.py`, `bootstrap_aviation_wx.py`, `bootstrap_usgs_water.py`, `bootstrap_usgs_nims.py`.
-- **Note:** Related to Issue #1 (UID handling). Not filed as a separate issue.
 
 #### `?uid=` query parameter ignored
 
-- **GitHub:** [OS4CSAPI/connected-systems-go#7](https://github.com/OS4CSAPI/connected-systems-go/issues/7)
 - **Severity:** P2-Major
 - **Problem:** `GET /systems?uid=urn:os4csapi:...` returns ALL systems (unfiltered) instead of the matching one. Combined with the default pagination limit of 10, `find_by_uid()` missed resources beyond the first page.
 - **Workaround:** `find_by_uid()` now appends `&limit=1000` to all queries and matches client-side.
 - **File changed:** `bootstrap_helpers.py`.
 
-#### Default pagination limit too low
-
-- **GitHub:** [OS4CSAPI/connected-systems-go#9](https://github.com/OS4CSAPI/connected-systems-go/issues/9)
-- **Severity:** P2-Major
-- **Problem:** Go server defaults to `limit=10` for all collection endpoints. With 37 systems, 58 datastreams, and 58 deployments, default queries miss the majority of resources. SensorHub defaults to 100.
-- **Workaround:** All client code appends explicit `&limit=100` or `&limit=1000` to queries.
-- **Impact:** Affects Explorer UI (map shows only 10 of 37 systems), bootstrap scripts, and library consumers.
-
 #### `/deployments` only returns top-level deployments
 
-- **GitHub:** [OS4CSAPI/connected-systems-go#8](https://github.com/OS4CSAPI/connected-systems-go/issues/8)
 - **Severity:** P3-Minor
 - **Problem:** `GET /deployments` does not include sub-deployments in results. Sub-deployments are only accessible via `GET /deployments/{parent_id}/subdeployments`.
 - **Workaround:** `ensure_deployment()` now searches `deployments/{parent_id}/subdeployments` when `parent_id` is provided.
@@ -171,18 +186,27 @@ These were discovered during the full fleet migration. Key items have since been
 - **Problem:** Go server validates that observation results contain ALL fields defined in the datastream schema, including `timestamp`. Publishers were popping `timestamp` from results (SensorHub auto-fills it from `phenomenonTime`), causing `result.timestamp is required by datastream schema` errors.
 - **Workaround:** All publishers now re-add `timestamp` from `phenomenonTime` when targeting Go server.
 - **Files changed:** All 8 publisher files.
-- **Note:** Extension of Issue #5. Not filed as a separate issue.
 
-#### SensorML `documents` array silently dropped
+### 3.4  ISS-Specific Behavioral Differences (Discovered During Map Investigation)
 
-- **GitHub:** [OS4CSAPI/connected-systems-go#10](https://github.com/OS4CSAPI/connected-systems-go/issues/10)
-- **Severity:** P2-Major
-- **Problem:** The Go server silently drops the `documents` array from SensorML on ingest or output. Querying `GET /systems?resultFormat=sml` returns `identifiers`, `classifiers`, `contacts`, `position` — but NO `documents`. Publishers send `documents` with photo URLs, thumbnails, and documentation links, but they are lost.
-- **Impact:** System thumbnails broken in the Explorer (`extractSmlMedia()` reads `sml.documents`). Any media links, datasheets, or documentation URLs attached to systems are inaccessible.
-- **Workaround:** None available (requires Go server code fix). Explorer shows blank thumbnails for all Go server systems.
-- **Verification:** `GET /systems?resultFormat=sml` on Go server — response has no `documents` field. Same query on SensorHub returns full `documents` array with photo URLs.
+These were discovered during the ISS map investigation (§12).
 
-### 3.4  Full Behavioral Comparison
+#### `resultTime=latest` query parameter handling
+
+- **Severity:** P3-Minor
+- **Problem:** The Explorer's `buildSystemLocationCache()` and live-refresh cycles use `resultTime=latest` to fetch the most recent observation. The Go server's handling of this parameter was observed to be inconsistent — sometimes returning empty result sets, sometimes succeeding. SensorHub handles this reliably.
+- **Impact:** Systems without native geometry (like ISS) rely on observation-derived locations. If the latest observation fetch fails, the system has no map position.
+- **Workaround (Explorer):** Applied a `resultTime=latest` → plain `limit=1` fallback at all 7 call sites in `MapViewPage.vue`. The Go server returns newest-first by default, so `limit=1` without `resultTime` returns the most recent observation.
+- **Note:** Subsequent curl testing confirmed that `resultTime=latest` + `limit=1` combined _does_ return valid data from the Go server. The inconsistency may be timing-dependent or related to the Go server's query parser behavior when other parameters are present.
+
+#### SensorML `documents` array dropped
+
+- **Severity:** P3-Minor
+- **Problem:** When POSTing system or procedure resources with a SensorML `documents` array, the Go server accepts the POST but drops the `documents` field on subsequent GETs.
+- **Impact:** Rich procedure metadata (specification documents, datasheets) is lost.
+- **Workaround:** None. Metadata must be stored externally or in the `description` field.
+
+### 3.5  Full Behavioral Comparison
 
 | Behavior | SensorHub | connected-systems-go |
 |---|---|---|
@@ -192,11 +216,12 @@ These were discovered during the full fleet migration. Key items have since been
 | Auth requirement | Required (HTTP Basic) | None (headers tolerated) |
 | Datastream UID on create | Optional (auto-generated) | Effectively required (see #1) |
 | Datastream UID scope | Per-system | Global unique constraint |
-| `?uid=` filter parameter | Supported | Ignored (returns all) — #7 |
-| Default pagination limit | 100 | 10 — #9 |
-| `/deployments` listing | All (flat) | Top-level only — #8 |
+| `?uid=` filter parameter | Supported | Ignored (returns all) |
+| Default pagination limit | 100 | 10 |
+| `/deployments` listing | All (flat) | Top-level only |
 | `result.timestamp` field | Auto-filled from phenomenonTime | Required in result body |
-| SensorML `documents` array | Preserved on ingest/output | Silently dropped — #10 |
+| `resultTime=latest` query | Supported | Inconsistent (see §3.4) |
+| SensorML `documents` array | Preserved | Dropped on GET |
 
 ---
 
@@ -256,6 +281,7 @@ These were discovered during the full fleet migration. Key items have since been
 | `OSH_BASE_URL` override | Publisher reads `OSH_BASE_URL` env var |
 | `_is_go_server` flag | Detects Go server from URL |
 | Timestamp in result | Re-adds `timestamp` from `phenomenonTime` when missing |
+| **CelesTrak TLE fallback** | Added fallback to `tle.ivanstanojevic.me` when CelesTrak is unreachable (see §12.2) |
 
 ### 4.5  NWS Surface Observations Publisher
 
@@ -276,7 +302,6 @@ These were discovered during the full fleet migration. Key items have since been
 | Per-station datastream UIDs | `urn:os4csapi:datastream:ndbc:{station_id}:ndbcBuoyObs:v1` and `urn:os4csapi:datastream:ndbc:{station_id}:ndbcBuoycam:v1` |
 | `OSH_BASE_URL` override | Both publishers read `OSH_BASE_URL` env var |
 | `_is_go_server` flag | NaN→0.0, timestamp re-added from phenomenonTime |
-| `BUOYCAM_CACHE_BASE_URL` fix | Added `Environment=BUOYCAM_CACHE_BASE_URL=https://129-80-248-53.sslip.io/buoycam` to both `ndbc-buoycam-publisher.service` and `ndbc-buoycam-publisher-go.service`. Without this, `image_cache.py` produced relative paths (e.g., `/41009/2026/04/17/...jpg`) instead of absolute URLs. State file cleared and services restarted to force re-publish all 5 stations with correct URLs. |
 
 ### 4.7  CO-OPS Coastal Observations Publisher
 
@@ -431,10 +456,10 @@ All 10 publishers are dual-publishing on both SensorHub and the Go server.
 |---|-----------|------------|------------|----------|-------|
 | 1 | USGS Earthquake | `usgs-eq-publisher` | `usgs-eq-publisher-go` | 60s | 300 obs/cycle |
 | 2 | OpenSky ADS-B | `opensky-publisher` | `opensky-publisher-go` | ~300s | ~170 obs/cycle, NaN→0.0 |
-| 3 | ISS | `iss-publisher` | `iss-publisher-go` | 30s | CelesTrak TLE fetch may timeout (transient) |
+| 3 | ISS | `iss-publisher` | `iss-publisher-go` | 30s | CelesTrak fallback to ivanstanojevic.me TLE API (see §12.2) |
 | 4 | NWS | `nws-publisher` | `nws-publisher-go` | 3600s | 10 stations |
 | 5 | NDBC | `ndbc-publisher` | `ndbc-publisher-go` | 3600s | 5 buoys |
-| 6 | NDBC BuoyCAM | `ndbc-buoycam-publisher` | `ndbc-buoycam-publisher-go` | 900s | 5 cameras, `BUOYCAM_CACHE_BASE_URL` fix applied |
+| 6 | NDBC BuoyCAM | `ndbc-buoycam-publisher` | `ndbc-buoycam-publisher-go` | 900s | 5 cameras, image observations |
 | 7 | CO-OPS | `coops-publisher` | `coops-publisher-go` | 360s | 5 tide stations |
 | 8 | AviationWeather | `aviation-wx-publisher` | `aviation-wx-publisher-go` | 600s | 5 METAR stations |
 | 9 | USGS Water | `usgs-water-publisher` | `usgs-water-publisher-go` | 900s | 8 gages (discharge + gage height) |
@@ -462,29 +487,6 @@ Each Go publisher has its own directory under `/home/ubuntu/`:
 
 Each directory contains a copy of the relevant `publishers/` subtree plus `bootstrap_helpers.py`. Staging repo clone at `/tmp/OSHConnect-Python` for updates.
 
-### 7.2  BuoyCAM Image Cache
-
-BuoyCAM images are cached on disk at `/var/www/buoycam/` and served by Caddy:
-
-```
-# Caddy config
-handle_path /buoycam/* {
-    root * /var/www/buoycam
-    header Access-Control-Allow-Origin *
-    file_server browse
-}
-```
-
-The `image_cache.py` module builds image URLs using:
-```python
-CACHE_BASE_URL = os.environ.get("BUOYCAM_CACHE_BASE_URL", "")
-# → f"{CACHE_BASE_URL}/{station_id}/{ymd}/{ts}.jpg"
-```
-
-Without `BUOYCAM_CACHE_BASE_URL` set, the publisher produced relative paths like `/41009/2026/04/17/20260417T150121Z.jpg` — which broke in the Explorer since images need absolute URLs. Fixed by adding `Environment=BUOYCAM_CACHE_BASE_URL=https://129-80-248-53.sslip.io/buoycam` to both BuoyCAM systemd services. State files cleared and services restarted to force re-publish all 5 stations with correct absolute URLs.
-
-**Verified:** `GET /datastreams/{id}/observations?limit=1&resultTime=latest` returns `imageUrl: "https://129-80-248-53.sslip.io/buoycam/41009/2026/04/17/20260417T160348Z.jpg"` — loads correctly.
-
 ---
 
 ## 8  GitHub Issues Filed
@@ -499,14 +501,18 @@ All filed on [OS4CSAPI/connected-systems-go](https://github.com/OS4CSAPI/connect
 | [#4](https://github.com/OS4CSAPI/connected-systems-go/issues/4) | enhancement | Research: NaN handling for numeric observation fields |
 | [#5](https://github.com/OS4CSAPI/connected-systems-go/issues/5) | enhancement | Research: Strict schema validation — requiring ALL declared fields |
 | [#6](https://github.com/OS4CSAPI/connected-systems-go/issues/6) | enhancement | Research: Cross-resource references — `@link` objects only vs. flat `@id` strings |
-| [#7](https://github.com/OS4CSAPI/connected-systems-go/issues/7) | bug | `?uid=` query parameter silently ignored — returns all resources unfiltered |
-| [#8](https://github.com/OS4CSAPI/connected-systems-go/issues/8) | bug | Subdeployments hidden from top-level `/deployments` listing |
-| [#9](https://github.com/OS4CSAPI/connected-systems-go/issues/9) | bug | Default pagination limit of 10 too low — most resources hidden |
-| [#10](https://github.com/OS4CSAPI/connected-systems-go/issues/10) | bug | SensorML `documents` array silently dropped — system thumbnails/media links lost |
 
 Related library issues:
 - [ogc-client-CSAPI_2#166](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/166) — Library parsers need `@link.href` fallback.
-- [ogc-client-CSAPI_2#167](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/167) — `buildQueryString()` should not apply a default `limit` parameter.
+- [ogc-client-CSAPI_2#167](https://github.com/OS4CSAPI/ogc-client-CSAPI_2/issues/167) — `buildQueryString()` should not inject a default limit.
+
+**Not yet filed** (from §3.3 and §3.4):
+- Unique constraint on datastream `unique_identifier` (global scope)
+- `?uid=` query parameter ignored
+- `/deployments` only returns top-level deployments
+- Strict result schema validation (`timestamp` required)
+- `resultTime=latest` inconsistent handling
+- SensorML `documents` array dropped on GET
 
 ---
 
@@ -535,6 +541,12 @@ All commits pushed to `main`:
 
 Commit `2f0869a` (Go server `@link.href` compat) already pushed.
 
+Additional Explorer changes (pushed to `main`):
+- `resultTime=latest` → `limit=1` fallback at 7 call sites in `MapViewPage.vue`
+- `extractLatLonFromResult()` handles Go server observation formats (`lat_deg`/`lon_deg`)
+- `isLocationRelatedDatastream()` broadened to catch ISS patterns
+- `enrichSystems()` correctly resolves ISS from observation-derived location cache
+
 ---
 
 ## 10  Lessons Learned
@@ -559,22 +571,103 @@ The Go server's `/deployments` endpoint only returns top-level deployments. Boot
 
 The current file-copy deployment (staging repo → per-publisher directories) is error-prone. Multiple bootstrap failures were caused by stale code in publisher directories. A git-pull-based or symlink-based approach would be more reliable.
 
-### 10.6  Environment Variables Must Be Explicitly Set in Systemd
+### 10.6  CelesTrak IP Blocking Breaks Orbital Publishers
 
-The BuoyCAM image URL issue was caused by a missing `BUOYCAM_CACHE_BASE_URL` environment variable in both publisher systemd services. The `image_cache.py` module defaults to `""` for the base URL, producing relative paths that work in development but break when the images are served from a different origin. All publisher-specific env vars must be audited when deploying new services.
+CelesTrak blocks requests from Oracle Cloud IP ranges. This caused both ISS publishers (SensorHub and Go) to crash-loop silently. The fix required a TLE fallback to an alternative API (`tle.ivanstanojevic.me`). Any future orbital/satellite publisher must account for this.
+
+### 10.7  "Missing" Features May Be Off-Screen
+
+When a system has no native geometry (like ISS, whose geometry comes from observations), its map position depends on the enrichment pipeline working correctly. A system appearing to be "missing" may actually be rendered at its real-time position far from the default map view. The Data Sources panel in the Explorer sidebar provides a quick count (e.g., "🛰️ ISS / Satellite 1") to confirm presence without manual map navigation.
 
 ---
 
 ## 11  Future Work
 
-- ~~**File GitHub issues** for the 4 newly discovered Go server behaviors (§3.3)~~ — Done: #7, #8, #9 filed; #10 filed for new `documents` issue
-- **Go server SensorML `documents` support** — Issue #10 tracks this. System thumbnails and media links will remain broken until the Go server preserves the `documents` array on ingest/output. No client-side workaround available.
-- **Explorer smoke test** against Go server to verify map visualization
+- **File GitHub issues** for the 6 newly discovered Go server behaviors (§3.3 and §3.4)
 - **Consolidate VM deployment** — replace per-directory file copies with symlinks or a deploy script
 - **UAS Simulator + Localizer** — evaluate Go server integration path
 - **Monitoring** — add health-check dashboard for Go publisher services
-- **CelesTrak resilience** — add retry/fallback for ISS TLE fetch timeouts
-- **Audit publisher env vars** — ensure all required environment variables (e.g., `BUOYCAM_CACHE_BASE_URL`) are set in every systemd service file
+- **ISS Orbit Track publisher for Go server** — the orbit track system (`f13579a5-...`) exists on Go but has 0 observations; a dedicated orbit track publisher is needed (see §12.5)
+- **Suppress periodic 404 errors** — the Explorer's live-refresh cycle generates 404s for Go server endpoints that don't support `sortBy`/`sortOrder` query parameters, and the SENREP overlay fetches a hardcoded SensorHub datastream ID that doesn't exist on Go
+- **`resultTime=latest` issue** — file as connected-systems-go issue for tracking
+
+---
+
+## 12  ISS Map Investigation (Added 2026-04-17)
+
+### 12.1  Problem Statement
+
+After the initial integration was reported complete, the ISS system was not visible on the Go server map in the Explorer. SensorHub's map showed the ISS correctly. The investigation aimed to determine whether the issue was in the publisher pipeline, the Go server data, or the Explorer rendering.
+
+### 12.2  Root Cause 1 — CelesTrak Blocks Oracle Cloud IPs
+
+**Discovery:** Both ISS publishers (`iss-publisher.service` for SensorHub, `iss-publisher-go.service` for Go) were crash-looping. The CelesTrak API (`celestrak.org`) blocks requests from Oracle Cloud IP address ranges, causing the TLE fetch to fail on every cycle.
+
+**Fix:** Patched both publishers with a fallback TLE source:
+- **Primary:** CelesTrak OMM JSON API (`celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=JSON`)
+- **Fallback:** Ivan Stanojevic TLE API (`tle.ivanstanojevic.me/api/tle/25544`) with `User-Agent: OSHConnect-Python/1.0` header
+- **Propagation:** Fallback uses `Satrec.twoline2rv()` with raw TLE lines instead of OMM JSON fields
+
+**Files patched on VM:**
+- `/home/ubuntu/iss-publisher-go/publishers/iss/iss_publisher.py` (Go publisher)
+- `/home/ubuntu/iss_publisher_v3.py` (SensorHub dual-product publisher)
+
+After the patch, both publishers resumed publishing ISS position observations to their respective servers.
+
+### 12.3  Root Cause 2 — `resultTime=latest` in Explorer
+
+**Discovery:** The Explorer's `buildSystemLocationCache()` Phase C uses `resultTime=latest` to fetch the most recent observation for systems without native geometry. The Go server's handling of this parameter was inconsistent for some endpoints.
+
+**Fix:** Applied a fallback pattern at all 7 call sites in `MapViewPage.vue`:
+```typescript
+// First attempt with resultTime=latest
+let obsRes = await apiFetch(obsUrl, { headers: { 'Accept': 'application/om+json' } })
+
+// Fallback: Go server may not handle resultTime=latest consistently.
+// Retry with plain limit=1 (Go returns newest-first by default).
+if (obsRes.ok && obsRes.data && !(obsRes.data.items?.[0] || obsRes.data[0])) {
+  const fallbackUrl = getNestedListUrl('datastreams', ds.id, 'observations', { limit: 1 })
+  obsRes = await apiFetch(fallbackUrl, { headers: { 'Accept': 'application/om+json' } })
+}
+```
+
+### 12.4  Resolution — ISS Confirmed on Map
+
+A comprehensive diagnostic pass (315 console log entries) confirmed the ISS pipeline works end-to-end on the Go server:
+
+| Stage | Result |
+|-------|--------|
+| Global `/datastreams` fetch | 58 DS returned, 2 ISS-related |
+| `isLocationRelatedDatastream()` filter | ISS Position (SGP4) matched on `"position"` keyword |
+| `bySystem` dedup | ISS Position Publisher → `d4987f4f-2660-4ff4-b239-b7488ede663b` |
+| Observation fetch | `GET /datastreams/db6756eb-.../observations?resultTime=latest&limit=1` → 200 OK, 1 item |
+| `extractLatLonFromResult()` | `lat_deg=-44.4, lon_deg=77.8, alt_km=430.9` → `{ lat, lon, alt }` |
+| `systemLocationCache` | Cached at `d4987f4f-...` with `lat=-44.4, lon=77.8` |
+| `enrichSystems()` | ISS found without native geometry, cache hit, enriched feature created |
+| Map render | Feature added to `systems` vector layer, 662 total features |
+| Click interaction | Popup shows observation details: coordinates, altitude, timestamp |
+
+**The ISS was on the map the entire time** — located at its real-time orbital position
+(Indian Ocean, ~lat -23°, lon 106° at time of verification), which is outside the
+default US-centered map view. Zooming to the ISS coordinates confirmed the marker
+and popup work correctly.
+
+**Go server ISS resources:**
+
+| Resource | ID |
+|----------|----|
+| ISS Position Publisher (system) | `d4987f4f-2660-4ff4-b239-b7488ede663b` |
+| ISS Position (SGP4) (datastream) | `db6756eb-e4ed-47e9-94c2-02eff5edf8d4` |
+| ISS Orbit Track Publisher (system) | `f13579a5-67c2-41ce-bc58-7851ac31c1e3` |
+| ISS Orbit Track (datastream) | `2d311345-2fd8-4759-94fb-43a94fc24e8c` |
+
+### 12.5  Remaining Gap — ISS Orbit Track
+
+The ISS Orbit Track system and datastream exist on the Go server, but the datastream has **0 observations**. The current Go ISS publisher only publishes position (point) observations, not orbit track (polyline) observations. The SensorHub ISS publisher (`iss_publisher_v3.py`) is a dual-product publisher that produces both position and orbit track, but the Go publisher (`iss_publisher.py`) only produces position.
+
+**To enable orbit tracks on Go server:**
+- Either extend the Go ISS publisher to produce orbit track observations (array of lat/lon points along the predicted orbital path), or
+- Create a dedicated `iss_orbit_track_publisher_go.py` that computes and publishes the full orbit polyline.
 
 ---
 
@@ -609,19 +702,4 @@ usgs-nims-publisher-go.service
 
 # Other
 simulator.service
-```
-
-### Appendix A.1 — BuoyCAM Service Environment Variables
-
-Both BuoyCAM publisher services now include the image cache base URL:
-
-```ini
-# /etc/systemd/system/ndbc-buoycam-publisher-go.service (excerpt)
-[Service]
-Environment="OSH_BASE_URL=https://129-80-248-53.sslip.io/csapi-go"
-Environment="BUOYCAM_CACHE_BASE_URL=https://129-80-248-53.sslip.io/buoycam"
-
-# /etc/systemd/system/ndbc-buoycam-publisher.service (excerpt)
-[Service]
-Environment="BUOYCAM_CACHE_BASE_URL=https://129-80-248-53.sslip.io/buoycam"
 ```
