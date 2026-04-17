@@ -421,6 +421,7 @@ def _datastream_schema() -> dict:
     """SWE DataRecord schema for ADS-B state vector datastream."""
     return {
         "outputName": DS_OUTPUT_NAME,
+        "uid": "urn:os4csapi:datastream:opensky-feed:adsbState:v1",
         "name": "Aircraft State Vectors",
         "description": (
             "Normalized OpenSky aircraft state vectors. Each observation represents one aircraft "

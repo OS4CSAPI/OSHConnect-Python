@@ -212,7 +212,10 @@ class OpenSkyPublisher:
 
         # REST config
         import base64
-        self._base_url = f"https://{self.osh_address}/{self.osh_root}/api"
+        self._base_url = os.environ.get(
+            "OSH_BASE_URL",
+            f"https://{self.osh_address}/{self.osh_root}/api",
+        )
         self._auth = "Basic " + base64.b64encode(
             f"{self.osh_user}:{self.osh_pass}".encode()).decode()
 
@@ -359,7 +362,7 @@ class OpenSkyPublisher:
         print("=" * 70)
         print(f"  {self.name}")
         print("=" * 70)
-        print(f"  Server:    https://{self.osh_address}:{self.osh_port}/{self.osh_root}/api")
+        print(f"  Server:    {self._base_url}")
         print(f"  Bbox:      lat {bbox['lamin']}–{bbox['lamax']}, lon {bbox['lomin']}–{bbox['lomax']}")
         print(f"  Interval:  {interval}s")
         print(f"  Dry run:   {dry_run}")
