@@ -1,7 +1,7 @@
 # CSAPI-Go Server Integration Report
 
-**Date:** 2026-04-17
-**Status:** Complete — Updated with ISS Investigation Results
+**Date:** 2026-04-17 (last updated 2026-04-18)
+**Status:** Complete — Updated with ISS Orbit Track & Deployment-Hierarchy Findings
 **Scope:** Dual-publish the entire OS4CSAPI publisher fleet to the
 connected-systems-go server
 
@@ -668,6 +668,144 @@ The ISS Orbit Track system and datastream exist on the Go server, but the datast
 **To enable orbit tracks on Go server:**
 - Either extend the Go ISS publisher to produce orbit track observations (array of lat/lon points along the predicted orbital path), or
 - Create a dedicated `iss_orbit_track_publisher_go.py` that computes and publishes the full orbit polyline.
+
+---
+
+## 13  ISS Orbit Track & Deployment-Hierarchy Investigation (Added 2026-04-18)
+
+After §12 closed out the position-marker visibility question, a follow-up
+investigation was opened when the ISS **orbit track polyline** and the ISS
+**deployed-system marker** were both absent from the Go server map in the
+deployed Explorer, while rendering correctly on OSH SensorHub. This section
+documents four additional Go-server behaviors, one Explorer bug (now fixed),
+and one bootstrap gap (now fixed).
+
+### 13.1  Root Cause 3 — Observations returned in DESCENDING order by default
+
+- **Severity:** P2-Major
+- **Comparison:** SensorHub returns observations in **ascending** time order
+  by default. The Go server returns them in **descending** (newest-first) order.
+- **Impact:** The Explorer's `loadObservationLayers()` burst-dedup loop assumed
+  ascending order when collapsing repeated point-observations into a single
+  polyline. Running it on descending data caused every item after the first to
+  be classified as a duplicate and dropped, leaving `trackCoords.length === 1`
+  and no polyline ever being added to the map.
+- **Fix (Explorer):** Added an explicit ascending `allItems.sort()` by
+  `phenomenonTime` immediately before the dedup loop. Committed to
+  `ogc-csapi-explorer` as `604d7c1` and deployed to Cloudflare Pages.
+- **Result:** The full 500-point ISS orbit track now renders correctly on the
+  Go-server map, matching OSH behavior.
+
+### 13.2  Go server silently ignores `sortBy` / `sortOrder` parameters
+
+- **Severity:** P3-Minor
+- **Problem:** Passing `sortBy=phenomenonTime&sortOrder=asc` to
+  `/datastreams/{id}/observations` has no effect — the server returns the same
+  descending order regardless of parameter values. No error, no warning.
+- **Workaround:** Client-side sort (see §13.1). Ordering cannot be requested
+  from the server; it must be imposed by the consumer.
+
+### 13.3  Go server silently ignores time-range filters
+
+- **Severity:** P3-Minor
+- **Problem:** `resultTime=<start>/<end>`, `phenomenonTime=<start>/<end>`, and
+  `datetime=<start>/<end>` range filters are all silently accepted and then
+  ignored on `/datastreams/{id}/observations`. The full unfiltered result set
+  is returned (subject to `limit`).
+- **Impact:** Clients that rely on server-side time-windowing (e.g., "last
+  N minutes") must paginate and filter client-side. This compounds the
+  ordering issue from §13.1 because the newest-first default means an
+  unbounded query trims the *oldest* data.
+- **Workaround:** Request large `limit` values and filter by timestamp
+  client-side. Not yet filed as an issue.
+
+### 13.4  Cloudflare Pages production deployment stuck on stale build
+
+- **Severity:** P2-Major (deployment / CI issue, not Go-server)
+- **Problem:** Production bundle at `ogc-csapi-explorer.pages.dev` remained on
+  the Apr 17 build (`index-B_aWg6nq.js`) for multiple days after new commits
+  were pushed to `main`. The GitHub → Cloudflare auto-deploy hook appears to
+  have skipped several commits. This masked the §13.1 fix and sent the
+  investigation down several incorrect paths.
+- **Workaround:** Manual Cloudflare redeploy after confirming the stuck state
+  by inspecting the bundle hash in the live page. Future fixes need a
+  deployment-smoke step that asserts a known marker string from the latest
+  commit is present in the served bundle before declaring a fix verified.
+
+### 13.5  Go server missing ISS deployment subtree (bootstrap gap)
+
+- **Severity:** P2-Major (data completeness; Go server has partial parity)
+- **Problem:** On OSH, the ISS tracking context is a **four-level** deployment
+  hierarchy:
+  ```
+  Orbital Tracking Demo        (root, geometry: null)
+    └─ LEO Objects             (geometry: null)
+       └─ ISS Tracking Role    (geometry: null)
+          ├─ ISS Position Feed        → platform@link → ISS Position Publisher
+          └─ ISS Orbit Track Feed     → platform@link → ISS Orbit Track Publisher
+  ```
+  The **leaf** deployments carry the `platform@link` that ties a deployment
+  to a system. The Explorer's snap-to-track-tip logic in `MapViewPage.vue`
+  matches deployments to systems by
+  `rd.properties['platform@link'].href.split('/').pop() === dsInfo.systemId`.
+- **Go-server state:** Bootstrap created only the root `Orbital Tracking Demo`
+  deployment. The three descendants — LEO Objects, ISS Tracking Role, and the
+  two leaves carrying `platform@link` — were never created. As a result no
+  Go-server deployment had a `platform@link` to the ISS systems, and the
+  deployed-system marker could not be positioned on the map.
+- **Fix:** Added `scripts/bootstrap_iss_deployments_go.py` to the
+  `ogc-csapi-explorer` repo. It is idempotent, searches by UID under each
+  parent, POSTs to `/deployments/{parent_id}/subdeployments` with
+  `application/geo+json`, and tolerates the Go server's `201 Created` +
+  empty-body response by re-fetching the new resource by UID. After running
+  it, the Go server now has the complete four-level hierarchy with
+  `platform@link` on both leaves pointing at the ISS Position Publisher and
+  ISS Orbit Track Publisher.
+- **Follow-up for `bootstrap_iss.py`:** The main ISS bootstrap script in this
+  repo already encodes the full `DEPLOYMENT_TREE`, but it was not executed
+  end-to-end against the Go server during the original fleet migration
+  (only the root was persisted). The deployment helper's recursive
+  `create_deployment_node()` should be re-validated against the Go server as
+  a regression guard.
+
+### 13.6  Go server missing `/deployments/{id}/systems` endpoint
+
+- **Severity:** P3-Minor
+- **Problem:** `GET /deployments/{id}/systems` returns **404 Not Found** on
+  the Go server. OSH supports this endpoint and uses it to list the systems
+  associated with a deployment (independently of `platform@link` traversal).
+- **Impact:** Clients that discover systems via deployment → systems
+  navigation instead of the reverse (`platform@link`) path are broken
+  against Go. The Explorer does not currently rely on this endpoint, so
+  no behavior change was required, but third-party clients may.
+- **Workaround:** Use `/deployments/{id}/subdeployments` to walk to leaves,
+  then follow each leaf's `platform@link.href` to the system.
+
+### 13.7  Updated Behavioral Comparison Additions
+
+| Behavior | SensorHub | connected-systems-go |
+|---|---|---|
+| Observation default sort order | Ascending by `phenomenonTime` | **Descending** (newest-first) |
+| `sortBy` / `sortOrder` query params | Honored | **Silently ignored** |
+| `resultTime` / `phenomenonTime` / `datetime` range filters | Honored | **Silently ignored** |
+| `/deployments/{id}/systems` endpoint | Supported | **404 Not Found** |
+| Deployment `201 Created` response body | Full resource JSON | Empty; `Location` header only |
+
+### 13.8  New Explorer commits (ogc-csapi-explorer `main`)
+
+| Commit | Description |
+|--------|-------------|
+| `604d7c1` | fix(map): sort observations ascending before burst-dedup to handle Go server's descending default order; restores ISS orbit-track polyline on Go |
+| (script) | `scripts/bootstrap_iss_deployments_go.py` — idempotent creator for the missing ISS deployment subtree on Go, with `platform@link` on both leaves |
+
+### 13.9  Outstanding items to file as Go-server issues
+
+- Default descending observation order (documentation / configurability)
+- `sortBy` / `sortOrder` silently ignored
+- Time-range filters (`resultTime`, `phenomenonTime`, `datetime`) silently ignored
+- `/deployments/{id}/systems` endpoint missing (404)
+- `201 Created` with empty body on POST (should return created resource or at
+  least `Location` consistently; clients must refetch by UID)
 
 ---
 
