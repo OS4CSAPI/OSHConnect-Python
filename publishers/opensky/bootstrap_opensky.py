@@ -498,9 +498,9 @@ def _deploy_root(config: dict) -> dict:
     }
 
 
-def _deploy_feed(config: dict, system_server_id: str) -> dict:
+def _deploy_feed(config: dict, system_server_id: str, base_url: str) -> dict:
     bbox = config["bounding_box"]
-    system_href = f"{config['base_url'].rstrip('/')}/systems/{system_server_id}"
+    system_href = f"{base_url.rstrip('/')}/systems/{system_server_id}"
     center_lon = (bbox["lomin"] + bbox["lomax"]) / 2
     center_lat = (bbox["lamin"] + bbox["lamax"]) / 2
 
@@ -598,7 +598,7 @@ def bootstrap(*, clean=False, clean_only=False, dry_run=False, force_sml=False):
     root_id = ensure_deployment(base_url, auth, DEPLOY_ROOT_UID, _deploy_root(config),
                                 dry_run=dry_run, stats=stats)
     ensure_deployment(base_url, auth, DEPLOY_FEED_UID,
-                      _deploy_feed(config, sys_id or "pending"),
+                      _deploy_feed(config, sys_id or "pending", base_url),
                       parent_id=root_id, dry_run=dry_run, stats=stats)
 
     print_summary(stats, dry_run)
