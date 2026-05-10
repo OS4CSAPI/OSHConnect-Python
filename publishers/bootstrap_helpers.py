@@ -287,6 +287,8 @@ SML_ONLY_FIELDS = frozenset({
     "lineage",
     "usageConstraints",
     "typeOf",
+    "typeOf@link",        # OSH SensorHub link form — not standard OGC CS JSON
+    "procedure@link",     # OSH SensorHub link form — not standard OGC CS JSON
     "configuration",
     "modes",
     "parameters",
