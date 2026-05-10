@@ -119,14 +119,19 @@ def _deploy_uid(station_id: str) -> str:
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  Resource definitions
+#
+#  Strict-parsing servers (csapi-go-v2 and later) reject any field in
+#  GeoJSON `properties` outside the closed set. SensorML metadata is
+#  PUT separately as application/sml+json. See:
+#  docs/research/Strict_Parsing_Aviation_WX_Pilot_Engineering_Report_2026-05-09.md
 # ═══════════════════════════════════════════════════════════════════════════
 
-PROCEDURE_BODY = {
+PROCEDURE_BODY_STUB = {
     "type": "Feature",
     "geometry": None,
     "properties": {
-        "uid": PROC_UID,
         "featureType": "sosa:ObservingProcedure",
+        "uid": PROC_UID,
         "name": "NDBC Buoy Observation v1",
         "description": (
             "Publishes real-time marine meteorological and oceanographic observations from NOAA's "
@@ -135,56 +140,73 @@ PROCEDURE_BODY = {
             "represent the last 45 days of data that have undergone automated quality checks; most stations "
             "report hourly and much of the data is typically available by about 25 minutes after the hour."
         ),
-        "keywords": [
-            "NOAA", "NDBC", "buoy", "marine weather", "waves",
-            "oceanographic", "realtime2", "surface observations",
-        ],
-        "documentation": [
-            {"title": "NDBC Home", "href": NDBC_HOME, "rel": "about"},
-            {"title": "NDBC Web Data Guide", "href": NDBC_WEB_DATA_GUIDE, "rel": "documentation"},
-            {"title": "NDBC Realtime Data Retrieval FAQ", "href": NDBC_RT_DATA_DOC, "rel": "documentation"},
-            {"title": "NDBC Measurement Descriptions and Units", "href": NDBC_MEAS_DESC, "rel": "describedby"},
-            {"title": "NDBC Station Status Report", "href": NDBC_STATUS_REPORT, "rel": "status"},
-            {"title": "NDBC BuoyCAM FAQ", "href": NDBC_BUOYCAM_FAQ, "rel": "related"},
-            {"title": "NDBC NetCDF / THREDDS Access", "href": NDBC_NETCDF, "rel": "alternate"},
-        ],
-        "contacts": [
-            {
-                "role": "operator",
-                "organizationName": NDBC_CONTACT_ORG,
-                "website": NDBC_HOME,
-                "email": NDBC_CONTACT_EMAIL,
-            },
-            {
-                "role": "publisher",
-                "organizationName": "OS4CSAPI",
-                "website": "https://github.com/OS4CSAPI/OSHConnect-Python",
-            },
-        ],
-        "lineage": {
-            "source": "NOAA / National Data Buoy Center",
-            "upstream": f"Realtime flat files from {NDBC_REALTIME_TEXT_BASE}",
-            "normalization": (
-                "Publisher parses NDBC realtime fields and emits a flat JSON result with marine "
-                "weather and wave values using source units documented by NDBC."
-            ),
-        },
-        "usageConstraints": {
-            "sourceProtocol": "HTTPS",
-            "sourceFormat": "Whitespace-delimited realtime flat files",
-            "rateLimitNote": "NDBC asks users to limit retrievals to a minimal level.",
-            "qualityControlNote": (
-                "Realtime files generally contain the last 45 days of data that have undergone "
-                "automated quality checks; historical files reflect additional post-processing."
-            ),
-        },
         "validTime": [VALID_TIME_START, ".."],
     },
 }
 
+PROCEDURE_SML = {
+    "type": "SimpleProcess",
+    "id": PROC_UID,
+    "uniqueId": PROC_UID,
+    "definition": "sosa:ObservingProcedure",
+    "label": "NDBC Buoy Observation v1",
+    "description": (
+        "Publishes real-time marine meteorological and oceanographic observations from NOAA's "
+        "National Data Buoy Center (NDBC). Observations are sourced from NDBC realtime flat files, "
+        "normalized into a flat JSON result object, and published to CSAPI."
+    ),
+    "keywords": [
+        "NOAA", "NDBC", "buoy", "marine weather", "waves",
+        "oceanographic", "realtime2", "surface observations",
+    ],
+    # NOTE: csapi-go-v2 ProcedureSensorMLFeature has the c2ab201 typo unfixed;
+    # use 'documentation' (not 'documents'). /systems uses 'documents'.
+    "documentation": [
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC Home",
+         "link": {"href": NDBC_HOME, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC Web Data Guide",
+         "link": {"href": NDBC_WEB_DATA_GUIDE, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC Realtime Data Retrieval FAQ",
+         "link": {"href": NDBC_RT_DATA_DOC, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC Measurement Descriptions and Units",
+         "link": {"href": NDBC_MEAS_DESC, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC Station Status Report",
+         "link": {"href": NDBC_STATUS_REPORT, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC BuoyCAM FAQ",
+         "link": {"href": NDBC_BUOYCAM_FAQ, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC NetCDF / THREDDS Access",
+         "link": {"href": NDBC_NETCDF, "type": "text/html"}},
+    ],
+    "contacts": [
+        {
+            "role": "operator",
+            "organisationName": NDBC_CONTACT_ORG,
+            "contactInfo": {
+                "address": {"electronicMailAddress": NDBC_CONTACT_EMAIL},
+                "onlineResource": {"linkage": NDBC_HOME},
+            },
+        },
+        {
+            "role": "publisher",
+            "organisationName": "OS4CSAPI",
+            "contactInfo": {
+                "onlineResource": {"linkage": "https://github.com/OS4CSAPI/OSHConnect-Python"},
+            },
+        },
+    ],
+    "identifiers": [
+        {"definition": "http://sensorml.com/ont/swe/property/UniqueID",
+         "label": "OS4CSAPI Procedure UID", "value": PROC_UID},
+    ],
+}
+
 
 def _system_stub(station: dict, proc_id: str) -> dict:
-    """GeoJSON Feature stub for a NDBC buoy system."""
+    """GeoJSON Feature stub for a NDBC buoy system.
+
+    Properties closed to {featureType, uid, name, description} per OGC 23-001
+    strict parsing. typeOf, validTime, links live in the companion SML body.
+    """
     station_id = station["id"]
     return {
         "type": "Feature",
@@ -193,21 +215,14 @@ def _system_stub(station: dict, proc_id: str) -> dict:
             "coordinates": [station["lon"], station["lat"]],
         },
         "properties": {
-            "uid": _system_uid(station_id),
             "featureType": "sosa:Sensor",
+            "uid": _system_uid(station_id),
             "name": f"NDBC {station_id} — {station['name']}",
             "description": (
                 f"NOAA NDBC buoy station {station_id} at {station['name']}. "
                 f"Platform type: {station.get('platform_type', 'buoy/platform unknown')}. "
                 f"Water depth: {station.get('water_depth_m', '?')} m."
             ),
-            "typeOf@link": {"href": proc_id, "title": "NDBC Buoy Observation v1"},
-            "links": [
-                {"rel": "about", "title": "NDBC Station Page", "href": _station_page_url(station_id)},
-                {"rel": "alternate", "title": "Realtime Station Page", "href": _station_realtime_url(station_id)},
-                {"rel": "alternate", "title": "Historical Station Page", "href": _station_history_url(station_id)},
-            ],
-            "validTime": [VALID_TIME_START, ".."],
         },
     }
 
@@ -388,26 +403,12 @@ def _system_sml(station: dict) -> dict:
             },
         ],
         "documents": docs,
-        "characteristics": [
-            {
-                "label": "Station Properties",
-                "characteristics": char_items,
-            },
-        ],
-        "capabilities": [
-            {
-                "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
-                "label": "Publisher Capabilities",
-                "capabilities": [
-                    {"type": "Quantity", "name": "update_interval",
-                     "definition": "http://qudt.org/vocab/quantitykind/Period",
-                     "label": "Publish Interval", "uom": {"code": "s"}, "value": 300.0},
-                    {"type": "Text", "name": "data_source",
-                     "definition": "http://sensorml.com/ont/swe/property/DataSource",
-                     "label": "Data Source", "value": "NDBC realtime2 flat files"},
-                ],
-            },
-        ],
+        # NOTE: characteristics/capabilities are part of OGC SensorML JSON encoding
+        # but the strict csapi-go-v2 server does not accept them on
+        # SystemSensorMLFeature (empirical probe 2026-05-09). Equivalent atoms
+        # preserved via identifiers/classifiers/position. char_items (owner,
+        # platform_type, payload_type, heights/depths) are not serialised here;
+        # restore once upstream adds these fields back.
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"]],
@@ -435,25 +436,15 @@ def _datastream_schema(station_id: str = "") -> dict:
       PTDY  - Pressure tendency (hPa)
       TIDE  - Water level (ft)
     """
-    uid_suffix = f":{station_id}" if station_id else ""
+    # Strict csapi-go-v2 rejects 'uid', 'documentation', 'characteristics', and
+    # SWE Time field 'referenceTime' on datastream POST. Keep only accepted fields.
     return {
-        "uid": f"urn:os4csapi:datastream:ndbc{uid_suffix}:ndbcBuoyObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "Buoy Observation",
         "description": (
             "Latest NDBC buoy observation for a station. Source values originate from NDBC realtime "
             "flat files and are normalized by the publisher into a flat JSON result object for CSAPI."
         ),
-        "documentation": [
-            {"title": "NDBC Web Data Guide", "href": NDBC_WEB_DATA_GUIDE, "rel": "documentation"},
-            {"title": "NDBC Realtime Data Retrieval FAQ", "href": NDBC_RT_DATA_DOC, "rel": "documentation"},
-            {"title": "NDBC Measurement Descriptions and Units", "href": NDBC_MEAS_DESC, "rel": "describedby"},
-        ],
-        "characteristics": [
-            {"label": "Source Format", "value": "NDBC realtime2 flat file"},
-            {"label": "Nominal Availability", "value": "Most stations hourly; much data typically available by ~25 minutes after the hour"},
-            {"label": "Quality Control", "value": "Realtime files reflect automated QC; historical data reflect additional post-processing"},
-        ],
         "schema": {
             "obsFormat": "application/om+json",
             "resultSchema": {
@@ -461,7 +452,7 @@ def _datastream_schema(station_id: str = "") -> dict:
                 "label": "NDBC Buoy Observation",
                 "description": "NDBC marine buoy observation (wind, waves, temperature, pressure)",
                 "fields": [
-                    {"type": "Time",     "name": "timestamp",              "label": "Observation Time",         "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "referenceTime": "1970-01-01T00:00:00Z", "uom": {"code": "s"}},
+                    {"type": "Time",     "name": "timestamp",              "label": "Observation Time",         "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "uom": {"code": "s"}},
                     {"type": "Text",     "name": "stationId",             "label": "Station ID",               "definition": "http://sensorml.com/ont/swe/property/StationID"},
                     {"type": "Quantity", "name": "lat_deg",               "label": "Latitude",                 "definition": "http://sensorml.com/ont/swe/property/GeodeticLatitude",  "uom": {"code": "deg"}},
                     {"type": "Quantity", "name": "lon_deg",               "label": "Longitude",                "definition": "http://sensorml.com/ont/swe/property/GeodeticLongitude", "uom": {"code": "deg"}},
@@ -488,12 +479,12 @@ def _datastream_schema(station_id: str = "") -> dict:
 #  BuoyCAM resource definitions
 # ═══════════════════════════════════════════════════════════════════════════
 
-BUOYCAM_PROCEDURE_BODY = {
+BUOYCAM_PROCEDURE_BODY_STUB = {
     "type": "Feature",
     "geometry": None,
     "properties": {
-        "uid": BUOYCAM_PROC_UID,
         "featureType": "sosa:ObservingProcedure",
+        "uid": BUOYCAM_PROC_UID,
         "name": "NDBC BuoyCAM Imagery v1",
         "description": (
             "Publishes cached BuoyCAM imagery from NOAA NDBC buoy-mounted cameras. "
@@ -503,58 +494,63 @@ BUOYCAM_PROCEDURE_BODY = {
             "referencing that cached URL. BuoyCAMs are daylight-only; image frequency varies "
             "but status updates typically occur every 30-60 minutes during daylight hours."
         ),
-        "keywords": [
-            "NOAA", "NDBC", "buoy", "BuoyCAM", "camera", "imagery",
-            "marine", "ocean", "visual", "JPEG",
-        ],
-        "documentation": [
-            {"title": "NDBC BuoyCAM Overview", "href": NDBC_BUOYCAM_HOME, "rel": "about"},
-            {"title": "NDBC BuoyCAM FAQ / Latest Image Links", "href": NDBC_BUOYCAM_FAQ, "rel": "documentation"},
-            {"title": "NDBC BuoyCAM Status Page", "href": NDBC_BUOYCAM_STATUS, "rel": "status"},
-            {"title": "NDBC Station Page Pattern", "href": NDBC_STATION_PAGE_BASE, "rel": "describedby"},
-            {"title": "NDBC Home", "href": NDBC_HOME, "rel": "about"},
-        ],
-        "contacts": [
-            {
-                "role": "operator",
-                "organizationName": NDBC_CONTACT_ORG,
-                "website": NDBC_HOME,
-                "email": NDBC_CONTACT_EMAIL,
-            },
-            {
-                "role": "publisher",
-                "organizationName": "OS4CSAPI",
-                "website": "https://github.com/OS4CSAPI/OSHConnect-Python",
-            },
-        ],
-        "lineage": {
-            "source": "NOAA / National Data Buoy Center — BuoyCAM program",
-            "upstream": "Latest-image JPEG endpoint per station via NDBC BuoyCAM",
-            "normalization": (
-                "Publisher fetches latest JPEG, computes SHA-256 hash for deduplication, "
-                "caches the image to an immutable URL on the OS4CSAPI static host, and "
-                "publishes a JSON observation record referencing the cached image URL."
-            ),
-        },
-        "usageConstraints": {
-            "sourceProtocol": "HTTPS",
-            "sourceFormat": "image/jpeg",
-            "rateLimitNote": "Publisher polls at 15-minute intervals to align with NDBC refresh cadence.",
-            "qualityControlNote": (
-                "BuoyCAMs are daylight-only. Images may be stale at night or during outages. "
-                "The publisher only publishes when a genuinely new image is detected."
-            ),
-        },
         "validTime": [VALID_TIME_START, ".."],
     },
+}
+
+BUOYCAM_PROCEDURE_SML = {
+    "type": "SimpleProcess",
+    "id": BUOYCAM_PROC_UID,
+    "uniqueId": BUOYCAM_PROC_UID,
+    "definition": "sosa:ObservingProcedure",
+    "label": "NDBC BuoyCAM Imagery v1",
+    "description": (
+        "Publishes cached BuoyCAM imagery from NOAA NDBC buoy-mounted cameras. "
+        "BuoyCAMs are daylight-only; image frequency varies but status updates typically "
+        "occur every 30-60 minutes during daylight hours."
+    ),
+    "keywords": [
+        "NOAA", "NDBC", "buoy", "BuoyCAM", "camera", "imagery",
+        "marine", "ocean", "visual", "JPEG",
+    ],
+    # ProcedureSensorMLFeature still has the c2ab201 typo unfixed; use 'documentation'.
+    "documentation": [
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC BuoyCAM Overview",
+         "link": {"href": NDBC_BUOYCAM_HOME, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC BuoyCAM FAQ / Latest Image Links",
+         "link": {"href": NDBC_BUOYCAM_FAQ, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC BuoyCAM Status Page",
+         "link": {"href": NDBC_BUOYCAM_STATUS, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NDBC Home",
+         "link": {"href": NDBC_HOME, "type": "text/html"}},
+    ],
+    "contacts": [
+        {
+            "role": "operator",
+            "organisationName": NDBC_CONTACT_ORG,
+            "contactInfo": {
+                "address": {"electronicMailAddress": NDBC_CONTACT_EMAIL},
+                "onlineResource": {"linkage": NDBC_HOME},
+            },
+        },
+        {
+            "role": "publisher",
+            "organisationName": "OS4CSAPI",
+            "contactInfo": {
+                "onlineResource": {"linkage": "https://github.com/OS4CSAPI/OSHConnect-Python"},
+            },
+        },
+    ],
+    "identifiers": [
+        {"definition": "http://sensorml.com/ont/swe/property/UniqueID",
+         "label": "OS4CSAPI Procedure UID", "value": BUOYCAM_PROC_UID},
+    ],
 }
 
 
 def _buoycam_datastream_schema(station_id: str = "") -> dict:
     """SWE DataRecord schema for BuoyCAM image-reference datastream."""
-    uid_suffix = f":{station_id}" if station_id else ""
     return {
-        "uid": f"urn:os4csapi:datastream:ndbc{uid_suffix}:ndbcBuoyCamImage:v1",
         "outputName": BUOYCAM_DS_OUTPUT_NAME,
         "name": "BuoyCAM Image",
         "description": (
@@ -563,16 +559,6 @@ def _buoycam_datastream_schema(station_id: str = "") -> dict:
             "status — not raw binary image data. Images are cached to an immutable URL so "
             "historical observations remain visually stable."
         ),
-        "documentation": [
-            {"title": "NDBC BuoyCAM Overview", "href": NDBC_BUOYCAM_HOME, "rel": "about"},
-            {"title": "NDBC BuoyCAM FAQ", "href": NDBC_BUOYCAM_FAQ, "rel": "documentation"},
-            {"title": "NDBC BuoyCAM Status", "href": NDBC_BUOYCAM_STATUS, "rel": "status"},
-        ],
-        "characteristics": [
-            {"label": "Source Format", "value": "image/jpeg from NDBC BuoyCAM latest-image endpoint"},
-            {"label": "Storage Mode", "value": "cached-immutable (publisher caches each image to a unique URL)"},
-            {"label": "Nominal Refresh", "value": "Every 30-60 minutes during daylight; publisher polls every 15 minutes"},
-        ],
         "schema": {
             "obsFormat": "application/om+json",
             "resultSchema": {
@@ -580,7 +566,7 @@ def _buoycam_datastream_schema(station_id: str = "") -> dict:
                 "label": "BuoyCAM Image Reference",
                 "description": "Cached BuoyCAM image metadata and immutable URL",
                 "fields": [
-                    {"type": "Time",     "name": "timestamp",        "label": "Fetch Time",            "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "referenceTime": "1970-01-01T00:00:00Z", "uom": {"code": "s"}},
+                    {"type": "Time",     "name": "timestamp",        "label": "Fetch Time",            "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "uom": {"code": "s"}},
                     {"type": "Text",     "name": "stationId",       "label": "Station ID",            "definition": "http://sensorml.com/ont/swe/property/StationID"},
                     {"type": "Text",     "name": "imageUrl",        "label": "Cached Image URL",      "definition": "http://www.opengis.net/def/property/OGC/0/ImageURL"},
                     {"type": "Text",     "name": "mediaType",       "label": "Media Type",            "definition": "http://purl.org/dc/elements/1.1/format"},
@@ -602,18 +588,14 @@ def _deploy_root() -> dict:
             "coordinates": [-90.0, 30.0],
         },
         "properties": {
-            "uid": DEPLOY_ROOT_UID,
             "featureType": "sosa:Deployment",
+            "uid": DEPLOY_ROOT_UID,
             "name": "NDBC Buoy Demo Deployment",
             "description": (
                 "Top-level CSAPI deployment grouping for NOAA NDBC buoy stations published by "
                 "OSHConnect-Python. This grouping represents the demo / integration scope, not a "
                 "single physical field deployment."
             ),
-            "documentation": [
-                {"title": "NDBC Home", "href": NDBC_HOME, "rel": "about"},
-                {"title": "NDBC Station Status Report", "href": NDBC_STATUS_REPORT, "rel": "status"},
-            ],
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -627,17 +609,13 @@ def _deploy_group() -> dict:
             "coordinates": [-90.0, 30.0],
         },
         "properties": {
-            "uid": DEPLOY_GROUP_UID,
             "featureType": "sosa:Deployment",
+            "uid": DEPLOY_GROUP_UID,
             "name": "NDBC Buoy Stations",
             "description": (
                 "Grouping deployment for curated NDBC buoy stations. Each child deployment links a "
                 "station platform/system resource to the demo deployment tree."
             ),
-            "documentation": [
-                {"title": "NDBC Home", "href": NDBC_HOME, "rel": "about"},
-                {"title": "NDBC Web Data Guide", "href": NDBC_WEB_DATA_GUIDE, "rel": "documentation"},
-            ],
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -652,8 +630,8 @@ def _deploy_station(station: dict, system_server_id: str) -> dict:
             "coordinates": [station["lon"], station["lat"]],
         },
         "properties": {
-            "uid": _deploy_uid(station_id),
             "featureType": "sosa:Deployment",
+            "uid": _deploy_uid(station_id),
             "name": f"Buoy {station_id} Feed",
             "description": f"NDBC buoy {station_id} ({station['name']}) observation feed.",
             "validTime": [VALID_TIME_START, ".."],
@@ -662,11 +640,6 @@ def _deploy_station(station: dict, system_server_id: str) -> dict:
                 "uid": _system_uid(station_id),
                 "title": f"NDBC {station_id}",
             },
-            "links": [
-                {"rel": "about", "title": "NDBC Station Page", "href": _station_page_url(station_id)},
-                {"rel": "alternate", "title": "Realtime Station Page", "href": _station_realtime_url(station_id)},
-                {"rel": "alternate", "title": "Historical Station Page", "href": _station_history_url(station_id)},
-            ],
         },
     }
 
@@ -728,11 +701,15 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
     # ── Procedures ────────────────────────────────────────────────────
     print("  ── Procedures ──")
-    proc_id = ensure_procedure(base_url, auth, PROC_UID, PROCEDURE_BODY,
-                               dry_run=dry_run, stats=stats)
+    proc_id = ensure_procedure(base_url, auth, PROC_UID, PROCEDURE_BODY_STUB,
+                               sml_body=PROCEDURE_SML,
+                               dry_run=dry_run, stats=stats,
+                               force_sml=force_sml)
     buoycam_proc_id = ensure_procedure(base_url, auth, BUOYCAM_PROC_UID,
-                                       BUOYCAM_PROCEDURE_BODY,
-                                       dry_run=dry_run, stats=stats)
+                                       BUOYCAM_PROCEDURE_BODY_STUB,
+                                       sml_body=BUOYCAM_PROCEDURE_SML,
+                                       dry_run=dry_run, stats=stats,
+                                       force_sml=force_sml)
 
     # ── Systems + Datastreams ─────────────────────────────────────────
     print("  ── Systems + Datastreams ──")
