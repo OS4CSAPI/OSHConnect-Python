@@ -38,6 +38,7 @@ to an exception (recommended for tests and CI).
 
 import argparse
 import base64
+import copy
 import json
 import os
 import socket
@@ -314,7 +315,6 @@ def _sanitize_stub(stub: dict, label: str) -> dict:
     In strict mode (OS4CSAPI_STRICT_BOOTSTRAP=1) a RuntimeError is raised
     instead — useful for CI to catch callers that should use sml_body instead.
     """
-    import copy
     if not isinstance(stub, dict):
         return stub
     props = stub.get("properties", stub)
@@ -341,6 +341,105 @@ def _sanitize_stub(stub: dict, label: str) -> dict:
 
 # Keep old name as alias for any callers outside this module
 _warn_if_sml_fields_in_stub = _sanitize_stub
+
+
+_SAFE_PROPS = frozenset({"uid", "featureType", "name", "description", "validTime",
+                         "platform@link", "deployedSystem@link"})
+_SAFE_DS_FIELDS = frozenset({"outputName", "name", "description", "schema", "obsTypes"})
+
+# Top-level datastream body fields rejected by csapi-go-v2
+_DS_STRIP_FIELDS = frozenset({"uid", "documentation", "links"})
+
+# SWE Common field-level attributes rejected by csapi-go-v2
+_SWE_FIELD_STRIP_ATTRS = frozenset({"referenceTime"})
+
+
+def _sanitize_swe_fields(fields: list) -> list:
+    """Recursively strip unknown SWE field attributes (e.g. referenceTime)."""
+    result = []
+    for field in fields:
+        if not isinstance(field, dict):
+            result.append(field)
+            continue
+        f = {k: v for k, v in field.items() if k not in _SWE_FIELD_STRIP_ATTRS}
+        if "fields" in f:
+            f = dict(f)
+            f["fields"] = _sanitize_swe_fields(f["fields"])
+        result.append(f)
+    return result
+
+
+def _sanitize_datastream_body(body: dict, label: str = "") -> dict:
+    """Strip fields from a datastream POST body that strict CSAPI servers reject.
+
+    Removes top-level extension fields (uid, documentation, links) and unknown
+    SWE field attributes (referenceTime) within schema.resultSchema.fields.
+    Returns a modified copy; the original is not mutated.
+    """
+    body = copy.deepcopy(body)
+    stripped = [f for f in _DS_STRIP_FIELDS if f in body]
+    if stripped:
+        for f in stripped:
+            body.pop(f)
+        print(f"  [WARN] Stripped datastream field(s) {stripped} before POST"
+              f"{' for ' + label if label else ''}")
+    try:
+        fields = body["schema"]["resultSchema"]["fields"]
+        sanitized = _sanitize_swe_fields(fields)
+        if sanitized != fields:
+            body["schema"] = dict(body["schema"])
+            body["schema"]["resultSchema"] = dict(body["schema"]["resultSchema"])
+            body["schema"]["resultSchema"]["fields"] = sanitized
+    except (KeyError, TypeError):
+        pass
+    return body
+
+
+def _post_with_fallback(base_url: str, collection: str, stub: dict, auth: str,
+                        label: str = "") -> dict | None:
+    """POST stub to collection, retrying with a minimal body on field-rejection 400s.
+
+    Strict CSAPI servers (e.g. csapi-go-v2) reject unknown fields with HTTP 400.
+    Errors may say 'unknown field X' or the more generic 'Invalid request body'.
+    On either, we rebuild the body keeping only the known-safe fields and retry
+    once, so the resource gets created without the unsupported metadata.
+    """
+    try:
+        return api_post(base_url, collection, stub, auth)
+    except RuntimeError as exc:
+        exc_str = str(exc)
+        if "400" not in exc_str:
+            raise
+        if "unknown field" not in exc_str and "Invalid request body" not in exc_str:
+            raise
+        # Rebuild with only safe fields
+        props = stub.get("properties", stub)
+        minimal_props = {k: v for k, v in props.items() if k in _SAFE_PROPS}
+        minimal = {"type": "Feature", "geometry": stub.get("geometry"), "properties": minimal_props}
+        print(f"  [WARN] POST {collection} failed ({exc_str:.120}); retrying with minimal stub{' for ' + label if label else ''}")
+        return api_post(base_url, collection, minimal, auth)
+
+
+def _post_datastream_with_fallback(base_url: str, path: str, body: dict, auth: str,
+                                   label: str = "") -> dict | None:
+    """POST datastream body, retrying with safe fields only on 'unknown field' 400."""
+    try:
+        return api_post(base_url, path, body, auth)
+    except RuntimeError as exc:
+        if "400" not in str(exc) or "unknown field" not in str(exc):
+            raise
+        minimal = {k: v for k, v in body.items() if k in _SAFE_DS_FIELDS}
+        # Preserve sanitized schema fields in minimal body
+        if "schema" in minimal:
+            try:
+                fields = minimal["schema"]["resultSchema"]["fields"]
+                minimal["schema"] = dict(minimal["schema"])
+                minimal["schema"]["resultSchema"] = dict(minimal["schema"]["resultSchema"])
+                minimal["schema"]["resultSchema"]["fields"] = _sanitize_swe_fields(fields)
+            except (KeyError, TypeError):
+                pass
+        print(f"  [WARN] POST {path} failed ({exc!s:.120}); retrying with minimal datastream body{' for ' + label if label else ''}")
+        return api_post(base_url, path, minimal, auth)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -400,8 +499,8 @@ def ensure_procedure(base_url: str, auth: str, uid: str, stub_body: dict,
         print(f"  [DRY] Would create procedure: {uid}")
         return None
 
-    # Step 1: POST geo+json stub
-    result = api_post(base_url, "procedures", stub_body, auth)
+    # Step 1: POST geo+json stub (with unknown-field fallback for strict servers)
+    result = _post_with_fallback(base_url, "procedures", stub_body, auth, uid)
     new_id = result.get("id") if result else None
 
     # Step 2: PUT SensorML if provided
@@ -458,8 +557,8 @@ def ensure_system(base_url: str, auth: str, uid: str, stub_body: dict,
         print(f"  [DRY] Would create system: {uid}")
         return None
 
-    # Step 1: POST geo+json stub
-    result = api_post(base_url, "systems", stub_body, auth)
+    # Step 1: POST geo+json stub (with unknown-field fallback for strict servers)
+    result = _post_with_fallback(base_url, "systems", stub_body, auth, uid)
     new_id = result.get("id") if result else None
 
     # Step 2: PUT SensorML if provided
@@ -496,7 +595,9 @@ def ensure_datastream(base_url: str, auth: str, system_id: str,
         print(f"  [DRY] Would create datastream '{output_name}' on system {system_id}")
         return None
 
-    result = api_post(base_url, f"systems/{system_id}/datastreams", schema_body, auth)
+    schema_body = _sanitize_datastream_body(schema_body, output_name)
+    result = _post_datastream_with_fallback(base_url, f"systems/{system_id}/datastreams",
+                                              schema_body, auth, output_name)
     new_id = result.get("id") if result else None
     print(f"  [OK] Created datastream '{output_name}' → id={new_id}")
     if stats:
@@ -573,7 +674,7 @@ def ensure_deployment(base_url: str, auth: str, uid: str, stub_body: dict,
     if parent_id:
         path = f"deployments/{parent_id}/subdeployments"
 
-    result = api_post(base_url, path, stub_body, auth)
+    result = _post_with_fallback(base_url, path, stub_body, auth, uid)
     new_id = result.get("id") if result else None
 
     # Step 2: PUT SensorML against the canonical /deployments/{id} path
