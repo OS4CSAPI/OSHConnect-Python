@@ -117,11 +117,11 @@ class Node:
     server_root: str = 'sensorhub'
     endpoints: Endpoints
     is_secure: bool
-    _basic_auth: bytes
+    _basic_auth: bytes = None
     _api_helper: APIHelper
     _systems: list[System] = field(default_factory=list)
-    _client_session: OSHClientSession
-    _mqtt_client: MQTTCommClient
+    _client_session: OSHClientSession = None
+    _mqtt_client: MQTTCommClient = None
     _mqtt_port: int = 1883
 
     def __init__(self, protocol: str, address: str, port: int,
