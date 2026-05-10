@@ -105,7 +105,7 @@ def _points_url(lat: float, lon: float) -> str:
 #  Resource definitions
 # ═══════════════════════════════════════════════════════════════════════════
 
-PROCEDURE_BODY = {
+PROCEDURE_STUB = {
     "type": "Feature",
     "geometry": None,
     "properties": {
@@ -119,48 +119,128 @@ PROCEDURE_BODY = {
             "ASOS/AWOS; nominal station reporting is hourly with special observations as conditions "
             "warrant, and API publication may lag upstream MADIS availability by up to about 20 minutes."
         ),
-        "keywords": [
-            "NWS",
-            "NOAA",
-            "ASOS",
-            "AWOS",
-            "surface weather",
-            "METAR",
-            "api.weather.gov",
-            "aviation weather",
-        ],
-        "documentation": [
-            {"title": "NWS API Web Service", "href": NWS_API_DOCS, "rel": "documentation"},
-            {"title": "NWS OpenAPI Specification", "href": NWS_OPENAPI, "rel": "describedby"},
-            {"title": "NWS ASOS Program", "href": NWS_ASOS_PAGE, "rel": "about"},
-            {"title": "NWS ASOS Equipment FAQ", "href": NWS_ASOS_EQUIP, "rel": "related"},
-            {"title": "NWS ASOS Contact", "href": NWS_ASOS_CONTACT, "rel": "contact"},
-        ],
-        "contacts": [
-            {
-                "role": "operator",
-                "organizationName": "National Weather Service",
-                "website": NWS_API_BASE,
-            },
-            {
-                "role": "support",
-                "organizationName": "ASOS Operations and Monitoring Center",
-                "email": NWS_AOMC_EMAIL,
-                "phone": NWS_AOMC_PHONE_1,
-            },
-        ],
-        "lineage": {
-            "source": "NOAA / National Weather Service",
-            "upstream": "MADIS-mediated station observations exposed by api.weather.gov",
-            "normalization": "Publisher normalizes selected values to SI-oriented fields (degC, Pa, km/h, m).",
-        },
-        "usageConstraints": {
-            "userAgentRequired": True,
-            "rateLimitNote": "NWS API is open data with unpublished but reasonable rate limits.",
-        },
         "validTime": [VALID_TIME_START, ".."],
     },
 }
+
+
+def _procedure_sml() -> dict:
+    """SensorML body for the NWS Surface Observation procedure.
+
+    Encoding: ``application/sml+json``. PUT against ``/procedures/{id}``
+    after the geo+json stub POST. Field shapes follow the SensorML JSON
+    encoding (``documents``, ``contacts.organisationName``,
+    ``contactInfo``) so the CSAPI server persists into the corresponding
+    procedure-table columns.
+    """
+    return {
+        "type": "SimpleProcess",
+        "id": PROC_UID,
+        "uniqueId": PROC_UID,
+        "definition": "http://www.opengis.net/def/procedure/observation",
+        "label": "NWS Surface Observation v1",
+        "description": (
+            "Observing procedure for NWS ASOS/AWOS surface weather stations exposed through "
+            "api.weather.gov. Latest station observations are normalized to SI-oriented fields "
+            "(degC, Pa, km/h, m) and published as flat JSON result objects. Nominal station "
+            "reporting is hourly with special observations as conditions warrant; API publication "
+            "may lag upstream MADIS availability by up to about 20 minutes."
+        ),
+        "keywords": [
+            "NWS", "NOAA", "ASOS", "AWOS",
+            "surface weather", "METAR",
+            "api.weather.gov", "aviation weather",
+        ],
+        "identifiers": [
+            {"definition": "http://sensorml.com/ont/swe/property/ShortName",
+             "label": "Short Name", "value": "NWS Surface Observation"},
+            {"definition": "http://sensorml.com/ont/swe/property/LongName",
+             "label": "Long Name",
+             "value": "National Weather Service ASOS/AWOS Surface Observation Procedure v1"},
+            {"definition": "http://sensorml.com/ont/swe/property/UniqueID",
+             "label": "OS4CSAPI UID", "value": PROC_UID},
+        ],
+        "classifiers": [
+            {"definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+             "label": "Network", "value": "ASOS / AWOS Surface Weather Observation Network"},
+            {"definition": "http://sensorml.com/ont/swe/property/SystemRole",
+             "label": "Operator", "value": "National Weather Service"},
+        ],
+        "contacts": [
+            {
+                "role": "http://sensorml.com/ont/swe/property/Operator",
+                "organisationName": "National Weather Service",
+                "contactInfo": {
+                    "website": NWS_API_BASE,
+                },
+            },
+            {
+                "role": "http://sensorml.com/ont/swe/property/Maintainer",
+                "organisationName": "ASOS Operations and Monitoring Center",
+                "contactInfo": {
+                    "website": NWS_ASOS_CONTACT,
+                    "phone": {"voice": NWS_AOMC_PHONE_1},
+                    "email": NWS_AOMC_EMAIL,
+                    "address": {"country": "United States"},
+                },
+            },
+        ],
+        "documents": [
+            {
+                "role": "http://dbpedia.org/resource/Documentation",
+                "name": "NWS API Web Service",
+                "link": {"href": NWS_API_DOCS, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/OpenAPI_Specification",
+                "name": "NWS OpenAPI Specification",
+                "link": {"href": NWS_OPENAPI, "type": "application/openapi+json"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "NWS ASOS Program",
+                "link": {"href": NWS_ASOS_PAGE, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/FAQ",
+                "name": "NWS ASOS Equipment FAQ",
+                "link": {"href": NWS_ASOS_EQUIP, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Contact",
+                "name": "NWS ASOS Contact",
+                "link": {"href": NWS_ASOS_CONTACT, "type": "text/html"},
+            },
+        ],
+        "characteristics": [
+            {
+                "label": "Lineage",
+                "definition": "http://sensorml.com/ont/swe/property/Lineage",
+                "characteristic": [
+                    {"label": "Source", "value": "NOAA / National Weather Service"},
+                    {"label": "Upstream",
+                     "value": "MADIS-mediated station observations exposed by api.weather.gov"},
+                    {"label": "Normalization",
+                     "value": "Publisher normalizes selected values to SI-oriented fields (degC, Pa, km/h, m)."},
+                ],
+            },
+            {
+                "label": "Usage Constraints",
+                "definition": "http://sensorml.com/ont/swe/property/UsageConstraints",
+                "characteristic": [
+                    {"label": "User-Agent Required", "value": "true"},
+                    {"label": "Rate Limit",
+                     "value": "NWS API is open data with unpublished but reasonable rate limits."},
+                ],
+            },
+        ],
+        "validTime": [VALID_TIME_START, ".."],
+    }
+
+
+def _procedure_stub() -> dict:
+    """Geo+json stub for the procedure (stable copy of PROCEDURE_STUB)."""
+    return PROCEDURE_STUB
 
 
 def _system_stub(station: dict, proc_id: str) -> dict:
@@ -382,6 +462,20 @@ def _datastream_schema(station_id: str = "") -> dict:
     }
 
 
+_DEPLOY_DOCUMENTS = [
+    {
+        "role": "http://dbpedia.org/resource/Documentation",
+        "name": "NWS API Web Service",
+        "link": {"href": NWS_API_DOCS, "type": "text/html"},
+    },
+    {
+        "role": "http://dbpedia.org/resource/Web_page",
+        "name": "NWS ASOS Program",
+        "link": {"href": NWS_ASOS_PAGE, "type": "text/html"},
+    },
+]
+
+
 def _deploy_root() -> dict:
     return {
         "type": "Feature",
@@ -394,12 +488,21 @@ def _deploy_root() -> dict:
             "featureType": "sosa:Deployment",
             "name": "NWS Weather Demo",
             "description": "Demonstration deployment for NWS surface weather observation systems published into CSAPI.",
-            "documentation": [
-                {"title": "NWS API Web Service", "href": NWS_API_DOCS, "rel": "documentation"},
-                {"title": "NWS ASOS Program", "href": NWS_ASOS_PAGE, "rel": "about"},
-            ],
             "validTime": [VALID_TIME_START, ".."],
         },
+    }
+
+
+def _deploy_root_sml() -> dict:
+    """SensorML body for the root demo deployment node."""
+    return {
+        "type": "Deployment",
+        "id": DEPLOY_ROOT_UID,
+        "uniqueId": DEPLOY_ROOT_UID,
+        "label": "NWS Weather Demo",
+        "description": "Demonstration deployment for NWS surface weather observation systems published into CSAPI.",
+        "documents": list(_DEPLOY_DOCUMENTS),
+        "validTime": [VALID_TIME_START, ".."],
     }
 
 
@@ -415,12 +518,22 @@ def _deploy_group() -> dict:
             "featureType": "sosa:Deployment",
             "name": "NWS Weather Stations",
             "description": "NWS ASOS/AWOS surface observation stations across the United States used for the OS4CSAPI demo.",
-            "documentation": [
-                {"title": "NWS API Web Service", "href": NWS_API_DOCS, "rel": "documentation"},
-                {"title": "NWS ASOS Program", "href": NWS_ASOS_PAGE, "rel": "about"},
-            ],
             "validTime": [VALID_TIME_START, ".."],
         },
+    }
+
+
+def _deploy_group_sml() -> dict:
+    """SensorML body for the NWS Weather Stations deployment grouping."""
+    return {
+        "type": "Deployment",
+        "id": DEPLOY_GROUP_UID,
+        "uniqueId": DEPLOY_GROUP_UID,
+        "label": "NWS Weather Stations",
+        "description": "NWS ASOS/AWOS surface observation stations across the United States used for the OS4CSAPI demo.",
+        "keywords": ["NWS", "NOAA", "ASOS", "AWOS", "surface weather"],
+        "documents": list(_DEPLOY_DOCUMENTS),
+        "validTime": [VALID_TIME_START, ".."],
     }
 
 
@@ -508,8 +621,10 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
     # ── Procedure ─────────────────────────────────────────────────────
     print("  ── Procedures ──")
-    proc_id = ensure_procedure(base_url, auth, PROC_UID, PROCEDURE_BODY,
-                               dry_run=dry_run, stats=stats)
+    proc_id = ensure_procedure(base_url, auth, PROC_UID,
+                               _procedure_stub(), _procedure_sml(),
+                               dry_run=dry_run, stats=stats,
+                               force_sml=force_sml)
 
     # ── Systems + Datastreams ─────────────────────────────────────────
     print("  ── Systems + Datastreams ──")
@@ -534,15 +649,21 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
     # ── Deployment tree ───────────────────────────────────────────────
     print("  ── Deployments ──")
-    root_id = ensure_deployment(base_url, auth, DEPLOY_ROOT_UID, _deploy_root(),
-                                dry_run=dry_run, stats=stats)
-    group_id = ensure_deployment(base_url, auth, DEPLOY_GROUP_UID, _deploy_group(),
+    root_id = ensure_deployment(base_url, auth, DEPLOY_ROOT_UID,
+                                _deploy_root(), _deploy_root_sml(),
+                                dry_run=dry_run, stats=stats,
+                                force_sml=force_sml)
+    group_id = ensure_deployment(base_url, auth, DEPLOY_GROUP_UID,
+                                 _deploy_group(), _deploy_group_sml(),
                                  parent_id=root_id,
-                                 dry_run=dry_run, stats=stats)
+                                 dry_run=dry_run, stats=stats,
+                                 force_sml=force_sml)
 
     for st in stations:
         sys_id = system_ids.get(st["id"])
         if sys_id or dry_run:
+            # _deploy_station carries no SensorML-only fields under properties;
+            # geo+json stub is sufficient.
             ensure_deployment(base_url, auth, _deploy_uid(st["id"]),
                               _deploy_station(st, sys_id or "pending"),
                               parent_id=group_id,

@@ -8,12 +8,32 @@ HTTP (urllib) with no external dependencies.
 Functions:
   find_by_uid()       — Lookup resource by UID in a collection
   find_datastream()   — Lookup datastream by outputName under a system
-  ensure_procedure()  — Create procedure if not exists
-  ensure_system()     — Create system (geo+json stub POST → SensorML PUT)
+  ensure_procedure()  — Create procedure (geo+json stub POST → optional SensorML PUT)
+  ensure_system()     — Create system (geo+json stub POST → optional SensorML PUT)
   ensure_datastream() — Create datastream with SWE DataRecord schema
-  ensure_deployment() — Create deployment node (with optional parent)
+  ensure_deployment() — Create deployment node (geo+json stub POST → optional SensorML PUT)
   clean_resource()    — Delete resource by UID if it exists
   api_get/post/put/delete() — Low-level HTTP helpers with retry
+
+Content-type contract (CSAPI Part 1, OGC 23-001):
+  - application/geo+json  → spatial-discovery view; carries uid/name/description
+                            (+ geometry) only. SensorML metadata is INTENTIONALLY
+                            stripped server-side.
+  - application/sml+json  → full SensorML metadata view; carries keywords,
+                            identifiers, classifiers, characteristics, capabilities,
+                            contacts, documentation/documents, history,
+                            securityConstraints, legalConstraints, etc.
+
+Bootstrap pattern for procedures, systems, and deployments:
+  1. POST a small geo+json stub  (Content-Type: application/json — server
+     interprets as application/geo+json on these endpoints).
+  2. PUT the full SensorML body  (Content-Type: application/sml+json) against
+     the just-created /resource/{id} path.
+
+This module enforces the contract via _warn_if_sml_fields_in_stub(): if a
+caller passes a "stub" with SensorML-only fields under properties, a loud
+warning is emitted. Set OS4CSAPI_STRICT_BOOTSTRAP=1 to elevate the warning
+to an exception (recommended for tests and CI).
 """
 
 import argparse
@@ -240,26 +260,141 @@ def find_datastream(base_url: str, auth: str, system_id: str,
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  Encoding-contract guardrail
+# ═══════════════════════════════════════════════════════════════════════════
+
+# SensorML-only fields that the CSAPI server silently strips when it sees
+# them under `properties` of a geo+json POST. Any of these fields appearing
+# in a "stub" body indicates the caller has not split GeoJSON encoding from
+# SensorML encoding properly — the stub will be accepted (HTTP 201) but
+# the listed fields will be DROPPED on the server side.
+#
+# Background: pre-strict CSAPI servers returned 201 + silent drop. Strict
+# servers (post-`a467aba` upstream) return HTTP 400. Either way, the bug
+# is on the client. See docs/engineering/2026-05-silent-sensorml-field-loss.md
+SML_ONLY_FIELDS = frozenset({
+    "keywords",
+    "identifiers",
+    "classifiers",
+    "characteristics",
+    "capabilities",
+    "contacts",
+    "documentation",      # OGC links-array form (not the SensorML `documents` form)
+    "documents",          # SensorML form
+    "history",
+    "securityConstraints",
+    "legalConstraints",
+    "lineage",
+    "usageConstraints",
+    "typeOf",
+    "configuration",
+    "modes",
+    "parameters",
+    "inputs",
+    "outputs",
+    "components",
+    "connections",
+    "localReferenceFrames",
+    "localTimeFrames",
+    "method",
+})
+
+_STRICT_BOOTSTRAP = os.environ.get("OS4CSAPI_STRICT_BOOTSTRAP", "").lower() in ("1", "true", "yes")
+
+
+def _warn_if_sml_fields_in_stub(stub: dict, label: str) -> None:
+    """Loud warning (or exception in strict mode) if a caller passes a 'stub'
+    body whose `properties` contain SensorML-only fields.
+
+    These fields will be silently dropped server-side on a geo+json POST.
+    Callers must split SensorML metadata out into a separate ``sml_body``
+    and let the helper PUT it with ``Content-Type: application/sml+json``.
+
+    Set OS4CSAPI_STRICT_BOOTSTRAP=1 to convert the warning to RuntimeError —
+    recommended for tests and CI.
+    """
+    if not isinstance(stub, dict):
+        return
+    props = stub.get("properties", stub)
+    if not isinstance(props, dict):
+        return
+    leaked = sorted(SML_ONLY_FIELDS & set(props.keys()))
+    if not leaked:
+        return
+    msg = (
+        f"[ENCODING-CONTRACT] {label}: stub body carries SensorML-only "
+        f"field(s) under `properties`: {leaked}. These will be silently "
+        f"dropped (or 400-rejected by strict servers) on the geo+json POST. "
+        f"Move them into a separate sml_body argument."
+    )
+    if _STRICT_BOOTSTRAP:
+        raise RuntimeError(msg)
+    print(f"  [WARN] {msg}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  Idempotent resource creation
 # ═══════════════════════════════════════════════════════════════════════════
 
-def ensure_procedure(base_url: str, auth: str, uid: str, body: dict,
-                     *, dry_run: bool = False, stats: dict = None) -> str | None:
-    """Create a procedure if it doesn't already exist. Returns server ID."""
+def ensure_procedure(base_url: str, auth: str, uid: str, stub_body: dict,
+                     sml_body: dict | None = None,
+                     *, dry_run: bool = False, stats: dict = None,
+                     force_sml: bool = False) -> str | None:
+    """Create a procedure if it doesn't already exist. Returns server ID.
+
+    Two-step encoding-correct pattern (mirrors ``ensure_system``):
+
+      1. POST ``stub_body`` (geo+json Feature: uid/name/description + optional
+         geometry) with ``Content-Type: application/json``. The server
+         interprets this as ``application/geo+json`` on the procedures
+         endpoint.
+      2. If ``sml_body`` is provided, PUT it against the new resource path
+         with ``Content-Type: application/sml+json`` to populate full
+         SensorML metadata (keywords, identifiers, classifiers,
+         characteristics, capabilities, contacts, documents, history,
+         securityConstraints, legalConstraints, …).
+
+    When ``force_sml`` is True and the procedure already exists, the
+    SensorML body is PUT again — useful for correcting previously-broken
+    payloads after this fix lands.
+
+    Callers MUST keep SensorML metadata out of the stub. The
+    ``_warn_if_sml_fields_in_stub`` guardrail catches accidental leakage.
+    """
+    _warn_if_sml_fields_in_stub(stub_body, f"ensure_procedure({uid})")
+
     existing = find_by_uid(base_url, auth, "procedures", uid)
     if existing:
-        print(f"  [SKIP] Procedure {uid} already exists (id={existing})")
-        if stats:
-            stats.setdefault("skipped", 0)
-            stats["skipped"] += 1
+        if force_sml and sml_body:
+            if dry_run:
+                print(f"  [DRY] Would force-PUT SML for procedure {uid} (id={existing})")
+            else:
+                api_put(base_url, f"procedures/{existing}", sml_body, auth,
+                        content_type="application/sml+json")
+                print(f"  [SML] Force-PUT SensorML for procedure {uid} (id={existing})")
+            if stats:
+                stats.setdefault("sml_updated", 0)
+                stats["sml_updated"] += 1
+        else:
+            print(f"  [SKIP] Procedure {uid} already exists (id={existing})")
+            if stats:
+                stats.setdefault("skipped", 0)
+                stats["skipped"] += 1
         return existing
 
     if dry_run:
         print(f"  [DRY] Would create procedure: {uid}")
         return None
 
-    result = api_post(base_url, "procedures", body, auth)
+    # Step 1: POST geo+json stub
+    result = api_post(base_url, "procedures", stub_body, auth)
     new_id = result.get("id") if result else None
+
+    # Step 2: PUT SensorML if provided
+    if new_id and sml_body:
+        api_put(base_url, f"procedures/{new_id}", sml_body, auth,
+                content_type="application/sml+json")
+
     print(f"  [OK] Created procedure {uid} → id={new_id}")
     if stats:
         stats.setdefault("created", 0)
@@ -278,6 +413,8 @@ def ensure_system(base_url: str, auth: str, uid: str, stub_body: dict,
     When *force_sml* is True and the system already exists, the SML body is
     PUT again (useful for correcting previously-broken SML payloads).
     """
+    _warn_if_sml_fields_in_stub(stub_body, f"ensure_system({uid})")
+
     existing = find_by_uid(base_url, auth, "systems", uid)
     if existing:
         if force_sml and sml_body:
@@ -345,10 +482,38 @@ def ensure_datastream(base_url: str, auth: str, system_id: str,
     return new_id
 
 
-def ensure_deployment(base_url: str, auth: str, uid: str, body: dict,
+def ensure_deployment(base_url: str, auth: str, uid: str, stub_body: dict,
+                      sml_body: dict | None = None,
                       parent_id: str | None = None,
-                      *, dry_run: bool = False, stats: dict = None) -> str | None:
-    """Create a deployment node if it doesn't exist. Returns server ID."""
+                      *, dry_run: bool = False, stats: dict = None,
+                      force_sml: bool = False) -> str | None:
+    """Create a deployment node if it doesn't exist. Returns server ID.
+
+    Two-step encoding-correct pattern (mirrors ``ensure_system`` and
+    ``ensure_procedure``):
+
+      1. POST ``stub_body`` (geo+json Feature: uid/name/description +
+         optional geometry, validTime, deployment-tree links) with
+         ``Content-Type: application/json``. Server interprets as
+         ``application/geo+json``.
+      2. If ``sml_body`` is provided, PUT it against the new resource path
+         with ``Content-Type: application/sml+json`` to populate full
+         SensorML metadata (keywords, identifiers, classifiers,
+         characteristics, capabilities, contacts, documents, history,
+         securityConstraints, legalConstraints, …).
+
+    When ``parent_id`` is given, the create path is
+    ``deployments/{parent_id}/subdeployments``; the SML PUT still targets
+    the canonical ``deployments/{new_id}`` path.
+
+    When ``force_sml`` is True and the deployment already exists, the
+    SensorML body is PUT again.
+
+    Callers MUST keep SensorML metadata out of the stub. The
+    ``_warn_if_sml_fields_in_stub`` guardrail catches accidental leakage.
+    """
+    _warn_if_sml_fields_in_stub(stub_body, f"ensure_deployment({uid})")
+
     # Check top-level deployments first
     existing = find_by_uid(base_url, auth, "deployments", uid)
     if not existing and parent_id:
@@ -356,22 +521,40 @@ def ensure_deployment(base_url: str, auth: str, uid: str, body: dict,
         existing = find_by_uid(base_url, auth,
                                f"deployments/{parent_id}/subdeployments", uid)
     if existing:
-        print(f"  [SKIP] Deployment {uid} already exists (id={existing})")
-        if stats:
-            stats.setdefault("skipped", 0)
-            stats["skipped"] += 1
+        if force_sml and sml_body:
+            if dry_run:
+                print(f"  [DRY] Would force-PUT SML for deployment {uid} (id={existing})")
+            else:
+                api_put(base_url, f"deployments/{existing}", sml_body, auth,
+                        content_type="application/sml+json")
+                print(f"  [SML] Force-PUT SensorML for deployment {uid} (id={existing})")
+            if stats:
+                stats.setdefault("sml_updated", 0)
+                stats["sml_updated"] += 1
+        else:
+            print(f"  [SKIP] Deployment {uid} already exists (id={existing})")
+            if stats:
+                stats.setdefault("skipped", 0)
+                stats["skipped"] += 1
         return existing
 
     if dry_run:
         print(f"  [DRY] Would create deployment: {uid}")
         return None
 
+    # Step 1: POST geo+json stub at the (possibly nested) create path
     path = "deployments"
     if parent_id:
         path = f"deployments/{parent_id}/subdeployments"
 
-    result = api_post(base_url, path, body, auth)
+    result = api_post(base_url, path, stub_body, auth)
     new_id = result.get("id") if result else None
+
+    # Step 2: PUT SensorML against the canonical /deployments/{id} path
+    if new_id and sml_body:
+        api_put(base_url, f"deployments/{new_id}", sml_body, auth,
+                content_type="application/sml+json")
+
     print(f"  [OK] Created deployment {uid} → id={new_id}")
     if stats:
         stats.setdefault("created", 0)
