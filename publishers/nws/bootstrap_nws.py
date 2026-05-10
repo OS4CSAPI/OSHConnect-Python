@@ -537,7 +537,8 @@ def _deploy_group_sml() -> dict:
     }
 
 
-def _deploy_station(station: dict, system_server_id: str) -> dict:
+def _deploy_station(station: dict, system_server_id: str, base_url: str) -> dict:
+    system_href = f"{base_url.rstrip('/')}/systems/{system_server_id}"
     return {
         "type": "Feature",
         "geometry": {
@@ -558,7 +559,7 @@ def _deploy_station(station: dict, system_server_id: str) -> dict:
             ],
             "validTime": [VALID_TIME_START, ".."],
             "platform@link": {
-                "href": system_server_id,
+                "href": system_href,
                 "uid": _system_uid(station["id"]),
                 "title": f"NWS {station['id']}",
             },
@@ -665,7 +666,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
             # _deploy_station carries no SensorML-only fields under properties;
             # geo+json stub is sufficient.
             ensure_deployment(base_url, auth, _deploy_uid(st["id"]),
-                              _deploy_station(st, sys_id or "pending"),
+                              _deploy_station(st, sys_id or "pending", base_url),
                               parent_id=group_id,
                               dry_run=dry_run, stats=stats)
 

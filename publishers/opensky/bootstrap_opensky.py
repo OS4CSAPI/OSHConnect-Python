@@ -500,6 +500,7 @@ def _deploy_root(config: dict) -> dict:
 
 def _deploy_feed(config: dict, system_server_id: str) -> dict:
     bbox = config["bounding_box"]
+    system_href = f"{config['base_url'].rstrip('/')}/systems/{system_server_id}"
     center_lon = (bbox["lomin"] + bbox["lomax"]) / 2
     center_lat = (bbox["lamin"] + bbox["lamax"]) / 2
 
@@ -520,7 +521,7 @@ def _deploy_feed(config: dict, system_server_id: str) -> dict:
             ),
             "validTime": [VALID_TIME_START, ".."],
             "platform@link": {
-                "href": system_server_id,
+                "href": system_href,
                 "uid": SYSTEM_UID,
                 "title": "OpenSky ADS-B Feed - Southern Arizona",
             },

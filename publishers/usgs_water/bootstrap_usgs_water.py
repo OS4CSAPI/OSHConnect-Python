@@ -717,8 +717,9 @@ def _deploy_group() -> dict:
     }
 
 
-def _deploy_station(station: dict, system_server_id: str) -> dict:
+def _deploy_station(station: dict, system_server_id: str, base_url: str) -> dict:
     nwis_id = station["nwisId"]
+    system_href = f"{base_url.rstrip('/')}/systems/{system_server_id}"
     return {
         "type": "Feature",
         "geometry": {
@@ -753,7 +754,7 @@ def _deploy_station(station: dict, system_server_id: str) -> dict:
             ],
             "validTime": [VALID_TIME_START, ".."],
             "platform@link": {
-                "href": system_server_id,
+                "href": system_href,
                 "uid": _system_uid(nwis_id),
                 "title": f"USGS {nwis_id}",
             },
@@ -863,7 +864,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
         sys_id = system_ids.get(nwis_id)
         if sys_id or dry_run:
             ensure_deployment(base_url, auth, _deploy_uid(nwis_id),
-                              _deploy_station(st, sys_id or "pending"),
+                              _deploy_station(st, sys_id or "pending", base_url),
                               parent_id=group_id,
                               dry_run=dry_run, stats=stats)
 

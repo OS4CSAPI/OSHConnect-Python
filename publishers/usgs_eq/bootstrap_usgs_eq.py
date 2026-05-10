@@ -414,8 +414,9 @@ def _deploy_root() -> dict:
     }
 
 
-def _deploy_feed(system_server_id: str) -> dict:
+def _deploy_feed(system_server_id: str, base_url: str) -> dict:
     """Feed-level deployment node linked to the earthquake feed system."""
+    system_href = f"{base_url.rstrip('/')}/systems/{system_server_id}"
     return {
         "type": "Feature",
         "geometry": {
@@ -435,7 +436,7 @@ def _deploy_feed(system_server_id: str) -> dict:
             ),
             "validTime": [VALID_TIME_START, ".."],
             "platform@link": {
-                "href": system_server_id,
+                "href": system_href,
                 "uid": SYSTEM_UID,
                 "title": "USGS Earthquake Feed",
             },
@@ -513,7 +514,7 @@ def bootstrap(*, clean=False, clean_only=False, dry_run=False, force_sml=False):
     root_id = ensure_deployment(base_url, auth, DEPLOY_ROOT_UID, _deploy_root(),
                                 dry_run=dry_run, stats=stats)
     ensure_deployment(base_url, auth, DEPLOY_FEED_UID,
-                      _deploy_feed(sys_id or "pending"),
+                      _deploy_feed(sys_id or "pending", base_url),
                       parent_id=root_id, dry_run=dry_run, stats=stats)
 
     print_summary(stats, dry_run)
