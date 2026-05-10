@@ -93,14 +93,23 @@ def _deploy_uid(icao_id: str) -> str:
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  Resource definitions
+#
+#  Strict-parsing servers (csapi-go-v2 and later) reject any field in
+#  GeoJSON `properties` outside the closed set
+#  {featureType, uid, name, description, validTime, platform@link}.
+#  All SensorML metadata (keywords, identifiers, classifiers, contacts,
+#  documents, characteristics, capabilities, lineage, usageConstraints,
+#  typeOf, ...) lives in a SEPARATE `application/sml+json` body that is
+#  PUT against /systems/{id} or /procedures/{id} after creation.
+#  See: docs/research/Strict_Parsing_Migration_Spec_Grounded_Reanalysis_2026-05-09.md §9.
 # ═══════════════════════════════════════════════════════════════════════════
 
-PROCEDURE_BODY = {
+PROCEDURE_BODY_STUB = {
     "type": "Feature",
     "geometry": None,
     "properties": {
-        "uid": PROC_UID,
         "featureType": "sosa:ObservingProcedure",
+        "uid": PROC_UID,
         "name": "METAR Decoder v1",
         "description": (
             "Publishes real-time METAR observations from the AviationWeather.gov REST API. "
@@ -108,52 +117,72 @@ PROCEDURE_BODY = {
             "barometric pressure, cloud layers, flight category, and the raw METAR string. "
             "Observations are decoded from standard METAR format and published to CSAPI."
         ),
-        "keywords": [
-            "METAR", "aviation", "weather", "AviationWeather.gov", "FAA", "AWC",
-            "ASOS", "surface observation", "flight category",
-        ],
-        "documentation": [
-            {"title": "AviationWeather.gov", "href": AWX_HOME, "rel": "about"},
-            {"title": "AviationWeather Data API", "href": AWX_API_DOC, "rel": "documentation"},
-            {"title": "METAR Format Guide", "href": "https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf", "rel": "describedby"},
-        ],
-        "contacts": [
-            {
-                "role": "operator",
-                "organizationName": FAA_CONTACT_ORG,
-                "website": AWX_HOME,
-                "email": FAA_CONTACT_EMAIL,
-            },
-            {
-                "role": "publisher",
-                "organizationName": "OS4CSAPI",
-                "website": "https://github.com/OS4CSAPI/OSHConnect-Python",
-            },
-        ],
-        "lineage": {
-            "source": "FAA / Aviation Weather Center (AWC)",
-            "upstream": f"AviationWeather.gov REST API at {AWX_API_DOC}",
-            "normalization": (
-                "Publisher fetches decoded METAR JSON from the AviationWeather.gov API "
-                "and emits a flat JSON result with metric/aviation-standard units."
-            ),
-        },
-        "usageConstraints": {
-            "sourceProtocol": "HTTPS",
-            "sourceFormat": "JSON via AviationWeather.gov REST API",
-            "rateLimitNote": "No explicit rate limit documented; publisher uses 5-minute cadence.",
-            "qualityControlNote": (
-                "METAR reports undergo NWS/FAA quality control. SPECI (special) reports "
-                "are issued between standard hourly observations when conditions change significantly."
-            ),
-        },
         "validTime": [VALID_TIME_START, ".."],
     },
 }
 
+PROCEDURE_SML = {
+    "type": "SimpleProcess",
+    "id": PROC_UID,
+    "uniqueId": PROC_UID,
+    "definition": "sosa:ObservingProcedure",
+    "label": "METAR Decoder v1",
+    "description": (
+        "Publishes real-time METAR observations from the AviationWeather.gov REST API. "
+        "Data includes temperature, dew point, wind speed/direction, visibility, "
+        "barometric pressure, cloud layers, flight category, and the raw METAR string. "
+        "Observations are decoded from standard METAR format and published to CSAPI."
+    ),
+    "keywords": [
+        "METAR", "aviation", "weather", "AviationWeather.gov", "FAA", "AWC",
+        "ASOS", "surface observation", "flight category",
+    ],
+    # NOTE: csapi-go-v2 ProcedureSensorMLFeature struct still has the
+    # `documentation` typo (the c2ab201 fix landed only on
+    # SystemSensorMLFeature). Until that lands, procedure SML PUT requires
+    # the typo'd field name. /systems uses `documents` (correct).
+    "documentation": [
+        {"role": "http://dbpedia.org/resource/Web_page",
+         "name": "AviationWeather.gov",
+         "link": {"href": AWX_HOME, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page",
+         "name": "AviationWeather Data API",
+         "link": {"href": AWX_API_DOC, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page",
+         "name": "METAR Format Guide",
+         "link": {"href": "https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf",
+                  "type": "application/pdf"}},
+    ],
+    "contacts": [
+        {
+            "role": "operator",
+            "organisationName": FAA_CONTACT_ORG,
+            "contactInfo": {
+                "address": {
+                    "deliveryPoint": FAA_CONTACT_ADDRESS,
+                    "electronicMailAddress": FAA_CONTACT_EMAIL,
+                },
+                "onlineResource": {"linkage": AWX_HOME},
+            },
+        },
+        {
+            "role": "publisher",
+            "organisationName": "OS4CSAPI",
+            "contactInfo": {
+                "onlineResource": {"linkage": "https://github.com/OS4CSAPI/OSHConnect-Python"},
+            },
+        },
+    ],
+}
+
 
 def _system_stub(station: dict, proc_id: str) -> dict:
-    """GeoJSON Feature stub for an aviation weather station system."""
+    """GeoJSON Feature stub for an aviation weather station system.
+
+    Properties closed to {featureType, uid, name, description} per OGC 23-001
+    strict parsing. typeOf, validTime, and links live in the companion SML body
+    (see ``_system_sml``).
+    """
     icao_id = station["icao_id"]
     return {
         "type": "Feature",
@@ -162,8 +191,8 @@ def _system_stub(station: dict, proc_id: str) -> dict:
             "coordinates": [station["lon"], station["lat"]],
         },
         "properties": {
-            "uid": _system_uid(icao_id),
             "featureType": "sosa:Sensor",
+            "uid": _system_uid(icao_id),
             "name": f"AWX {icao_id} — {station['name']}",
             "description": (
                 f"AviationWeather.gov METAR station {icao_id} at {station['name']}, "
@@ -171,12 +200,6 @@ def _system_stub(station: dict, proc_id: str) -> dict:
                 f"Station type: {station.get('station_type', 'ASOS')}. "
                 f"Field elevation: {station.get('elev_m', '?')} m MSL."
             ),
-            "typeOf@link": {"href": proc_id, "title": "METAR Decoder v1"},
-            "links": [
-                {"rel": "about", "title": "METAR Data", "href": _station_page_url(icao_id)},
-                {"rel": "alternate", "title": "API Endpoint", "href": _station_api_url(icao_id)},
-            ],
-            "validTime": [VALID_TIME_START, ".."],
         },
     }
 
@@ -289,29 +312,13 @@ def _system_sml(station: dict) -> dict:
             },
         ],
         "documents": docs,
-        "characteristics": [
-            {
-                "name": "station_characteristics",
-                "type": "DataRecord",
-                "label": "Station Characteristics",
-                "fields": char_items,
-            },
-        ],
-        "capabilities": [
-            {
-                "name": "publisher_capabilities",
-                "type": "DataRecord",
-                "label": "Publisher Capabilities",
-                "capabilities": [
-                    {"type": "Quantity", "name": "update_interval",
-                     "definition": "http://qudt.org/vocab/quantitykind/Period",
-                     "label": "Publish Interval", "uom": {"code": "s"}, "value": 300.0},
-                    {"type": "Text", "name": "data_source",
-                     "definition": "http://sensorml.com/ont/swe/property/DataSource",
-                     "label": "Data Source", "value": "AviationWeather.gov REST API (METAR JSON)"},
-                ],
-            },
-        ],
+        # NOTE: characteristics/capabilities are part of OGC SensorML JSON encoding
+        # but the strict csapi-go-v2 server does not accept them on the
+        # SystemSensorMLFeature struct (see empirical probe 2026-05-09).
+        # Field-elevation, station_type, operator, and update_interval information
+        # is preserved in identifiers/classifiers/position above. char_items
+        # (operator, station_type, faa_id, field_elevation) are intentionally not
+        # serialised here; restore once upstream adds these fields back.
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"]],
@@ -336,9 +343,9 @@ def _datastream_schema(icao_id: str = "") -> dict:
       cloud_base_ft   - Lowest cloud base (feet AGL)
       raw_metar       - Raw METAR text
     """
-    uid_suffix = f":{icao_id.lower()}" if icao_id else ""
+    # NOTE: Strict csapi-go-v2 rejects 'documentation', 'characteristics', and
+    # SWE Time field 'referenceTime'. Keeping body to fields the server accepts.
     return {
-        "uid": f"urn:os4csapi:datastream:awx{uid_suffix}:metarObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "METAR Observation",
         "description": (
@@ -346,15 +353,6 @@ def _datastream_schema(icao_id: str = "") -> dict:
             "Includes temperature, dew point, wind, visibility, altimeter setting, cloud layers, "
             "flight category, and the raw METAR string. Some fields may be NaN if not reported."
         ),
-        "documentation": [
-            {"title": "AviationWeather Data API", "href": AWX_API_DOC, "rel": "documentation"},
-            {"title": "METAR Decode Key", "href": "https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf", "rel": "describedby"},
-        ],
-        "characteristics": [
-            {"label": "Source Format", "value": "JSON via AviationWeather.gov REST API"},
-            {"label": "Nominal Availability", "value": "Hourly METAR; SPECI on significant changes"},
-            {"label": "Quality Control", "value": "NWS/FAA automated and manual QC applied"},
-        ],
         "schema": {
             "obsFormat": "application/om+json",
             "resultSchema": {
@@ -362,7 +360,7 @@ def _datastream_schema(icao_id: str = "") -> dict:
                 "label": "METAR Observation",
                 "description": "Decoded METAR aviation weather observation",
                 "fields": [
-                    {"type": "Time",     "name": "timestamp",        "label": "Observation Time",     "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "referenceTime": "1970-01-01T00:00:00Z", "uom": {"code": "s"}},
+                    {"type": "Time",     "name": "timestamp",        "label": "Observation Time",     "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "uom": {"code": "s"}},
                     {"type": "Text",     "name": "stationId",        "label": "ICAO Station ID",      "definition": "http://sensorml.com/ont/swe/property/StationID"},
                     {"type": "Quantity", "name": "lat_deg",          "label": "Latitude",             "definition": "http://sensorml.com/ont/swe/property/GeodeticLatitude",    "uom": {"code": "deg"}},
                     {"type": "Quantity", "name": "lon_deg",          "label": "Longitude",            "definition": "http://sensorml.com/ont/swe/property/GeodeticLongitude",   "uom": {"code": "deg"}},
@@ -391,17 +389,14 @@ def _deploy_root() -> dict:
             "coordinates": [-111.5, 33.0],
         },
         "properties": {
-            "uid": DEPLOY_ROOT_UID,
             "featureType": "sosa:Deployment",
+            "uid": DEPLOY_ROOT_UID,
             "name": "AviationWeather METAR Demo Deployment",
             "description": (
                 "Top-level CSAPI deployment grouping for AviationWeather.gov METAR stations "
                 "published by OSHConnect-Python. This grouping represents the demo / integration "
                 "scope, not a single physical field deployment."
             ),
-            "documentation": [
-                {"title": "AviationWeather.gov", "href": AWX_HOME, "rel": "about"},
-            ],
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -415,17 +410,13 @@ def _deploy_group() -> dict:
             "coordinates": [-111.5, 33.0],
         },
         "properties": {
-            "uid": DEPLOY_GROUP_UID,
             "featureType": "sosa:Deployment",
+            "uid": DEPLOY_GROUP_UID,
             "name": "AviationWeather METAR Stations",
             "description": (
                 "Grouping deployment for curated AviationWeather.gov METAR stations. Each child "
                 "deployment links a station/system resource to the demo deployment tree."
             ),
-            "documentation": [
-                {"title": "AviationWeather.gov", "href": AWX_HOME, "rel": "about"},
-                {"title": "AviationWeather Data API", "href": AWX_API_DOC, "rel": "documentation"},
-            ],
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -440,8 +431,8 @@ def _deploy_station(station: dict, system_server_id: str) -> dict:
             "coordinates": [station["lon"], station["lat"]],
         },
         "properties": {
-            "uid": _deploy_uid(icao_id),
             "featureType": "sosa:Deployment",
+            "uid": _deploy_uid(icao_id),
             "name": f"METAR {icao_id} Feed",
             "description": f"AviationWeather METAR station {icao_id} ({station['name']}) observation feed.",
             "validTime": [VALID_TIME_START, ".."],
@@ -450,10 +441,6 @@ def _deploy_station(station: dict, system_server_id: str) -> dict:
                 "uid": _system_uid(icao_id),
                 "title": f"AWX {icao_id}",
             },
-            "links": [
-                {"rel": "about", "title": "METAR Data", "href": _station_page_url(icao_id)},
-                {"rel": "alternate", "title": "API Endpoint", "href": _station_api_url(icao_id)},
-            ],
         },
     }
 
@@ -513,8 +500,10 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
     # ── Procedure ─────────────────────────────────────────────────────
     print("  ── Procedures ──")
-    proc_id = ensure_procedure(base_url, auth, PROC_UID, PROCEDURE_BODY,
-                               dry_run=dry_run, stats=stats)
+    proc_id = ensure_procedure(base_url, auth, PROC_UID, PROCEDURE_BODY_STUB,
+                               sml_body=PROCEDURE_SML,
+                               dry_run=dry_run, stats=stats,
+                               force_sml=force_sml)
 
     # ── Systems + Datastreams ─────────────────────────────────────────
     print("  ── Systems + Datastreams ──")
