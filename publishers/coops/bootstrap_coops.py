@@ -140,14 +140,19 @@ def _deploy_uid(station_id: str) -> str:
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  Resource definitions
+#
+#  Strict csapi-go-v2 closes GeoJSON `properties` to {featureType, uid,
+#  name, description} (+ validTime / platform@link where applicable).
+#  SensorML metadata travels separately via PUT application/sml+json.
+#  See docs/research/Strict_Parsing_Aviation_WX_Pilot_Engineering_Report_2026-05-09.md
 # ═══════════════════════════════════════════════════════════════════════════
 
-PROCEDURE_BODY = {
+PROCEDURE_BODY_STUB = {
     "type": "Feature",
     "geometry": None,
     "properties": {
-        "uid": PROC_UID,
         "featureType": "sosa:ObservingProcedure",
+        "uid": PROC_UID,
         "name": "CO-OPS Coastal Observation v1",
         "description": (
             "Publishes near-real-time NOAA CO-OPS coastal observations and related products into CSAPI. "
@@ -157,76 +162,91 @@ PROCEDURE_BODY = {
             "API (MDAPI). Operational real-time values should be treated as preliminary/operational products; "
             "verified products are made available by NOAA through historical workflows."
         ),
-        "keywords": [
-            "NOAA", "CO-OPS", "tides", "water level", "coastal",
-            "tide gauge", "predictions", "MLLW", "sea level",
-            "NWLON", "CORMS", "MDAPI", "DPAPI",
-        ],
-        "documentation": [
-            {"title": "CO-OPS Home", "href": COOPS_HOME, "rel": "about"},
-            {"title": "CO-OPS Web Services", "href": COOPS_WEB_SERVICES, "rel": "documentation"},
-            {"title": "CO-OPS Data API", "href": COOPS_API_DOC, "rel": "documentation"},
-            {"title": "CO-OPS Metadata API (MDAPI)", "href": COOPS_MDAPI_DOC, "rel": "describedby"},
-            {"title": "CO-OPS Derived Product API (DPAPI)", "href": COOPS_DPAPI_DOC, "rel": "related"},
-            {"title": "CO-OPS API Builder", "href": COOPS_API_BUILDER, "rel": "service"},
-            {"title": "National Water Level Observation Network (NWLON)", "href": COOPS_NWLON, "rel": "about"},
-            {"title": "CORMS Watchstanding / QA Context", "href": COOPS_CORMS, "rel": "related"},
-            {"title": "Measurement Specifications", "href": COOPS_MEASUREMENT_SPECS, "rel": "describedby"},
-            {"title": "CO-OPS Glossary", "href": COOPS_GLOSSARY, "rel": "glossary"},
-        ],
-        "contacts": [
-            {
-                "role": "operator",
-                "organizationName": COOPS_CONTACT_ORG,
-                "website": COOPS_HOME,
-                "email": COOPS_CONTACT_EMAIL,
-                "phone": COOPS_CONTACT_PHONE,
-            },
-            {
-                "role": "qualityControl",
-                "organizationName": "Continuous Operational Real-Time Monitoring System (CORMS)",
-                "website": COOPS_CORMS,
-                "email": COOPS_CORMS_EMAIL,
-                "phone": COOPS_CORMS_PHONE,
-            },
-            {
-                "role": "publisher",
-                "organizationName": "OS4CSAPI",
-                "website": "https://github.com/OS4CSAPI/OSHConnect-Python",
-            },
-        ],
-        "lineage": {
-            "source": "NOAA / Center for Operational Oceanographic Products and Services (CO-OPS)",
-            "upstream": "CO-OPS Data API for operational observations plus CO-OPS Metadata API (MDAPI) for station metadata",
-            "normalization": (
-                "Publisher fetches selected operational water-level and meteorological products, normalizes "
-                "them into a flat JSON result object, and preserves authoritative cross-links to station, "
-                "network, datum, and product metadata."
-            ),
-        },
-        "usageConstraints": {
-            "sourceProtocol": "HTTPS",
-            "sourceFormat": "JSON via CO-OPS Data API and Metadata API",
-            "requestLimitNote": (
-                "CO-OPS internet services enforce per-request limits based on interval and time span; "
-                "6-minute interval data is limited to one month per request and hourly interval data to one year."
-            ),
-            "qualityControlNote": (
-                "Operational real-time values are near-real-time products monitored by CORMS. "
-                "Verified products are typically made available later through NOAA historical workflows."
-            ),
-            "datumNote": (
-                "Water-level products are datum-dependent. Publisher metadata and datastream descriptions "
-                "should clearly state the datum used for operational queries."
-            ),
-        },
         "validTime": [VALID_TIME_START, ".."],
     },
 }
 
+PROCEDURE_SML = {
+    "type": "SimpleProcess",
+    "id": PROC_UID,
+    "uniqueId": PROC_UID,
+    "definition": "sosa:ObservingProcedure",
+    "label": "CO-OPS Coastal Observation v1",
+    "description": (
+        "Publishes near-real-time NOAA CO-OPS coastal observations into CSAPI. Primary observations "
+        "are operational 6-minute water levels and available coastal meteorological fields, with "
+        "optional tide-prediction context. Operational real-time values are preliminary; verified "
+        "products are released later through NOAA historical workflows."
+    ),
+    "keywords": [
+        "NOAA", "CO-OPS", "tides", "water level", "coastal",
+        "tide gauge", "predictions", "MLLW", "sea level",
+        "NWLON", "CORMS", "MDAPI", "DPAPI",
+    ],
+    # NOTE: csapi-go-v2 ProcedureSensorMLFeature still has c2ab201 typo unfixed;
+    # use 'documentation' here. /systems uses 'documents'.
+    "documentation": [
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "CO-OPS Home",
+         "link": {"href": COOPS_HOME, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "CO-OPS Web Services",
+         "link": {"href": COOPS_WEB_SERVICES, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "CO-OPS Data API",
+         "link": {"href": COOPS_API_DOC, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "CO-OPS Metadata API (MDAPI)",
+         "link": {"href": COOPS_MDAPI_DOC, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "CO-OPS Derived Product API (DPAPI)",
+         "link": {"href": COOPS_DPAPI_DOC, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "CO-OPS API Builder",
+         "link": {"href": COOPS_API_BUILDER, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "NWLON",
+         "link": {"href": COOPS_NWLON, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "CORMS",
+         "link": {"href": COOPS_CORMS, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "Measurement Specifications",
+         "link": {"href": COOPS_MEASUREMENT_SPECS, "type": "text/html"}},
+        {"role": "http://dbpedia.org/resource/Web_page", "name": "CO-OPS Glossary",
+         "link": {"href": COOPS_GLOSSARY, "type": "text/html"}},
+    ],
+    "contacts": [
+        {
+            "role": "operator",
+            "organisationName": COOPS_CONTACT_ORG,
+            "contactInfo": {
+                "address": {"electronicMailAddress": COOPS_CONTACT_EMAIL},
+                "phone": {"voice": COOPS_CONTACT_PHONE},
+                "onlineResource": {"linkage": COOPS_HOME},
+            },
+        },
+        {
+            "role": "qualityControl",
+            "organisationName": "Continuous Operational Real-Time Monitoring System (CORMS)",
+            "contactInfo": {
+                "address": {"electronicMailAddress": COOPS_CORMS_EMAIL},
+                "phone": {"voice": COOPS_CORMS_PHONE},
+                "onlineResource": {"linkage": COOPS_CORMS},
+            },
+        },
+        {
+            "role": "publisher",
+            "organisationName": "OS4CSAPI",
+            "contactInfo": {
+                "onlineResource": {"linkage": "https://github.com/OS4CSAPI/OSHConnect-Python"},
+            },
+        },
+    ],
+    "identifiers": [
+        {"definition": "http://sensorml.com/ont/swe/property/UniqueID",
+         "label": "OS4CSAPI Procedure UID", "value": PROC_UID},
+    ],
+}
+
 
 def _system_stub(station: dict, proc_id: str) -> dict:
-    """GeoJSON Feature stub for a CO-OPS station system."""
+    """GeoJSON Feature stub for a CO-OPS station system.
+
+    Properties closed to {featureType, uid, name, description} per OGC 23-001
+    strict parsing. typeOf, validTime, links live in the companion SML body.
+    """
     station_id = station["id"]
     network = station.get("network", "CO-OPS / NWLON")
     return {
@@ -236,26 +256,14 @@ def _system_stub(station: dict, proc_id: str) -> dict:
             "coordinates": [station["lon"], station["lat"]],
         },
         "properties": {
-            "uid": _system_uid(station_id),
             "featureType": "sosa:Sensor",
+            "uid": _system_uid(station_id),
             "name": f"CO-OPS {station_id} — {station['name']}",
             "description": (
                 f"NOAA CO-OPS coastal water-level station {station_id} at {station['name']}. "
                 f"Network: {network}. Established {station.get('established', 'unknown')}. "
                 f"Mean tidal range: {station.get('mean_range_ft', '?')} ft."
             ),
-            "typeOf@link": {"href": proc_id, "title": "CO-OPS Coastal Observation v1"},
-            "links": [
-                {"rel": "about", "title": "Station Home", "href": _station_page_url(station_id)},
-                {"rel": "alternate", "title": "Water Levels", "href": _station_water_level_url(station_id)},
-                {"rel": "alternate", "title": "Tide Predictions", "href": _station_predictions_url(station_id)},
-                {"rel": "alternate", "title": "Met Observations", "href": _station_met_url(station_id)},
-                {"rel": "alternate", "title": "Datums", "href": _station_datums_url(station_id)},
-                {"rel": "alternate", "title": "Inventory", "href": _station_inventory_url(station_id)},
-                {"rel": "alternate", "title": "Station Photos", "href": station.get("station_photos_page", _station_photos_page_url(station_id))},
-                {"rel": "describedby", "title": "MDAPI Station Record", "href": _station_mdapi_url(station_id)},
-            ],
-            "validTime": [VALID_TIME_START, ".."],
         },
     }
 
@@ -484,32 +492,11 @@ def _system_sml(station: dict) -> dict:
             },
         ],
         "documents": docs,
-        "characteristics": [
-            {
-                "name": "station_characteristics",
-                "type": "DataRecord",
-                "label": "Station Characteristics",
-                "fields": char_items,
-            },
-        ],
-        "capabilities": [
-            {
-                "name": "publisher_capabilities",
-                "type": "DataRecord",
-                "label": "Publisher Capabilities",
-                "capabilities": [
-                    {"type": "Quantity", "name": "update_interval",
-                     "definition": "http://qudt.org/vocab/quantitykind/Period",
-                     "label": "Publish Interval", "uom": {"code": "s"}, "value": 360.0},
-                    {"type": "Text", "name": "primary_data_source",
-                     "definition": "http://sensorml.com/ont/swe/property/DataSource",
-                     "label": "Primary Data Source", "value": "CO-OPS Data API (datagetter)"},
-                    {"type": "Text", "name": "metadata_source",
-                     "definition": "http://sensorml.com/ont/swe/property/DataSource",
-                     "label": "Metadata Source", "value": "CO-OPS Metadata API (MDAPI) and station web resources"},
-                ],
-            },
-        ],
+        # NOTE: characteristics/capabilities are part of OGC SensorML JSON encoding
+        # but the strict csapi-go-v2 server rejects them on SystemSensorMLFeature
+        # (empirical probe 2026-05-09). char_items (datums, ranges, network, owner)
+        # is dropped on the wire; equivalent atoms remain via identifiers/classifiers/
+        # position. Restore once upstream accepts these fields.
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"]],
@@ -532,9 +519,9 @@ def _datastream_schema(station_id: str = "") -> dict:
       wind_gust_ms   - Wind gust (m/s)
       pressure_hpa   - Barometric pressure (hPa / mb)
     """
-    uid_suffix = f":{station_id}" if station_id else ""
+    # Strict csapi-go-v2 rejects 'uid', 'documentation', 'characteristics', and
+    # SWE Time field 'referenceTime' on datastream POST.
     return {
-        "uid": f"urn:os4csapi:datastream:coops{uid_suffix}:coopsCoastalObs:v1",
         "outputName": DS_OUTPUT_NAME,
         "name": "Coastal Observation",
         "description": (
@@ -544,21 +531,6 @@ def _datastream_schema(station_id: str = "") -> dict:
             "and station metadata should be interpreted alongside official CO-OPS station "
             "resources and the CO-OPS Metadata API."
         ),
-        "documentation": [
-            {"title": "CO-OPS Web Services", "href": COOPS_WEB_SERVICES, "rel": "documentation"},
-            {"title": "CO-OPS Data API", "href": COOPS_API_DOC, "rel": "documentation"},
-            {"title": "CO-OPS Metadata API (MDAPI)", "href": COOPS_MDAPI_DOC, "rel": "describedby"},
-            {"title": "CO-OPS API Builder", "href": COOPS_API_BUILDER, "rel": "service"},
-            {"title": "Measurement Specifications", "href": COOPS_MEASUREMENT_SPECS, "rel": "describedby"},
-            {"title": "CO-OPS Glossary", "href": COOPS_GLOSSARY, "rel": "glossary"},
-        ],
-        "characteristics": [
-            {"label": "Source Format", "value": "JSON via CO-OPS Data API (datagetter)"},
-            {"label": "Nominal Availability", "value": "Operational 6-minute water levels; additional products and met data vary by station"},
-            {"label": "Datum Context", "value": "Water-level products are datum-dependent and should be interpreted with official station datum metadata"},
-            {"label": "Request Limits", "value": "CO-OPS internet services enforce interval-based per-request limits"},
-            {"label": "Quality Control", "value": "Operational values are near-real-time products; verified products are available later through NOAA workflows"},
-        ],
         "schema": {
             "obsFormat": "application/om+json",
             "resultSchema": {
@@ -566,7 +538,7 @@ def _datastream_schema(station_id: str = "") -> dict:
                 "label": "CO-OPS Coastal Observation",
                 "description": "Water level, tide prediction, and coastal meteorological data",
                 "fields": [
-                    {"type": "Time",     "name": "timestamp",        "label": "Observation Time",     "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "referenceTime": "1970-01-01T00:00:00Z", "uom": {"code": "s"}},
+                    {"type": "Time",     "name": "timestamp",        "label": "Observation Time",     "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "uom": {"code": "s"}},
                     {"type": "Text",     "name": "stationId",       "label": "Station ID",           "definition": "http://sensorml.com/ont/swe/property/StationID"},
                     {"type": "Quantity", "name": "lat_deg",          "label": "Latitude",             "definition": "http://sensorml.com/ont/swe/property/GeodeticLatitude",    "uom": {"code": "deg"}},
                     {"type": "Quantity", "name": "lon_deg",          "label": "Longitude",            "definition": "http://sensorml.com/ont/swe/property/GeodeticLongitude",   "uom": {"code": "deg"}},
@@ -593,20 +565,14 @@ def _deploy_root() -> dict:
             "coordinates": [-90.0, 30.0],
         },
         "properties": {
-            "uid": DEPLOY_ROOT_UID,
             "featureType": "sosa:Deployment",
+            "uid": DEPLOY_ROOT_UID,
             "name": "CO-OPS Coastal Demo Deployment",
             "description": (
                 "Top-level CSAPI deployment grouping for curated NOAA CO-OPS coastal water-level "
                 "stations published by OSHConnect-Python. This grouping represents the integration "
                 "scope of the demo, not a single physical field deployment."
             ),
-            "documentation": [
-                {"title": "CO-OPS Home", "href": COOPS_HOME, "rel": "about"},
-                {"title": "CO-OPS Web Services", "href": COOPS_WEB_SERVICES, "rel": "documentation"},
-                {"title": "National Water Level Observation Network (NWLON)", "href": COOPS_NWLON, "rel": "related"},
-                {"title": "Tides & Currents Map", "href": COOPS_MAP, "rel": "alternate"},
-            ],
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -620,21 +586,14 @@ def _deploy_group() -> dict:
             "coordinates": [-90.0, 30.0],
         },
         "properties": {
-            "uid": DEPLOY_GROUP_UID,
             "featureType": "sosa:Deployment",
+            "uid": DEPLOY_GROUP_UID,
             "name": "CO-OPS Tide Stations",
             "description": (
                 "Grouping deployment for curated NOAA CO-OPS coastal stations. Each child deployment "
                 "links a station/system resource to the demo deployment tree and preserves authoritative "
                 "cross-navigation to station pages, APIs, and network metadata."
             ),
-            "documentation": [
-                {"title": "CO-OPS Home", "href": COOPS_HOME, "rel": "about"},
-                {"title": "CO-OPS Data API", "href": COOPS_API_DOC, "rel": "documentation"},
-                {"title": "CO-OPS Metadata API (MDAPI)", "href": COOPS_MDAPI_DOC, "rel": "describedby"},
-                {"title": "CO-OPS API Builder", "href": COOPS_API_BUILDER, "rel": "service"},
-                {"title": "Tides & Currents Map", "href": COOPS_MAP, "rel": "alternate"},
-            ],
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -649,8 +608,8 @@ def _deploy_station(station: dict, system_server_id: str) -> dict:
             "coordinates": [station["lon"], station["lat"]],
         },
         "properties": {
-            "uid": _deploy_uid(station_id),
             "featureType": "sosa:Deployment",
+            "uid": _deploy_uid(station_id),
             "name": f"Tide Station {station_id} Feed",
             "description": (
                 f"CO-OPS coastal water-level station {station_id} ({station['name']}) "
@@ -662,13 +621,6 @@ def _deploy_station(station: dict, system_server_id: str) -> dict:
                 "uid": _system_uid(station_id),
                 "title": f"CO-OPS {station_id}",
             },
-            "links": [
-                {"rel": "about", "title": "Station Home", "href": _station_page_url(station_id)},
-                {"rel": "alternate", "title": "Water Levels", "href": _station_water_level_url(station_id)},
-                {"rel": "alternate", "title": "Tide Predictions", "href": _station_predictions_url(station_id)},
-                {"rel": "alternate", "title": "Station Photos", "href": station.get("station_photos_page", _station_photos_page_url(station_id))},
-                {"rel": "describedby", "title": "MDAPI Station Record", "href": station.get("mdapi_station", _station_mdapi_url(station_id))},
-            ],
         },
     }
 
@@ -728,8 +680,10 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
     # ── Procedure ─────────────────────────────────────────────────────
     print("  ── Procedures ──")
-    proc_id = ensure_procedure(base_url, auth, PROC_UID, PROCEDURE_BODY,
-                               dry_run=dry_run, stats=stats)
+    proc_id = ensure_procedure(base_url, auth, PROC_UID, PROCEDURE_BODY_STUB,
+                               sml_body=PROCEDURE_SML,
+                               dry_run=dry_run, stats=stats,
+                               force_sml=force_sml)
 
     # ── Systems + Datastreams ─────────────────────────────────────────
     print("  ── Systems + Datastreams ──")
