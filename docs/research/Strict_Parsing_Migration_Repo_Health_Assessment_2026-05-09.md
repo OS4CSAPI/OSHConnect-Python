@@ -136,8 +136,8 @@ sml_body=...)`, `ensure_system(..., sml_body=...)`, and
 `ensure_deployment(..., sml_body=..., parent_id=...)`. The
 `OS4CSAPI_STRICT_BOOTSTRAP=1` environment guardrail raises `RuntimeError`
 on closed-properties leakage during dry-run. Both have now been validated
-against a real strict server with two publishers (aviation-wx, NDBC). They
-work; reuse for the remaining seven publishers is mechanical.
+against a real strict server with three publishers (aviation-wx, NDBC,
+CO-OPS). They work; reuse for the remaining six publishers is mechanical.
 
 ### 2.5 Architectural defects in upstream surfaced
 
@@ -201,11 +201,16 @@ Each publisher refactor is the same surgery:
 5. Strip deployment stubs.
 6. Wire `sml_body=` and `force_sml=` into `ensure_procedure(...)` calls.
 
-Done by hand on aviation-wx (5 systems) and NDBC (2 procedures, 5 systems,
-dual datastream schemas). Seven publishers remain (coops, iss, nws,
-opensky, usgs_eq, usgs_nims, usgs_water). Without an extracted helper,
-every fix to an upstream defect (e.g., when the procedure `documentation`
-typo is fixed) requires editing N publishers.
+Done by hand on aviation-wx (5 systems), NDBC (2 procedures, 5 systems,
+dual datastream schemas), and CO-OPS (1 procedure, 5 systems, 3-role
+contacts including `qualityControl`/CORMS). Six publishers remain (iss,
+nws, opensky, usgs_eq, usgs_nims, usgs_water). Without an extracted
+helper, every fix to an upstream defect (e.g., when the procedure
+`documentation` typo is fixed) requires editing N publishers.
+
+**Trigger reached:** Recommendation 6.1 (extract shared SML/stub builder
+after ~3 publishers) is now due. Three full-fidelity refactors are on
+record; the abstraction is no longer speculative.
 
 ### 3.4 Workarounds carry "unfixed upstream typo" notes inline
 
@@ -532,6 +537,37 @@ We mention it here so readers don't waste time probing.
 
 ---
 
+### 4.7 Positive-test confirmations (CO-OPS pilot, commit `3ac7c88`)
+
+The CO-OPS migration exercised three SensorML contact-shape variants not
+seen in aviation-wx or NDBC. All were accepted by `/systems` PUT with
+`Content-Type: application/sml+json` and round-tripped intact on a
+subsequent `GET ... Accept: application/sml+json`:
+
+| Field / shape | Status | Notes |
+|---|---|---|
+| Contact `role: "qualityControl"` | Accepted | CORMS contact preserved end-to-end on station 8518750. |
+| Contact `contactInfo.phone.voice` | Accepted | NWS-style voice phone number survives the round trip. |
+| Three-contact array (operator + qualityControl + publisher) | Accepted | Prior pilots only exercised two roles. |
+
+These are not defects, and we record them here so subsequent publishers
+(NWS, USGS) don't re-probe. They also tighten the negative space around
+Issue #2: the System SensorML JSON binding *does* implement
+`contacts[*].role`, `contactInfo.phone`, and the spec-defined extended
+contact roles — the binding gap is specifically `characteristics` and
+`capabilities`, not contact metadata.
+
+**Reproducer (succeeds):**
+
+```bash
+curl -s -H "Accept: application/sml+json" \
+  https://129-80-248-53.sslip.io/csapi-go-v2/systems/{coops_8518750_id} \
+  | python -c "import json,sys; d=json.load(sys.stdin); print([c['role'] for c in d['contacts']])"
+# -> ['operator', 'qualityControl', 'publisher']
+```
+
+---
+
 ## 5. Summary Table of Upstream Issues
 
 | # | Endpoint | Field | Status | Severity | Defect type | Workaround |
@@ -542,6 +578,7 @@ We mention it here so readers don't waste time probing.
 | 4 | POST /datastreams | SWE Time `referenceTime` | Rejected | P2 | Incomplete SWE Common decoder | Drop field; implicit epoch |
 | 5 | POST /datastreams | top-level `uid` | Rejected | P3 | Possibly intentional; undocumented | Let server assign ID |
 | 6 | POST /deployments | `parent@link` in properties | Rejected | Informational | Not a defect | Use `parent_id=` helper param |
+| 7 | PUT /systems | `contacts[*].role=qualityControl`, `contactInfo.phone.voice`, 3-role contact arrays | **Accepted** | Confirmation | None — works as specified | None needed (CO-OPS pilot, commit `3ac7c88`) |
 
 ---
 
@@ -627,8 +664,8 @@ Option (c) is fine if documented. Right now it's implicit.
 
 **Improvements (durable):**
 
-1. Two publishers (aviation-wx, NDBC) are portable across both server
-   families.
+1. Three publishers (aviation-wx, NDBC, CO-OPS) are portable across both
+   server families.
 2. Stub/SML separation matches OGC 23-001.
 3. Empirical schema is captured in three companion documents.
 4. Helper infrastructure (`bootstrap_helpers.ensure_*`) is validated.
