@@ -26,9 +26,18 @@ have an expiry date.
 - Net negative on **metadata fidelity over the wire** (lossy round-trip vs. the
   legacy OSH server) and **maintenance surface area** (mechanical workarounds
   copy-pasted into each publisher).
-- **Four upstream defects** identified in `csapi-go-v2`. Two are clear bugs,
-  one is an asymmetric/incomplete fix, one is a server-side internal error.
+- **Five upstream defects** identified in `csapi-go-v2`. Two are clear bugs,
+  one is an asymmetric/incomplete fix, one is a server-side internal error,
+  and one is a malformed-redirect bug that breaks the OGC-API
+  `/collections/{id}/items` access pattern for any browser-side client.
   Each is described in §4 with reproducer probes.
+- **Runtime observation pipeline confirmed end-to-end** on 2026-05-10: all
+  four migrated publishers (aviation-wx, NDBC met, NDBC buoycam, CO-OPS)
+  successfully POST live observations and image payloads to
+  `/csapi-go-v2/datastreams/{id}/observations` with **20/20 success and
+  zero errors** in a single cycle. Strict-parsing migration was sufficient at
+  bootstrap time; no publisher-side code changes were needed for runtime
+  posting against the strict server (see §4.9).
 
 ---
 
@@ -568,6 +577,84 @@ curl -s -H "Accept: application/sml+json" \
 
 ---
 
+### 4.8 Issue #8 — `/collections/{id}/items` 307 redirect drops path prefix
+
+Discovered 2026-05-10 while debugging 404s in the `ogc-csapi-explorer`
+web UI. The OGC-API standard items access path,
+`GET /csapi-go-v2/collections/{id}/items`, returns a 307 redirect whose
+`Location` header is missing the `/csapi-go-v2/` route prefix. Any client
+that follows the redirect (browsers, `curl -L`, OGC client libraries) lands
+on a 404.
+
+**Reproducer:**
+
+```bash
+curl -sS -i -k "https://129-80-248-53.sslip.io/csapi-go-v2/collections/systems/items?f=json" | head -5
+# HTTP/2 307
+# location: https://129-80-248-53.sslip.io/systems?f=json   <- prefix dropped
+#
+curl -sS -i -k "https://129-80-248-53.sslip.io/systems?f=json" | head -1
+# HTTP/2 404
+```
+
+**Impact:** This is the most user-visible defect found so far. It breaks
+the entire `/collections/{id}/items` access pattern for browser clients
+because the OGC API client library inside `ogc-csapi-explorer` treats this
+path as canonical. Server-side scripts that hit resource roots directly
+(`/systems`, `/datastreams`, `/observations`) are unaffected — which is
+why our publishers and bootstraps never noticed it.
+
+**Workaround landed:** Proxy-side `Location` rewrite in both the
+Cloudflare Pages Function and the Vite dev proxy of the
+`ogc-csapi-explorer` repository (commit
+[`f1b23de`](https://github.com/OS4CSAPI/ogc-csapi-explorer/commit/f1b23de)).
+The proxies intercept any 3xx response, detect same-host redirects, and
+re-attach the `/api/csapi-go-v2` prefix mapped to the upstream
+`/csapi-go-v2` route. Verified end-to-end: a follow-through to
+`/collections/systems/items` now returns the full FeatureCollection (16
+systems including the entire NDBC and CO-OPS fleet).
+
+**Upstream fix:** the redirect target should be the same
+route-prefix-relative path the request arrived on. Either preserve the
+prefix in the redirect, or omit the redirect entirely and serve the
+FeatureCollection directly at `/collections/{id}/items`.
+
+---
+
+### 4.9 Runtime observation pipeline confirmation (2026-05-10)
+
+After the bootstraps completed, an end-to-end runtime test was run against
+`/csapi-go-v2/` to confirm that the strict-parsing migration applied at
+bootstrap was sufficient for the publishers' POST loop. All four migrated
+publishers were invoked with `--once` and `OSH_BASE_URL` pointed directly
+at `https://129-80-248-53.sslip.io/csapi-go-v2`.
+
+| Publisher | Stations | Published | Errors | Notes |
+|---|---|---|---|---|
+| `aviation_wx_publisher` | 5 | 5 | 0 | METAR observations |
+| `ndbc_publisher` | 5 | 5 | 0 | Met observations (wind/wave/temp) |
+| `ndbc_buoycam_publisher` | 5 | 5 | 0 | JPEG image payloads |
+| `coops_publisher` | 5 | 5 | 0 | Water level + met |
+
+**Total:** 20/20 successful POSTs in a single cycle, zero errors. Sample
+GET against `/datastreams/{id}/observations?limit=1` round-tripped the
+full `result` payload (lat/lon, met fields, timestamp) intact.
+
+**Why this works without further code changes:** the publishers'
+pre-existing `_is_go_server` branch in `_post_observation()` already
+performs the two known runtime workarounds for strict parsing — replacing
+string `"NaN"` with `0.0` (Go decoder rejects non-finite JSON numbers) and
+ensuring `result.timestamp` is a string when present. No SWE-Common-level
+rejections were observed at the observation tier; the strict parser appears
+to be lenient on the `result` body as long as the datastream's declared
+schema accepts the field set, which the bootstrap stage already negotiated.
+
+**Implication for §3.2 (test coverage):** until automated contract tests
+exist, this manual `--once` cycle is the de-facto smoke test. Recommend
+adding it to the runbook and running it after every publisher migration.
+
+---
+
 ## 5. Summary Table of Upstream Issues
 
 | # | Endpoint | Field | Status | Severity | Defect type | Workaround |
@@ -579,6 +666,7 @@ curl -s -H "Accept: application/sml+json" \
 | 5 | POST /datastreams | top-level `uid` | Rejected | P3 | Possibly intentional; undocumented | Let server assign ID |
 | 6 | POST /deployments | `parent@link` in properties | Rejected | Informational | Not a defect | Use `parent_id=` helper param |
 | 7 | PUT /systems | `contacts[*].role=qualityControl`, `contactInfo.phone.voice`, 3-role contact arrays | **Accepted** | Confirmation | None — works as specified | None needed (CO-OPS pilot, commit `3ac7c88`) |
+| 8 | GET /collections/{id}/items | `Location` header on 307 redirect | Drops `/csapi-go-v2/` path prefix → 404 on follow | P1 (browser clients) | Malformed redirect target | Proxy-side `Location` rewrite (ogc-csapi-explorer commit `f1b23de`) |
 
 ---
 
@@ -664,12 +752,17 @@ Option (c) is fine if documented. Right now it's implicit.
 
 **Improvements (durable):**
 
-1. Three publishers (aviation-wx, NDBC, CO-OPS) are portable across both
-   server families.
+1. Three publishers (aviation-wx, NDBC, CO-OPS) plus the NDBC buoycam image
+   publisher are portable across both server families.
 2. Stub/SML separation matches OGC 23-001.
 3. Empirical schema is captured in three companion documents.
 4. Helper infrastructure (`bootstrap_helpers.ensure_*`) is validated.
-5. Four upstream defects identified with reproducers.
+5. **Five upstream defects identified with reproducers**, including a
+   browser-breaking redirect bug (Issue #8) that was patched at the proxy
+   layer in the `ogc-csapi-explorer` repository.
+6. **Runtime observation pipeline verified end-to-end** against the strict
+   server — 20/20 successful POSTs with zero errors across all migrated
+   publishers (§4.9).
 
 **Costs (mitigatable but real):**
 
