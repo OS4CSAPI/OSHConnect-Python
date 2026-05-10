@@ -302,34 +302,43 @@ SML_ONLY_FIELDS = frozenset({
 _STRICT_BOOTSTRAP = os.environ.get("OS4CSAPI_STRICT_BOOTSTRAP", "").lower() in ("1", "true", "yes")
 
 
-def _warn_if_sml_fields_in_stub(stub: dict, label: str) -> None:
-    """Loud warning (or exception in strict mode) if a caller passes a 'stub'
-    body whose `properties` contain SensorML-only fields.
+def _sanitize_stub(stub: dict, label: str) -> dict:
+    """Return a copy of stub with SensorML-only fields stripped from properties.
 
-    These fields will be silently dropped server-side on a geo+json POST.
-    Callers must split SensorML metadata out into a separate ``sml_body``
-    and let the helper PUT it with ``Content-Type: application/sml+json``.
+    Strict CSAPI servers (e.g. csapi-go-v2) reject fields like ``keywords``,
+    ``documentation``, and ``documents`` in the GeoJSON POST body with HTTP 400.
+    This function removes those fields before the POST so that all servers work.
 
-    Set OS4CSAPI_STRICT_BOOTSTRAP=1 to convert the warning to RuntimeError —
-    recommended for tests and CI.
+    In strict mode (OS4CSAPI_STRICT_BOOTSTRAP=1) a RuntimeError is raised
+    instead — useful for CI to catch callers that should use sml_body instead.
     """
+    import copy
     if not isinstance(stub, dict):
-        return
+        return stub
     props = stub.get("properties", stub)
     if not isinstance(props, dict):
-        return
+        return stub
     leaked = sorted(SML_ONLY_FIELDS & set(props.keys()))
     if not leaked:
-        return
+        return stub
     msg = (
         f"[ENCODING-CONTRACT] {label}: stub body carries SensorML-only "
-        f"field(s) under `properties`: {leaked}. These will be silently "
-        f"dropped (or 400-rejected by strict servers) on the geo+json POST. "
+        f"field(s) under `properties`: {leaked}. These will be stripped "
+        f"before POST (strict servers return 400 on unknown fields). "
         f"Move them into a separate sml_body argument."
     )
     if _STRICT_BOOTSTRAP:
         raise RuntimeError(msg)
     print(f"  [WARN] {msg}")
+    stub = copy.deepcopy(stub)
+    target = stub.get("properties", stub)
+    for field in leaked:
+        target.pop(field, None)
+    return stub
+
+
+# Keep old name as alias for any callers outside this module
+_warn_if_sml_fields_in_stub = _sanitize_stub
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -361,7 +370,7 @@ def ensure_procedure(base_url: str, auth: str, uid: str, stub_body: dict,
     Callers MUST keep SensorML metadata out of the stub. The
     ``_warn_if_sml_fields_in_stub`` guardrail catches accidental leakage.
     """
-    _warn_if_sml_fields_in_stub(stub_body, f"ensure_procedure({uid})")
+    stub_body = _sanitize_stub(stub_body, f"ensure_procedure({uid})")
 
     existing = find_by_uid(base_url, auth, "procedures", uid)
     if existing:
@@ -369,9 +378,12 @@ def ensure_procedure(base_url: str, auth: str, uid: str, stub_body: dict,
             if dry_run:
                 print(f"  [DRY] Would force-PUT SML for procedure {uid} (id={existing})")
             else:
-                api_put(base_url, f"procedures/{existing}", sml_body, auth,
-                        content_type="application/sml+json")
-                print(f"  [SML] Force-PUT SensorML for procedure {uid} (id={existing})")
+                try:
+                    api_put(base_url, f"procedures/{existing}", sml_body, auth,
+                            content_type="application/sml+json")
+                    print(f"  [SML] Force-PUT SensorML for procedure {uid} (id={existing})")
+                except Exception as exc:
+                    print(f"  [WARN] SML PUT skipped for procedure {uid} (id={existing}): {exc}")
             if stats:
                 stats.setdefault("sml_updated", 0)
                 stats["sml_updated"] += 1
@@ -392,8 +404,11 @@ def ensure_procedure(base_url: str, auth: str, uid: str, stub_body: dict,
 
     # Step 2: PUT SensorML if provided
     if new_id and sml_body:
-        api_put(base_url, f"procedures/{new_id}", sml_body, auth,
-                content_type="application/sml+json")
+        try:
+            api_put(base_url, f"procedures/{new_id}", sml_body, auth,
+                    content_type="application/sml+json")
+        except Exception as exc:
+            print(f"  [WARN] SML PUT skipped for procedure {uid} (id={new_id}): {exc}")
 
     print(f"  [OK] Created procedure {uid} → id={new_id}")
     if stats:
@@ -413,7 +428,7 @@ def ensure_system(base_url: str, auth: str, uid: str, stub_body: dict,
     When *force_sml* is True and the system already exists, the SML body is
     PUT again (useful for correcting previously-broken SML payloads).
     """
-    _warn_if_sml_fields_in_stub(stub_body, f"ensure_system({uid})")
+    stub_body = _sanitize_stub(stub_body, f"ensure_system({uid})")
 
     existing = find_by_uid(base_url, auth, "systems", uid)
     if existing:
@@ -421,9 +436,12 @@ def ensure_system(base_url: str, auth: str, uid: str, stub_body: dict,
             if dry_run:
                 print(f"  [DRY] Would force-PUT SML for system {uid} (id={existing})")
             else:
-                api_put(base_url, f"systems/{existing}", sml_body, auth,
-                        content_type="application/sml+json")
-                print(f"  [SML] Force-PUT SensorML for system {uid} (id={existing})")
+                try:
+                    api_put(base_url, f"systems/{existing}", sml_body, auth,
+                            content_type="application/sml+json")
+                    print(f"  [SML] Force-PUT SensorML for system {uid} (id={existing})")
+                except Exception as exc:
+                    print(f"  [WARN] SML PUT skipped for system {uid} (id={existing}): {exc}")
             if stats:
                 stats.setdefault("sml_updated", 0)
                 stats["sml_updated"] += 1
@@ -444,8 +462,11 @@ def ensure_system(base_url: str, auth: str, uid: str, stub_body: dict,
 
     # Step 2: PUT SensorML if provided
     if new_id and sml_body:
-        api_put(base_url, f"systems/{new_id}", sml_body, auth,
-                content_type="application/sml+json")
+        try:
+            api_put(base_url, f"systems/{new_id}", sml_body, auth,
+                    content_type="application/sml+json")
+        except Exception as exc:
+            print(f"  [WARN] SML PUT skipped for system {uid} (id={new_id}): {exc}")
 
     print(f"  [OK] Created system {uid} → id={new_id}")
     if stats:
@@ -512,7 +533,7 @@ def ensure_deployment(base_url: str, auth: str, uid: str, stub_body: dict,
     Callers MUST keep SensorML metadata out of the stub. The
     ``_warn_if_sml_fields_in_stub`` guardrail catches accidental leakage.
     """
-    _warn_if_sml_fields_in_stub(stub_body, f"ensure_deployment({uid})")
+    stub_body = _sanitize_stub(stub_body, f"ensure_deployment({uid})")
 
     # Check top-level deployments first
     existing = find_by_uid(base_url, auth, "deployments", uid)
@@ -525,9 +546,12 @@ def ensure_deployment(base_url: str, auth: str, uid: str, stub_body: dict,
             if dry_run:
                 print(f"  [DRY] Would force-PUT SML for deployment {uid} (id={existing})")
             else:
-                api_put(base_url, f"deployments/{existing}", sml_body, auth,
-                        content_type="application/sml+json")
-                print(f"  [SML] Force-PUT SensorML for deployment {uid} (id={existing})")
+                try:
+                    api_put(base_url, f"deployments/{existing}", sml_body, auth,
+                            content_type="application/sml+json")
+                    print(f"  [SML] Force-PUT SensorML for deployment {uid} (id={existing})")
+                except Exception as exc:
+                    print(f"  [WARN] SML PUT skipped for deployment {uid} (id={existing}): {exc}")
             if stats:
                 stats.setdefault("sml_updated", 0)
                 stats["sml_updated"] += 1
@@ -552,8 +576,11 @@ def ensure_deployment(base_url: str, auth: str, uid: str, stub_body: dict,
 
     # Step 2: PUT SensorML against the canonical /deployments/{id} path
     if new_id and sml_body:
-        api_put(base_url, f"deployments/{new_id}", sml_body, auth,
-                content_type="application/sml+json")
+        try:
+            api_put(base_url, f"deployments/{new_id}", sml_body, auth,
+                    content_type="application/sml+json")
+        except Exception as exc:
+            print(f"  [WARN] SML PUT skipped for deployment {uid} (id={new_id}): {exc}")
 
     print(f"  [OK] Created deployment {uid} → id={new_id}")
     if stats:

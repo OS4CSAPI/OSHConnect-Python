@@ -459,7 +459,7 @@ def clean_all(base_url, auth, *, dry_run=False, stats):
     clean_resource(base_url, auth, "deployments", DEPLOY_FEED_UID,
                    dry_run=dry_run, stats=stats)
     clean_resource(base_url, auth, "deployments", DEPLOY_ROOT_UID,
-                   dry_run=dry_run, stats=stats)
+                   dry_run=dry_run, stats=stats, cascade=True)
     clean_resource(base_url, auth, "systems", SYSTEM_UID,
                    dry_run=dry_run, stats=stats, cascade=True)
     clean_resource(base_url, auth, "procedures", PROC_UID,

@@ -413,9 +413,7 @@ def clean_all(base_url: str, auth: str, cameras: list[dict],
     clean_resource(base_url, auth, "deployments", DEPLOY_GROUP_UID,
                    dry_run=dry_run, stats=stats)
     clean_resource(base_url, auth, "deployments", DEPLOY_ROOT_UID,
-                   dry_run=dry_run, stats=stats)
-
-    # Datastreams on existing systems (find + delete individually)
+                   dry_run=dry_run, stats=stats, cascade=True)
     for cam in cameras:
         sys_id = find_by_uid(base_url, auth, "systems", _system_uid(cam["nwisId"]))
         if not sys_id:

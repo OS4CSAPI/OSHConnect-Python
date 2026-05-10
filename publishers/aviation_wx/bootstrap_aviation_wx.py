@@ -460,7 +460,7 @@ def clean_all(base_url: str, auth: str, stations: list[dict],
     clean_resource(base_url, auth, "deployments", DEPLOY_GROUP_UID,
                    dry_run=dry_run, stats=stats)
     clean_resource(base_url, auth, "deployments", DEPLOY_ROOT_UID,
-                   dry_run=dry_run, stats=stats)
+                   dry_run=dry_run, stats=stats, cascade=True)
 
     # Systems (datastreams deleted automatically via cascade)
     for st in reversed(stations):
