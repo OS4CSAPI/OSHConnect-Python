@@ -164,3 +164,10 @@ cython_debug/
 .python-version
 
 poetry.lock
+
+# Publisher runtime state files
+publishers/ndbc/buoycam_state.json
+publishers/**/state.json
+
+# Test/merge output artifacts
+merge-test-output*.txt

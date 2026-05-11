@@ -123,6 +123,29 @@ def _system_position() -> dict:
                 "title": "SGP4 Propagation v1",
                 "type": "application/sml+json",
             },
+            "documentation": [
+                {
+                    "role": "http://dbpedia.org/resource/Photograph",
+                    "name": "ISS Photograph",
+                    "description": (
+                        "NASA photograph of the International Space Station "
+                        "taken from the Space Shuttle Discovery during STS-119."
+                    ),
+                    "link": {
+                        "href": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/International_Space_Station_after_undocking_of_STS-132.jpg/640px-International_Space_Station_after_undocking_of_STS-132.jpg",
+                        "type": "image/jpeg",
+                    },
+                },
+                {
+                    "role": "http://dbpedia.org/resource/Web_page",
+                    "name": "ISS Tracking Page",
+                    "description": "NASA real-time ISS tracking page.",
+                    "link": {
+                        "href": "https://spotthestation.nasa.gov/",
+                        "type": "text/html",
+                    },
+                },
+            ],
         },
     }
 
@@ -265,17 +288,24 @@ def _datastream_orbit_track() -> dict:
 #  Resource definitions — Deployment tree
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _deployment_tree() -> dict:
+def _deployment_tree(pos_sys_id: str | None = None, base_url: str | None = None) -> dict:
+    props: dict = {
+        "uid": DEPLOY_ROOT_UID,
+        "featureType": "sosa:Deployment",
+        "name": "Orbital Tracking Demo",
+        "description": "Top-level deployment context for orbital object tracking demonstrations.",
+        "validTime": [VALID_TIME_START, ".."],
+    }
+    if pos_sys_id and base_url:
+        props["platform@link"] = {
+            "href": f"{base_url}/systems/{pos_sys_id}",
+            "title": "ISS Position Publisher",
+            "uid": SYS_POS_UID,
+        }
     return {
         "type": "Feature",
         "geometry": None,
-        "properties": {
-            "uid": DEPLOY_ROOT_UID,
-            "featureType": "sosa:Deployment",
-            "name": "Orbital Tracking Demo",
-            "description": "Top-level deployment context for orbital object tracking demonstrations.",
-            "validTime": [VALID_TIME_START, ".."],
-        },
+        "properties": props,
     }
 
 
@@ -337,7 +367,8 @@ def main():
 
     # ── Deployment ────────────────────────────────────────────────────
     print("\n── Deployment ──")
-    ensure_deployment(base_url, auth, DEPLOY_ROOT_UID, _deployment_tree(),
+    ensure_deployment(base_url, auth, DEPLOY_ROOT_UID,
+                      _deployment_tree(pos_sys_id=pos_sys_id, base_url=base_url),
                       dry_run=dry_run, stats=stats)
 
     # ── Summary ───────────────────────────────────────────────────────
