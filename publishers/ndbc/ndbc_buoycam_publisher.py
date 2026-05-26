@@ -170,9 +170,10 @@ class BuoyCamPublisher:
 
     def connect(self):
         """Resolve BuoyCAM datastream IDs for each camera-equipped station."""
+        self._ds_ids.clear()
         for st in self.stations:
             uid = self._system_uid(st["id"])
-            sys_id = find_by_uid(self._base_url, self._auth, "systems", uid)
+            sys_id = find_by_uid(self._base_url, self._auth, "systems", uid, no_cache=True)
             if not sys_id:
                 print(f"  [WARN] System '{uid}' not found — skipping {st['id']}")
                 continue

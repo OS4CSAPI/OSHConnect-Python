@@ -199,11 +199,12 @@ class USGSWaterPublisher:
 
     def connect(self):
         """Resolve system and datastream IDs for each station via REST API."""
+        self._ds_ids.clear()
         connected = 0
         for st in self.stations:
             nwis_id = st["nwisId"]
             uid = self._system_uid(nwis_id)
-            sys_id = find_by_uid(self._base_url, self._auth, "systems", uid)
+            sys_id = find_by_uid(self._base_url, self._auth, "systems", uid, no_cache=True)
             if not sys_id:
                 print(f"  [WARN] System '{uid}' not found -- skipping {nwis_id}")
                 continue

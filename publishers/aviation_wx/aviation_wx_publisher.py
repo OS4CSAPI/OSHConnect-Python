@@ -239,9 +239,10 @@ class AviationWxPublisher:
 
     def connect(self):
         """Resolve system and datastream IDs for each station via REST API."""
+        self._ds_ids.clear()
         for st in self.stations:
             uid = self._system_uid(st["icao_id"])
-            sys_id = find_by_uid(self._base_url, self._auth, "systems", uid)
+            sys_id = find_by_uid(self._base_url, self._auth, "systems", uid, no_cache=True)
             if not sys_id:
                 print(f"  [WARN] System '{uid}' not found — skipping {st['icao_id']}")
                 continue

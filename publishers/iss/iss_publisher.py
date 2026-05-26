@@ -234,7 +234,8 @@ class ISSPublisher(PublisherBase):
         """Connect to server. Uses REST mode when OSH_BASE_URL is set, SDK otherwise."""
         if self._rest_mode:
             from publishers.bootstrap_helpers import api_get, find_by_uid
-            sys_id = find_by_uid(self._base_url, self._auth, "systems", self.system_uid)
+            self._ds_id = None
+            sys_id = find_by_uid(self._base_url, self._auth, "systems", self.system_uid, no_cache=True)
             if not sys_id:
                 raise RuntimeError(f"System '{self.system_uid}' not found on server")
             ds_list = api_get(self._base_url, f"systems/{sys_id}/datastreams", self._auth)

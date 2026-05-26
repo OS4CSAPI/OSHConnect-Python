@@ -222,7 +222,8 @@ class OpenSkyPublisher:
 
     def connect(self):
         """Resolve system and datastream ID via REST API."""
-        sys_id = find_by_uid(self._base_url, self._auth, "systems", SYSTEM_UID)
+        self._ds_id = None
+        sys_id = find_by_uid(self._base_url, self._auth, "systems", SYSTEM_UID, no_cache=True)
         if not sys_id:
             raise RuntimeError(f"System '{SYSTEM_UID}' not found on server")
 

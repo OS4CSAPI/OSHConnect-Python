@@ -190,11 +190,12 @@ class USGSNimsPublisher:
 
     def connect(self):
         """Resolve system and imagery datastream IDs for each camera via REST API."""
+        self._ds_ids.clear()
         connected = 0
         for cam in self.cameras:
             nwis_id = cam["nwisId"]
             uid = self._system_uid(nwis_id)
-            sys_id = find_by_uid(self._base_url, self._auth, "systems", uid)
+            sys_id = find_by_uid(self._base_url, self._auth, "systems", uid, no_cache=True)
             if not sys_id:
                 print(f"  [WARN] System '{uid}' not found — skipping {nwis_id}")
                 continue

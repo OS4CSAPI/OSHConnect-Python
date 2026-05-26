@@ -229,10 +229,15 @@ def api_delete(base_url: str, path: str, auth: str, *, cascade: bool = False) ->
 _uid_cache: dict[str, str] = {}
 
 
-def find_by_uid(base_url: str, auth: str, collection: str, uid: str) -> str | None:
+def _uid_cache_key(base_url: str, collection: str, uid: str) -> str:
+    return f"{base_url.rstrip('/')}:{collection}:{uid}"
+
+
+def find_by_uid(base_url: str, auth: str, collection: str, uid: str,
+                *, no_cache: bool = False) -> str | None:
     """Find a resource by UID in a collection. Returns server ID or None."""
-    cache_key = f"{collection}:{uid}"
-    if cache_key in _uid_cache:
+    cache_key = _uid_cache_key(base_url, collection, uid)
+    if not no_cache and cache_key in _uid_cache:
         return _uid_cache[cache_key]
 
     result = api_get(base_url, f"{collection}?uid={uid}&limit=1000", auth)
@@ -244,8 +249,9 @@ def find_by_uid(base_url: str, auth: str, collection: str, uid: str) -> str | No
             if props.get("uid") == uid:
                 item_id = item.get("id") or props.get("id")
                 if item_id:
-                    _uid_cache[cache_key] = str(item_id)
-                    return str(item_id)
+                    item_id = str(item_id)
+                    _uid_cache[cache_key] = item_id
+                    return item_id
     return None
 
 
@@ -516,7 +522,7 @@ def ensure_procedure(base_url: str, auth: str, uid: str, stub_body: dict,
         stats.setdefault("created", 0)
         stats["created"] += 1
     if new_id:
-        _uid_cache[f"procedures:{uid}"] = new_id
+        _uid_cache[_uid_cache_key(base_url, "procedures", uid)] = new_id
     return new_id
 
 
@@ -574,7 +580,7 @@ def ensure_system(base_url: str, auth: str, uid: str, stub_body: dict,
         stats.setdefault("created", 0)
         stats["created"] += 1
     if new_id:
-        _uid_cache[f"systems:{uid}"] = new_id
+        _uid_cache[_uid_cache_key(base_url, "systems", uid)] = new_id
     return new_id
 
 
@@ -690,7 +696,7 @@ def ensure_deployment(base_url: str, auth: str, uid: str, stub_body: dict,
         stats.setdefault("created", 0)
         stats["created"] += 1
     if new_id:
-        _uid_cache[f"deployments:{uid}"] = new_id
+        _uid_cache[_uid_cache_key(base_url, "deployments", uid)] = new_id
     return new_id
 
 
@@ -713,8 +719,7 @@ def clean_resource(base_url: str, auth: str, collection: str, uid: str,
         stats["deleted"] += 1
 
     # Invalidate cache
-    cache_key = f"{collection}:{uid}"
-    _uid_cache.pop(cache_key, None)
+    _uid_cache.pop(_uid_cache_key(base_url, collection, uid), None)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
