@@ -118,6 +118,8 @@ EA Hydrology Beggearn Huish
 Verified UI behavior:
 
 - The deployed-system card renders an image-backed STANAG symbol element instead of the old blank fallback rectangle.
+- A representative hydrometric gauge photograph is available in system SensorML metadata for the deployed-system side-card thumbnail path. It is explicitly labeled as representative imagery, not station-specific imagery.
+- Because the current OSH server rejects system SensorML PUTs with HTTP 500, the production Explorer also includes an Environment Agency Hydrology fallback thumbnail using that same representative photograph when SensorML media is unavailable.
 - The card includes a `Latest readings` section.
 - The card shows both Beggearn Huish readings:
   - River flow `0.219 m3/s`
@@ -147,6 +149,8 @@ Confirmed live-demo features:
 - correct OSH preset connected,
 - EA hydrology resources visible on map,
 - STANAG symbol no longer blank fallback,
+- representative gauge photo metadata available for side-card thumbnail display,
+- Explorer fallback thumbnail available while system SensorML PUTs are blocked server-side,
 - deployed-system side card latest readings visible,
 - map popup latest-reading content populated,
 - backend latest observations available.

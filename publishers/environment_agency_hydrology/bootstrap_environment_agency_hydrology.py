@@ -47,6 +47,15 @@ EA_STATIONS = "https://environment.data.gov.uk/hydrology/id/stations.json"
 EA_MEASURES = "https://environment.data.gov.uk/hydrology/id/measures.json"
 EA_READINGS = "https://environment.data.gov.uk/hydrology/data/readings.json"
 OGL3 = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+EA_GAUGE_PHOTO = (
+    "https://upload.wikimedia.org/wikipedia/commons/f/f0/"
+    "Environment_Agency_Morton_River_Gauge_Station_-_geograph.org.uk_-_283345.jpg"
+)
+EA_GAUGE_PHOTO_PAGE = (
+    "https://commons.wikimedia.org/wiki/"
+    "File:Environment_Agency_Morton_River_Gauge_Station_-_geograph.org.uk_-_283345.jpg"
+)
+CC_BY_SA_20 = "https://creativecommons.org/licenses/by-sa/2.0/"
 
 
 def _load_stations() -> list[dict]:
@@ -170,6 +179,16 @@ def _system_sml(station: dict) -> dict:
     measure_labels = ", ".join(m["label"] for m in station.get("measures", []))
     docs = [
         {
+            "role": "http://dbpedia.org/resource/Photograph",
+            "name": "Representative Hydrometric Gauge Photo",
+            "description": (
+                "Representative photograph of an Environment Agency river gauge station. "
+                "Used as a visual proxy for curated Environment Agency hydrology stations; "
+                "not a station-specific photograph. Photo: Brian Green / Geograph, CC BY-SA 2.0."
+            ),
+            "link": {"href": EA_GAUGE_PHOTO, "type": "image/jpeg"},
+        },
+        {
             "role": "http://dbpedia.org/resource/Web_page",
             "name": "Environment Agency Station Resource",
             "description": f"Linked-data station resource for {station['name']}.",
@@ -179,6 +198,18 @@ def _system_sml(station: dict) -> dict:
             "role": "http://dbpedia.org/resource/Web_page",
             "name": "Hydrology API Reference",
             "link": {"href": EA_API_REFERENCE, "type": "text/html"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Representative Gauge Photo Source",
+            "description": "Wikimedia Commons source page for the representative gauge photo.",
+            "link": {"href": EA_GAUGE_PHOTO_PAGE, "type": "text/html"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Representative Gauge Photo License",
+            "description": "Creative Commons Attribution-ShareAlike 2.0 license for the representative gauge photo.",
+            "link": {"href": CC_BY_SA_20, "type": "text/html"},
         },
     ]
     for measure in station.get("measures", []):

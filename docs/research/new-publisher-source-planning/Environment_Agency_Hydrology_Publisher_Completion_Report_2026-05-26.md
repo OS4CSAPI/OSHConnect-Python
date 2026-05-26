@@ -59,6 +59,10 @@ CSAPI UIDs sanitize Environment Agency station notation before embedding it in r
 
 Deployment descriptions now explicitly identify the resources as Environment Agency hydrology monitoring stations and water sensor systems. This gives the Explorer symbol classifier enough semantic signal to avoid the generic blank friendly land-unit rectangle fallback.
 
+System SensorML now includes a representative Environment Agency river-gauge station photograph as the first document link. This follows the side-card image pattern used by ISS, CO-OPS, NDBC, and aviation weather publishers, where image-type SensorML documents become deployed-system card thumbnails. Because the Environment Agency station resources do not expose station-specific photos, the image is labeled as representative rather than exact-station imagery and includes source/license attribution: Brian Green / Geograph, CC BY-SA 2.0, via Wikimedia Commons.
+
+The Explorer also includes a defensive Environment Agency Hydrology thumbnail fallback using the same representative photograph. This is needed because the current OSH server still returns HTTP 500 on system SensorML PUTs, so freshly added image metadata may not reach the live side card through the normal SensorML path until that server behavior is fixed.
+
 ### Explorer Symbol Classification
 
 Environment Agency Hydrology was aligned with the existing water/weather station publishers for NATO/STANAG display. The closest established symbol family is the friendly emplaced sensor symbol already used for USGS Water, CO-OPS, NDBC, and NWS station resources.
@@ -174,6 +178,8 @@ The server enforces the DataRecord result fields strictly. The runtime was adjus
 ### System SensorML PUT Currently Fails on This Server
 
 Procedure SensorML is accepted. System SensorML PUTs currently return HTTP 500 for all Environment Agency station systems on the configured server. This does not block the operational path: systems, datastreams, deployments, and live observations are present and working. The bootstrap logs the skipped SensorML PUTs and continues.
+
+The representative gauge photo was added to system SensorML, but this server-side PUT failure means the live Explorer cannot rely on SensorML metadata alone for the side-card thumbnail. The Explorer fallback supplies the same representative image when Environment Agency Hydrology deployments have no SensorML media link.
 
 ## Documentation Updates
 

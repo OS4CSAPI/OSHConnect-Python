@@ -41,3 +41,5 @@ Use `--stations` with comma-separated Environment Agency station notations to pu
 - Values can be provisional or revised; result payloads preserve source `quality`, `completeness`, and validation-count fields when present.
 - Explorer NATO/STANAG display should use the friendly emplaced sensor symbol family (`SFGPEWRH-------`), matching USGS Water, CO-OPS, NDBC, and NWS station publishers.
 - Explorer deployed-system cards and map click popups display latest readings from the station datastreams. Freshness is based on source `phenomenonTime`, so stale groundwater values remain visibly stale even if they were published into CSAPI recently.
+- System SensorML includes a representative Environment Agency river-gauge photograph for Explorer side-card thumbnails. The image is a visual proxy, not a curated-station-specific photo: Brian Green / Geograph, CC BY-SA 2.0, via Wikimedia Commons.
+- The production Explorer has a matching fallback thumbnail for Environment Agency Hydrology because the current OSH server rejects system SensorML PUTs with HTTP 500.

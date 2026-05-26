@@ -141,7 +141,10 @@ System metadata should include:
 - river/catchment/location metadata if available,
 - source station URL,
 - available curated measures,
+- representative hydrometric gauge photo metadata for Explorer side-card thumbnails,
 - licensing and attribution note.
+
+Environment Agency station resources do not expose station-specific photos. Use an explicitly labeled representative Environment Agency river-gauge photograph rather than implying that the image is the exact selected station. Preserve attribution and license metadata in SensorML document links.
 
 ### Datastreams
 
