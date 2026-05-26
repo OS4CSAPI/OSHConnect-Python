@@ -86,6 +86,6 @@ python -m publishers.met_office_global_spot.met_office_global_spot_publisher --o
 
 ## Implementation Notes
 
-The initial curated points mirror the Met Office Land Observations demo geography: London Heathrow, Stornoway, and Cairngorm. At one hourly API request per point per cycle, a one-hour cadence uses 72 calls/day, comfortably below the 360 calls/day free-plan allowance.
+The initial curated points mirror the Met Office Land Observations demo geography: London Heathrow, Exeter Airport, Portsmouth / Thorney Island, Stornoway, and Cairngorm. At one hourly API request per point per cycle, a one-hour cadence uses 120 calls/day, comfortably below the 360 calls/day free-plan allowance.
 
 The runtime client has a configurable endpoint path because public DataHub pages confirm the Site-Specific Forecast / Global Spot product and `/sitespecific/v0` context, but the exact hourly endpoint path should be validated with the live subscribed API before production service installation.

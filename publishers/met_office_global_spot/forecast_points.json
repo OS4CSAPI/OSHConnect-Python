@@ -66,6 +66,22 @@
       "selectionReason": "Urban and airport-adjacent forecast context that complements the London Met Office land observation location and UK-AIR Camden."
     },
     {
+      "id": "exeter-airport-area",
+      "name": "Exeter Airport Area",
+      "description": "Curated Met Office Global Spot forecast point for the Exeter Airport area.",
+      "lat": 50.7344,
+      "lon": -3.4139,
+      "selectionReason": "Southwest England forecast point paired with the live-validated Met Office Land Observations geohash near Exeter Airport."
+    },
+    {
+      "id": "portsmouth-thorney-island-area",
+      "name": "Portsmouth / Thorney Island Area",
+      "description": "Curated Met Office Global Spot forecast point for the Portsmouth-adjacent east Solent / Thorney Island area.",
+      "lat": 50.8198,
+      "lon": -1.0880,
+      "selectionReason": "South coast forecast point paired with the live-validated Portsmouth-adjacent Met Office Land Observations geohash; label avoids implying a city-centre station."
+    },
+    {
       "id": "stornoway-coastal-area",
       "name": "Stornoway Coastal Area",
       "description": "Curated Met Office Global Spot forecast point for the Stornoway coastal area.",

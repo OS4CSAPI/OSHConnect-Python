@@ -56,6 +56,8 @@ This is intentionally separate from `publishers/met_office_datahub`, which publi
 Forecast points:
 
 - London Heathrow Area
+- Exeter Airport Area
+- Portsmouth / Thorney Island Area
 - Stornoway Coastal Area
 - Cairngorm Upland Area
 
@@ -68,7 +70,7 @@ Forecast parameters:
 - Forecast Precipitation Probability
 - Forecast Weather Code
 
-With three locations at one request per location per hour, the default operational cadence is about 72 requests/day, comfortably below the documented 360 calls/day free-plan allowance.
+With five locations at one request per location per hour, the default operational cadence is about 120 requests/day, comfortably below the documented 360 calls/day free-plan allowance.
 
 ## Validation Completed
 

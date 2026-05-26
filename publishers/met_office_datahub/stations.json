@@ -93,6 +93,24 @@
       "selectionReason": "Urban and airport-adjacent weather context that complements UK-AIR Camden and aviation demo layers."
     },
     {
+      "id": "exeter-airport-area",
+      "name": "Exeter Airport Area",
+      "description": "Curated Met Office Land Observations lookup point for the Exeter Airport area.",
+      "lat": 50.7344,
+      "lon": -3.4139,
+      "geohash": "gcj8ds",
+      "selectionReason": "Live nearest lookup resolved a Met Office observation geohash about 1 km from Exeter Airport, adding a strong southwest England weather reference for demos."
+    },
+    {
+      "id": "portsmouth-thorney-island-area",
+      "name": "Portsmouth / Thorney Island Area",
+      "description": "Curated Met Office Land Observations lookup point for the Portsmouth-adjacent east Solent / Thorney Island area.",
+      "lat": 50.8198,
+      "lon": -1.0880,
+      "geohash": "gcp34f",
+      "selectionReason": "Live nearest lookup from Portsmouth resolved an observation geohash east of the city, about 11 km from Portsmouth, providing a south coast weather reference with honest Portsmouth-adjacent labeling."
+    },
+    {
       "id": "stornoway-coastal-area",
       "name": "Stornoway Coastal Area",
       "description": "Curated coastal Met Office Land Observations lookup point for the Stornoway area.",
