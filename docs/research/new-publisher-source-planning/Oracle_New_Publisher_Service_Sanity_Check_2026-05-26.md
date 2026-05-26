@@ -36,9 +36,37 @@ sensorhub.service: active
 met-office-datahub-publisher.service: active
 ```
 
-The Oracle service inventory shows `met-office-datahub-publisher.service` installed and running as the persistent service for the newest access-gated publisher.
+The initial check found only `met-office-datahub-publisher.service` installed as a persistent service for the newest publisher set. Environment Agency Hydrology, UK-AIR, and BGS SensorThings were already bootstrapped and one-shot published, but they were not yet represented by dedicated Oracle systemd units.
 
-No persistent systemd units were discovered for Environment Agency Hydrology, UK-AIR, or BGS SensorThings during this check. Those publishers have been bootstrapped and one-shot published successfully, and their live CSAPI root deployments remain present, but they are not yet represented by dedicated Oracle scheduler/service units in the same way as Met Office.
+That operational gap was closed on 2026-05-26. A durable full-repo working tree was installed at:
+
+```text
+/home/ubuntu/oshconnect-python-publishers
+```
+
+It was seeded from controlled repo commit:
+
+```text
+13de4a1d8821ebb09cda35531afe3935eb538a55
+```
+
+The following persistent services were installed, enabled, and started:
+
+| Service | Module | Interval | First managed cycle |
+| --- | --- | ---: | --- |
+| `environment-agency-hydrology-publisher.service` | `publishers.environment_agency_hydrology.environment_agency_hydrology_publisher` | 900s | 5 published, 0 errors |
+| `uk-air-publisher.service` | `publishers.uk_air.uk_air_publisher` | 3600s | 4 published, 0 errors |
+| `bgs-sensorthings-publisher.service` | `publishers.bgs_sensorthings.bgs_sensorthings_publisher` | 21600s | 9 published, 0 errors |
+
+All three services use the existing host-local environment file pattern:
+
+```ini
+EnvironmentFile=/etc/os4csapi/publisher-secrets.env
+```
+
+No raw credentials are stored in git.
+
+Post-install status check showed all three new services as `enabled` and `active`. Journals showed each service connected to all curated systems, posted its first managed cycle, and entered its sleep interval before the next cycle.
 
 ## Public CORS Check
 
@@ -50,46 +78,15 @@ Access-Control-Allow-Origin: *
 
 This confirms the live Caddy fix is still in place and avoids the previous duplicate-origin browser failure.
 
-## Controlled-Repo Issue Draft
+## Latest Observation Spot Check
 
-The local environment did not provide a GitHub issue tool, `gh` CLI, or GitHub API token at the time of this check. If an issue is filed, file it only in a controlled OS4CSAPI repository, preferably `OS4CSAPI/OSHConnect-Python`.
+Representative latest-observation read-back after service installation:
 
-Suggested title:
+| Source | Datastream ID | Result |
+| --- | --- | --- |
+| Environment Agency Hydrology river level | `05i0` | latest observation returned |
+| UK-AIR NO2 | `05kg` | latest observation returned |
+| BGS water temperature | `05mg` | latest observation returned |
+| Met Office air temperature | `05r0` | latest observation returned |
 
-```text
-Install persistent Oracle services for EA Hydrology, UK-AIR, and BGS publishers
-```
-
-Suggested body:
-
-```markdown
-## Summary
-
-Environment Agency Hydrology, UK-AIR, and BGS SensorThings were implemented, bootstrapped, one-shot published, and verified in production Explorer, but the Oracle host currently only has Met Office installed as a persistent new-publisher service.
-
-## Current State
-
-- `met-office-datahub-publisher.service` is installed and active.
-- No dedicated systemd units were discovered for:
-  - Environment Agency Hydrology
-  - UK-AIR
-  - BGS SensorThings / UKGEOS
-- Live CSAPI root deployments are present:
-  - `urn:os4csapi:deployment:environment-agency-hydrology-demo:v1` -> `05d0`
-  - `urn:os4csapi:deployment:uk-air-demo:v1` -> `05g0`
-  - `urn:os4csapi:deployment:bgs-sensorthings-demo:v1` -> `05ig`
-  - `urn:os4csapi:deployment:met-office-datahub-demo:v1` -> `05l0`
-
-## Proposed Work
-
-Add host-local systemd service/timer units or equivalent scheduler entries for the three one-shot-verified publishers, using the existing Oracle service pattern and without committing any secrets.
-
-## Acceptance Criteria
-
-- Environment Agency Hydrology publishes on a bounded recurring cadence.
-- UK-AIR publishes on a bounded recurring cadence.
-- BGS SensorThings publishes on a bounded recurring cadence appropriate for its source update frequency.
-- Units use host-local environment/secret files only.
-- `systemctl status` and journal checks are documented.
-- Production Explorer still loads the public endpoint without CORS-blocked OSH requests.
-```
+The BGS source currently reports older observations from 2026-04-13, which matches the upstream latest value observed during the publisher completion work. This is stale source data, not a service failure.
