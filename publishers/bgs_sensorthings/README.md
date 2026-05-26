@@ -18,7 +18,7 @@ The first pass uses three UKGEOS Glasgow downhole hydro loggers:
 
 Curated source records are restricted to BGS datastreams that reported unrestricted access and Open Government Licence / UKRI acknowledgement usage text during probing.
 
-The card thumbnail uses an official UKGEOS borehole-dimensions illustration from the Glasgow Observatory page as a representative visual. It is not a station-specific photograph. UKGEOS legal text says photographic images are not covered by OGL, so the publisher intentionally avoids UKGEOS photographs unless a specific image license is available.
+The card thumbnail uses the official UKGEOS borehole-dimensions illustration at `https://www.ukgeos.ac.uk/assets/img/svgs/illustrations/borehole_dimmensions.svg` from the Glasgow Observatory page as a representative visual. It is not a station-specific photograph. UKGEOS legal text says photographic images are not covered by OGL, so the publisher intentionally avoids UKGEOS photographs unless a specific image license is available.
 
 ## Bootstrap
 

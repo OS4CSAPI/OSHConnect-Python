@@ -135,6 +135,8 @@ The BGS/UKGEOS Glasgow Observatory page includes relevant visual assets, includi
 
 Because no station-specific licensed photograph was identified during this pass, the BGS card uses the official UKGEOS borehole-dimensions illustration as a representative, non-photographic visual for Glasgow Observatory borehole infrastructure. The implementation labels it as representative, not station-specific.
 
+Post-thumbnail live bootstrap with `--force-sml` successfully PUT the procedure SensorML, but the three BGS system SensorML PUTs still returned the known live OSH HTTP 500. The representative image docs are present in the publisher metadata for future successful system updates; current production Explorer visibility is provided by the BGS representative thumbnail fallback.
+
 ## Remaining Follow-Up
 
 - Investigate the live OSH SensorML PUT 500 for BGS systems if richer system metadata becomes necessary.
