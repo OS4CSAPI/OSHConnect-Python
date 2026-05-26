@@ -267,8 +267,8 @@ class MetOfficeDataHubClient:
 
     def nearest(self, lat: float, lon: float) -> dict:
         query_variants = [
-            {"latitude": lat, "longitude": lon},
-            {"lat": lat, "lon": lon},
+            {"lat": f"{lat:.2f}", "lon": f"{lon:.2f}"},
+            {"latitude": f"{lat:.2f}", "longitude": f"{lon:.2f}"},
         ]
         errors = []
         for query in query_variants:
