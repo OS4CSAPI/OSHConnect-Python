@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+import publishers.met_office_global_spot.met_office_global_spot_publisher as global_spot
 from publishers.met_office_global_spot.met_office_global_spot_publisher import (
     MetOfficeGlobalSpotPublisher,
     _candidate_records,
@@ -86,3 +87,19 @@ def test_unknown_lead_time_uses_schema_supported_nan():
 
     assert forecasts[0]["result"]["issuedTime"] == ""
     assert forecasts[0]["result"]["leadTimeHours"] == "NaN"
+
+
+def test_seen_forecast_keys_persist_for_service_restarts(tmp_path, monkeypatch):
+    monkeypatch.setattr(global_spot, "STATE_PATH", tmp_path / "state.json")
+
+    publisher = MetOfficeGlobalSpotPublisher.__new__(MetOfficeGlobalSpotPublisher)
+    publisher.state = {"publishedKeys": []}
+    publisher._seen = set()
+
+    publisher._remember_seen("location|air_temperature_forecast|valid|12.3", persist=True)
+
+    restarted = MetOfficeGlobalSpotPublisher.__new__(MetOfficeGlobalSpotPublisher)
+    restarted.state = restarted._load_state()
+    restarted._seen = set(restarted.state.get("publishedKeys", []))
+
+    assert "location|air_temperature_forecast|valid|12.3" in restarted._seen

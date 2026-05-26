@@ -95,6 +95,7 @@ Oracle live validation completed after host-local key installation:
 - A live Global Spot probe against `/sitespecific/v0/point/hourly` succeeded for London Heathrow Area with 49 candidate forecast records and recognized forecast temperature, humidity, wind speed, precipitation probability, and weather-code fields.
 - The Global Spot bootstrap resources already existed on OSH: 5 virtual forecast systems, 30 forecast datastreams, and the deployment hierarchy.
 - The first live publish attempt inserted 0 observations because OSH rejected an empty `leadTimeHours` decimal field. The publisher now preserves the field shape and uses OSH's supported `NaN` decimal sentinel when the upstream response lacks an issued/model-run time needed to compute lead time.
+- Before installing a persistent service, the publisher was updated to persist recently published forecast dedupe keys in `publishers/met_office_global_spot/state.json`, so service restarts do not repost the same forecast horizon.
 - After the fix, one live Global Spot `--once` cycle published 625 forecast observations with 0 errors and 0 skipped records.
 - CSAPI verification against datastream `06hg2` returned a live forecast observation with forecast type `Met Office Global Spot hourly deterministic forecast`, valid time `2026-05-26T19:00:00Z`, result time `2026-05-26T19:35:34Z`, air temperature `29.9`, and `leadTimeHours=NaN`.
 - Production Explorer reloaded to 905 map features after the Global Spot resources and observations were live. Selecting `Met Office Global Spot Portsmouth / Thorney Island Area` rendered a dedicated Forecast section and did not render Latest readings or Recent trend for forecast datastreams.
@@ -123,7 +124,7 @@ MET_OFFICE_DATAHUB_API_KEY_HEADER=apikey
 1. Commit and push the publisher `leadTimeHours` sentinel fix and focused parser tests.
 2. Commit and push the Explorer UI polish that hides unknown lead time values.
 3. Verify Cloudflare Pages production bundle after deployment and re-check the Global Spot Portsmouth / Thorney Island card.
-4. Install a persistent Oracle systemd service only after the deployed UI smoke check is clean.
+4. Seed the Oracle publisher state from the currently published forecast horizon, then install and start the persistent Oracle systemd service.
 
 ## Explorer Follow-Up
 

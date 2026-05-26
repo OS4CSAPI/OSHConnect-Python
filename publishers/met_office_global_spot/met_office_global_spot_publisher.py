@@ -29,6 +29,8 @@ from publishers.bootstrap_helpers import api_get, find_by_uid
 DEFAULT_API_BASE = "https://data.hub.api.metoffice.gov.uk/sitespecific/v0"
 DEFAULT_HOURLY_PATH = "/point/hourly"
 FORECAST_TYPE = "Met Office Global Spot hourly deterministic forecast"
+STATE_PATH = Path(__file__).with_name("state.json")
+MAX_SEEN_KEYS = 5000
 
 
 class UpstreamRateLimit(RuntimeError):
@@ -298,6 +300,7 @@ class MetOfficeGlobalSpotPublisher:
             self.locations = [s for s in self.locations if s["id"] in wanted]
         self.parameters = _load_parameters()
         self.client = MetOfficeGlobalSpotClient()
+        self.state = self._load_state()
 
         self.osh_address = os.environ.get("OSH_ADDRESS", "")
         self.osh_port = int(os.environ.get("OSH_PORT", "443"))
@@ -318,12 +321,38 @@ class MetOfficeGlobalSpotPublisher:
         self._auth = "Basic " + base64.b64encode(
             f"{self.osh_user}:{self.osh_pass}".encode()).decode()
         self._ds_ids: dict[str, dict[str, str]] = {}
-        self._seen: set[str] = set()
+        self._seen: set[str] = set(self.state.get("publishedKeys", []))
         self._request_delay = float(os.environ.get("MET_OFFICE_GLOBAL_SPOT_REQUEST_DELAY", "1.0"))
         self._rate_limit_backoff = float(os.environ.get("MET_OFFICE_GLOBAL_SPOT_429_BACKOFF", "3600"))
         self._forecast_hours = float(os.environ.get("MET_OFFICE_GLOBAL_SPOT_FORECAST_HOURS", "24"))
         self._cooldown_until = 0.0
         self.stats = {"published": 0, "errors": 0, "reconnects": 0, "skipped": 0}
+
+    def _load_state(self) -> dict:
+        if not STATE_PATH.exists():
+            return {"publishedKeys": []}
+        try:
+            state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return {"publishedKeys": []}
+        if not isinstance(state.get("publishedKeys"), list):
+            state["publishedKeys"] = []
+        return state
+
+    def _save_state(self):
+        keys = list(dict.fromkeys(self.state.get("publishedKeys", [])))[-MAX_SEEN_KEYS:]
+        self.state["publishedKeys"] = keys
+        STATE_PATH.write_text(json.dumps(self.state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    def _remember_seen(self, key: str, *, persist: bool):
+        self._seen.add(key)
+        if not persist:
+            return
+        keys = self.state.setdefault("publishedKeys", [])
+        keys.append(key)
+        if len(keys) > MAX_SEEN_KEYS:
+            del keys[:-MAX_SEEN_KEYS]
+        self._save_state()
 
     def _system_uid(self, location_id: str) -> str:
         return f"urn:os4csapi:system:met-office-datahub-global-spot:{_uid_token(location_id)}:v1"
@@ -534,13 +563,13 @@ class MetOfficeGlobalSpotPublisher:
                 value_label = f"{parameter['label']}={forecast['value']} {parameter['unit']} valid {forecast['phenomenonTime']}"
                 if dry_run:
                     print(f"  [{ts_label}] {location_id}/{output_name}: [DRY] {value_label}")
-                    self._seen.add(forecast["dedupeKey"])
+                    self._remember_seen(forecast["dedupeKey"], persist=False)
                 else:
                     try:
                         self._post_observation(ds_id, obs)
                         self.stats["published"] += 1
                         published += 1
-                        self._seen.add(forecast["dedupeKey"])
+                        self._remember_seen(forecast["dedupeKey"], persist=True)
                         print(f"  [{ts_label}] {location_id}/{output_name}: OK  {value_label}")
                     except Exception as exc:
                         self.stats["errors"] += 1
