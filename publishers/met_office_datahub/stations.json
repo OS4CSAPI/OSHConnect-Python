@@ -1,0 +1,114 @@
+{
+  "_comment": "Curated Met Office Weather DataHub Land Observations demo locations. Geohash values are resolved from the nearest endpoint and should be cached before operational publishing.",
+  "_sources": {
+    "landingPage": "https://datahub.metoffice.gov.uk/",
+    "docsRoot": "https://datahub.metoffice.gov.uk/docs",
+    "observationsOverview": "https://datahub.metoffice.gov.uk/docs/g/category/observations/overview",
+    "apiDocumentation": "https://datahub.metoffice.gov.uk/docs/g/category/observations/type/land-observations/api-documentation",
+    "glossary": "https://datahub.metoffice.gov.uk/docs/glossary?models=mo-land-observations",
+    "pricing": "https://datahub.metoffice.gov.uk/pricing/observations"
+  },
+  "parameters": [
+    {
+      "outputName": "air_temperature",
+      "label": "Air Temperature",
+      "resultField": "air_temperature_c",
+      "unit": "C",
+      "uom": "Cel",
+      "aliases": ["screenTemperature", "screen_temperature", "temperature", "airTemperature", "air_temperature", "temperature_at_screen_level"]
+    },
+    {
+      "outputName": "relative_humidity",
+      "label": "Relative Humidity",
+      "resultField": "relative_humidity_pct",
+      "unit": "%",
+      "uom": "%",
+      "aliases": ["screenRelativeHumidity", "relativeHumidity", "relative_humidity", "humidity", "humidity_at_screen_level"]
+    },
+    {
+      "outputName": "mean_sea_level_pressure",
+      "label": "Mean Sea Level Pressure",
+      "resultField": "mean_sea_level_pressure_hpa",
+      "unit": "hPa",
+      "uom": "hPa",
+      "aliases": ["meanSeaLevelPressure", "mslp", "pressure", "mean_sea_level_pressure"]
+    },
+    {
+      "outputName": "visibility",
+      "label": "Visibility",
+      "resultField": "visibility_m",
+      "unit": "m",
+      "uom": "m",
+      "aliases": ["visibility", "visibilityAt10m", "visibility_at_10m"]
+    },
+    {
+      "outputName": "weather_code",
+      "label": "Weather Code",
+      "resultField": "weather_code",
+      "unit": "code",
+      "uom": "1",
+      "aliases": ["weatherCode", "weather_code", "presentWeatherCode", "present_weather_code"]
+    },
+    {
+      "outputName": "wind_direction",
+      "label": "Wind Direction",
+      "resultField": "wind_direction_deg",
+      "unit": "deg",
+      "uom": "deg",
+      "aliases": ["windDirectionFrom10m", "windDirection", "wind_direction", "wind_direction_at_10m"]
+    },
+    {
+      "outputName": "wind_speed",
+      "label": "Wind Speed",
+      "resultField": "wind_speed_ms",
+      "unit": "m/s",
+      "uom": "m/s",
+      "aliases": ["windSpeed10m", "windSpeed", "wind_speed", "wind_speed_at_10m"]
+    },
+    {
+      "outputName": "wind_gust",
+      "label": "Wind Gust",
+      "resultField": "wind_gust_ms",
+      "unit": "m/s",
+      "uom": "m/s",
+      "aliases": ["windGust10m", "windGust", "wind_gust", "wind_gust_at_10m"]
+    },
+    {
+      "outputName": "pressure_tendency",
+      "label": "Pressure Tendency",
+      "resultField": "pressure_tendency_hpa",
+      "unit": "hPa",
+      "uom": "hPa",
+      "aliases": ["pressureTendency", "pressure_tendency", "pressure_tendency_at_10m"]
+    }
+  ],
+  "stations": [
+    {
+      "id": "london-heathrow-area",
+      "name": "London Heathrow Area",
+      "description": "Curated urban and aviation-adjacent Met Office Land Observations lookup point for the London Heathrow area.",
+      "lat": 51.4700,
+      "lon": -0.4543,
+      "geohash": null,
+      "selectionReason": "Urban and airport-adjacent weather context that complements UK-AIR Camden and aviation demo layers."
+    },
+    {
+      "id": "stornoway-coastal-area",
+      "name": "Stornoway Coastal Area",
+      "description": "Curated coastal Met Office Land Observations lookup point for the Stornoway area.",
+      "lat": 58.2156,
+      "lon": -6.3311,
+      "geohash": null,
+      "selectionReason": "North Atlantic coastal weather-impact reference location for UK-wide demo coverage."
+    },
+    {
+      "id": "cairngorm-upland-area",
+      "name": "Cairngorm Upland Area",
+      "description": "Curated upland Met Office Land Observations lookup point for the Cairngorms area.",
+      "lat": 57.1167,
+      "lon": -3.6420,
+      "geohash": null,
+      "selectionReason": "Upland/rural reference location that complements urban, coastal, hydrology, and groundwater publishers."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Met Office Weather DataHub Publisher
 
-Status: started, access-gated implementation target.
+Status: implemented as an access-gated Land Observations publisher; live validation requires `MET_OFFICE_LAND_OBSERVATIONS_API_KEY` in the local environment.
 
 This publisher slot is reserved for the fourth candidate source from the new-publisher expansion research: Met Office Weather DataHub Land Observations.
 
@@ -23,6 +23,8 @@ The API flow is documented as:
 
 The service is account/subscription gated. The public pricing page lists a free Land Observations plan up to 360 calls per day, but access still requires registration, product selection, subscription, and API credentials.
 
+The subscribed API context supplied for this implementation is `/observation-land/1` with API name `CDP_Observation_Land`.
+
 ## Proposed CSAPI Model
 
 Use the station-network pattern from `publishers/usgs_water`, with compatibility guardrails from `publishers/aviation_wx`.
@@ -33,9 +35,52 @@ Use the station-network pattern from `publishers/usgs_water`, with compatibility
 - One deployment group for the curated Met Office demo set.
 - Observations should preserve the source time, geohash/location identifier, observed parameter, value, unit, and source response metadata where permitted.
 
-## Implementation Gate
+## Configuration
 
-Do not implement a live runtime until a `MET_OFFICE_DATAHUB_API_KEY` or equivalent subscription credential is available and the exact API request headers/query parameters are verified against the subscribed product.
+Store the API key outside git. In this workspace the preferred location is `publishers/.env`, which is ignored by the repository `.gitignore`.
+
+```text
+MET_OFFICE_LAND_OBSERVATIONS_API_KEY=...
+```
+
+Optional overrides:
+
+```text
+MET_OFFICE_LAND_OBSERVATIONS_BASE_URL=https://data.hub.api.metoffice.gov.uk/observation-land/1
+MET_OFFICE_DATAHUB_API_KEY_HEADER=apikey
+MET_OFFICE_DATAHUB_REQUEST_DELAY=1.0
+MET_OFFICE_DATAHUB_429_BACKOFF=3600
+```
+
+## Commands
+
+Probe the authenticated API and inspect response shape:
+
+```bash
+python -m publishers.met_office_datahub.met_office_datahub_publisher --probe --stations london-heathrow-area
+```
+
+Run a dry publisher cycle without POSTing to OSH:
+
+```bash
+python -m publishers.met_office_datahub.met_office_datahub_publisher --dry-run --once
+```
+
+Bootstrap CSAPI resources:
+
+```bash
+python -m publishers.met_office_datahub.bootstrap_met_office_datahub
+```
+
+Run one live publish cycle:
+
+```bash
+python -m publishers.met_office_datahub.met_office_datahub_publisher --once
+```
+
+## Implementation Notes
+
+The publisher resolves and caches the nearest Met Office Land Observations geohash for each curated lookup point in `state.json`. That file is ignored by git through the repository's `publishers/**/state.json` rule. This keeps recurring publish cycles comfortably below the 360 calls/day free-plan limit.
 
 When credentials are available, start with a small curated set of UK locations that complement existing demo publishers, for example:
 

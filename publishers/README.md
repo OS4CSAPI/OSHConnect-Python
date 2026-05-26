@@ -61,6 +61,7 @@ python -m publishers.environment_agency_hydrology.bootstrap_environment_agency_h
 python -m publishers.uk_air.bootstrap_uk_air
 python -m publishers.bgs_sensorthings.bootstrap_bgs_sensorthings
 # Met Office DataHub is access-gated; see publishers/met_office_datahub/README.md
+python -m publishers.met_office_datahub.bootstrap_met_office_datahub
 python -m publishers.iss.bootstrap_iss
 ```
 
@@ -116,7 +117,7 @@ python -m publishers.nws.nws_publisher --interval 3600
 | `BOOTSTRAP_URL` | No | Override the full bootstrap API URL |
 | `OSH_FORCE_IP` | No | Force DNS resolution to a specific IP |
 | `USGS_API_KEY` | No | USGS API key for higher rate limits |
-| `MET_OFFICE_DATAHUB_API_KEY` | Planned | Met Office Weather DataHub subscription key for Land Observations |
+| `MET_OFFICE_LAND_OBSERVATIONS_API_KEY` | For Met Office | Met Office Weather DataHub Land Observations subscription key |
 | `BUOYCAM_CACHE_ROOT` | No | Local directory for BuoyCAM image cache |
 | `BUOYCAM_CACHE_BASE_URL` | No | Public URL serving the cached images |
 
@@ -133,7 +134,7 @@ python -m publishers.nws.nws_publisher --interval 3600
   only the curated pollutant timeseries in `stations.json`.
 - **BGS SensorThings** uses the public BGS Sensor Data Service SensorThings API
   and polls only curated unrestricted UKGEOS Glasgow datastreams in `stations.json`.
-- **Met Office DataHub** is started as an access-gated publisher target for Land
-  Observations. It requires account/subscription credentials before live runtime
-  implementation can be completed.
+- **Met Office DataHub** uses the access-gated Land Observations API and reads
+  `MET_OFFICE_LAND_OBSERVATIONS_API_KEY` from the environment. It caches nearest
+  geohash lookups in ignored runtime state to stay within the free-plan call budget.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.
