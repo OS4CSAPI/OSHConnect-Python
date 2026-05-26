@@ -34,6 +34,9 @@ import argparse
 import json
 import os
 import sys
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 # Add parent dir to path for shared helpers
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -75,6 +78,8 @@ USGS_COMBINED_METADATA = "https://api.waterdata.usgs.gov/ogcapi/v0/collections/c
 USGS_PARAMETER_CODES = "https://api.waterdata.usgs.gov/ogcapi/v0/collections/parameter-codes"
 USGS_STATISTIC_CODES = "https://api.waterdata.usgs.gov/ogcapi/v0/collections/statistic-codes"
 USGS_API_REGISTRATION = "https://api.usgs.gov/"
+USGS_NIMS_API_BASE = "https://api.waterdata.usgs.gov/nims/v0"
+USGS_NIMS_IMAGE_BASE = "https://usgs-nims-images.s3.amazonaws.com"
 
 # Series semantics
 STATISTIC_INSTANTANEOUS = "00011"
@@ -129,6 +134,36 @@ def _combined_metadata_url(nwis_id: str, parameter_code: str) -> str:
         f"&parameter_code={parameter_code}"
         f"&limit=10"
     )
+
+
+def _nims_latest_image_doc(station: dict) -> dict | None:
+    cam_id = station.get("camId")
+    if not cam_id:
+        return None
+
+    url = f"{USGS_NIMS_API_BASE}/listFiles?camId={quote(cam_id)}&limit=1&recent=true"
+    try:
+        req = Request(url, headers={"Accept": "application/json"})
+        with urlopen(req, timeout=10) as resp:
+            files = json.loads(resp.read().decode())
+    except (HTTPError, URLError, TimeoutError, ValueError, OSError) as exc:
+        print(f"  [WARN] NIMS thumbnail lookup skipped for {cam_id}: {exc}")
+        return None
+
+    if not isinstance(files, list) or not files:
+        return None
+
+    filename = files[0]
+    if not isinstance(filename, str) or not filename.lower().endswith(".jpg"):
+        return None
+
+    thumb_url = f"{USGS_NIMS_IMAGE_BASE}/thumbnail/{quote(cam_id)}/{quote(filename)}"
+    return {
+        "role": "http://dbpedia.org/resource/Photograph",
+        "name": "USGS NIMS Camera Image",
+        "description": f"Latest available USGS NIMS camera thumbnail for {station['name']}.",
+        "link": {"href": thumb_url, "type": "image/jpeg"},
+    }
 
 
 # ======================================================================
@@ -350,6 +385,63 @@ def _system_sml(station: dict) -> dict:
             "value": station["camId"],
         })
 
+    documents = [
+        doc for doc in [_nims_latest_image_doc(station)] if doc
+    ]
+    documents.extend([
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Monitoring Location",
+            "description": f"USGS monitoring-location resource for site {nwis_id}.",
+            "link": {
+                "href": station.get("monitoringLocationUrl", _monitoring_location_url(nwis_id)),
+                "type": "application/geo+json",
+            },
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Latest Continuous - Discharge",
+            "description": f"Latest discharge values for site {nwis_id}.",
+            "link": {
+                "href": station.get("latestContinuous00060Url", _latest_continuous_url(nwis_id, "00060")),
+                "type": "application/geo+json",
+            },
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Latest Continuous - Gage Height",
+            "description": f"Latest gage-height values for site {nwis_id}.",
+            "link": {
+                "href": station.get("latestContinuous00065Url", _latest_continuous_url(nwis_id, "00065")),
+                "type": "application/geo+json",
+            },
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Time Series Metadata - Discharge",
+            "description": f"Time-series metadata for discharge at site {nwis_id}.",
+            "link": {
+                "href": station.get("timeSeries00060Url", _time_series_metadata_url(nwis_id, "00060")),
+                "type": "application/geo+json",
+            },
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Time Series Metadata - Gage Height",
+            "description": f"Time-series metadata for gage height at site {nwis_id}.",
+            "link": {
+                "href": station.get("timeSeries00065Url", _time_series_metadata_url(nwis_id, "00065")),
+                "type": "application/geo+json",
+            },
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "USGS Water Data OGC API",
+            "description": "Official USGS Water Data OGC API documentation.",
+            "link": {"href": USGS_API_DOCS, "type": "text/html"},
+        },
+    ])
+
     return {
         "type": "PhysicalSystem",
         "id": _system_uid(nwis_id),
@@ -432,59 +524,7 @@ def _system_sml(station: dict) -> dict:
                 },
             },
         ],
-        "documents": [
-            {
-                "role": "http://dbpedia.org/resource/Web_page",
-                "name": "Monitoring Location",
-                "description": f"USGS monitoring-location resource for site {nwis_id}.",
-                "link": {
-                    "href": station.get("monitoringLocationUrl", _monitoring_location_url(nwis_id)),
-                    "type": "application/geo+json",
-                },
-            },
-            {
-                "role": "http://dbpedia.org/resource/Web_page",
-                "name": "Latest Continuous - Discharge",
-                "description": f"Latest discharge values for site {nwis_id}.",
-                "link": {
-                    "href": station.get("latestContinuous00060Url", _latest_continuous_url(nwis_id, "00060")),
-                    "type": "application/geo+json",
-                },
-            },
-            {
-                "role": "http://dbpedia.org/resource/Web_page",
-                "name": "Latest Continuous - Gage Height",
-                "description": f"Latest gage-height values for site {nwis_id}.",
-                "link": {
-                    "href": station.get("latestContinuous00065Url", _latest_continuous_url(nwis_id, "00065")),
-                    "type": "application/geo+json",
-                },
-            },
-            {
-                "role": "http://dbpedia.org/resource/Web_page",
-                "name": "Time Series Metadata - Discharge",
-                "description": f"Time-series metadata for discharge at site {nwis_id}.",
-                "link": {
-                    "href": station.get("timeSeries00060Url", _time_series_metadata_url(nwis_id, "00060")),
-                    "type": "application/geo+json",
-                },
-            },
-            {
-                "role": "http://dbpedia.org/resource/Web_page",
-                "name": "Time Series Metadata - Gage Height",
-                "description": f"Time-series metadata for gage height at site {nwis_id}.",
-                "link": {
-                    "href": station.get("timeSeries00065Url", _time_series_metadata_url(nwis_id, "00065")),
-                    "type": "application/geo+json",
-                },
-            },
-            {
-                "role": "http://dbpedia.org/resource/Web_page",
-                "name": "USGS Water Data OGC API",
-                "description": "Official USGS Water Data OGC API documentation.",
-                "link": {"href": USGS_API_DOCS, "type": "text/html"},
-            },
-        ],
+        "documents": documents,
         "characteristics": [
             {
                 "label": "Station Properties",
@@ -526,6 +566,15 @@ def _system_sml(station: dict) -> dict:
             "srsName": "http://www.opengis.net/def/crs/EPSG/0/4326",
         },
     }
+
+
+def _go_compatible_system_sml(sml: dict, base_url: str) -> dict:
+    if "csapi-go" not in base_url:
+        return sml
+    compat = dict(sml)
+    compat.pop("characteristics", None)
+    compat.pop("capabilities", None)
+    return compat
 
 
 def _discharge_datastream_schema(site_no: str = "") -> dict:
@@ -829,7 +878,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
         uid = _system_uid(nwis_id)
 
         stub = _system_stub(st, proc_id or "pending")
-        sml = _system_sml(st)
+        sml = _go_compatible_system_sml(_system_sml(st), base_url)
 
         sys_id = ensure_system(base_url, auth, uid, stub, sml,
                                dry_run=dry_run, stats=stats,

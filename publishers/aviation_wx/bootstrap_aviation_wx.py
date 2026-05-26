@@ -61,6 +61,7 @@ DS_OUTPUT_NAME = "metarObs"
 AWX_HOME = "https://aviationweather.gov/"
 AWX_API_DOC = "https://aviationweather.gov/data/api/"
 AWX_METAR_BASE = "https://aviationweather.gov/metar/data?ids="
+AWX_ASOS_IMAGE = "https://www.weather.gov/images/asos/IMG_1176%20blank.png"
 
 # ── FAA contact ──────────────────────────────────────────────────────────
 FAA_CONTACT_ORG = "FAA / Aviation Weather Center (AWC)"
@@ -235,6 +236,12 @@ def _system_sml(station: dict) -> dict:
 
     # ── Build documents list ──────────────────────────────────────────
     docs: list[dict] = [
+        {
+            "role": "http://dbpedia.org/resource/Photograph",
+            "name": "ASOS Station Image",
+            "description": "Representative photograph of a typical ASOS/AWOS aviation weather observing installation.",
+            "link": {"href": AWX_ASOS_IMAGE, "type": "image/png"},
+        },
         {
             "role": "http://dbpedia.org/resource/Web_page",
             "name": "METAR Data Page",

@@ -414,6 +414,15 @@ def _system_sml(station: dict) -> dict:
     }
 
 
+def _go_compatible_system_sml(sml: dict, base_url: str) -> dict:
+    if "csapi-go" not in base_url:
+        return sml
+    compat = dict(sml)
+    compat.pop("characteristics", None)
+    compat.pop("capabilities", None)
+    return compat
+
+
 def _datastream_schema(station_id: str = "") -> dict:
     """SWE DataRecord schema for surface observation datastream.
 
@@ -634,7 +643,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False,
 
         # Build stub body — need procedure server ID for typeOf link
         stub = _system_stub(st, proc_id or "pending")
-        sml = _system_sml(st)
+        sml = _go_compatible_system_sml(_system_sml(st), base_url)
 
         sys_id = ensure_system(base_url, auth, uid, stub, sml,
                                dry_run=dry_run, stats=stats,

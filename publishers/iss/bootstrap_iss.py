@@ -60,6 +60,13 @@ DS_TRACK_OUTPUT = "issOrbitTrack"
 
 DEPLOY_ROOT_UID = "urn:os4csapi:deployment:orbital-tracking-demo:v1"
 
+ISS_PHOTO_URL = (
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/"
+    "International_Space_Station_after_undocking_of_STS-132.jpg/"
+    "640px-International_Space_Station_after_undocking_of_STS-132.jpg"
+)
+NASA_ISS_TRACK_URL = "https://spotthestation.nasa.gov/"
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  Resource definitions — Procedures
@@ -123,29 +130,6 @@ def _system_position() -> dict:
                 "title": "SGP4 Propagation v1",
                 "type": "application/sml+json",
             },
-            "documentation": [
-                {
-                    "role": "http://dbpedia.org/resource/Photograph",
-                    "name": "ISS Photograph",
-                    "description": (
-                        "NASA photograph of the International Space Station "
-                        "taken from the Space Shuttle Discovery during STS-119."
-                    ),
-                    "link": {
-                        "href": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/International_Space_Station_after_undocking_of_STS-132.jpg/640px-International_Space_Station_after_undocking_of_STS-132.jpg",
-                        "type": "image/jpeg",
-                    },
-                },
-                {
-                    "role": "http://dbpedia.org/resource/Web_page",
-                    "name": "ISS Tracking Page",
-                    "description": "NASA real-time ISS tracking page.",
-                    "link": {
-                        "href": "https://spotthestation.nasa.gov/",
-                        "type": "text/html",
-                    },
-                },
-            ],
         },
     }
 
@@ -170,6 +154,76 @@ def _system_orbit_track() -> dict:
             },
         },
     }
+
+
+def _system_sml(uid: str, label: str, description: str, procedure_uid: str, procedure_label: str) -> dict:
+    return {
+        "type": "PhysicalSystem",
+        "id": uid,
+        "uniqueId": uid,
+        "definition": "sosa:System",
+        "label": label,
+        "description": description,
+        "keywords": [
+            "ISS", "International Space Station", "satellite", "orbit",
+            "SGP4", "TLE", "space station", "orbital tracking",
+        ],
+        "identifiers": [
+            {"definition": "http://sensorml.com/ont/swe/property/ShortName",
+             "label": "Short Name", "value": label},
+            {"definition": "http://sensorml.com/ont/swe/property/UniqueID",
+             "label": "OS4CSAPI UID", "value": uid},
+        ],
+        "classifiers": [
+            {"definition": "http://sensorml.com/ont/swe/property/SensorType",
+             "label": "System Type", "value": "Software Agent"},
+            {"definition": "http://sensorml.com/ont/swe/property/SystemRole",
+             "label": "System Role", "value": "Orbit Feed"},
+            {"definition": "http://sensorml.com/ont/swe/property/IntendedApplication",
+             "label": "Intended Application", "value": "Orbital tracking demonstration"},
+        ],
+        "documents": [
+            {
+                "role": "http://dbpedia.org/resource/Photograph",
+                "name": "ISS Photograph",
+                "description": "NASA photograph of the International Space Station.",
+                "link": {"href": ISS_PHOTO_URL, "type": "image/jpeg"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "NASA Spot the Station",
+                "description": "NASA real-time ISS tracking and sighting page.",
+                "link": {"href": NASA_ISS_TRACK_URL, "type": "text/html"},
+            },
+        ],
+        "validTime": [VALID_TIME_START, ".."],
+    }
+
+
+def _system_position_sml() -> dict:
+    return _system_sml(
+        SYS_POS_UID,
+        "ISS Position Publisher",
+        (
+            "Virtual sensor that computes the International Space Station's geodetic "
+            "position using SGP4 propagation from NORAD TLE data."
+        ),
+        PROC_SGP4_UID,
+        "SGP4 Propagation v1",
+    )
+
+
+def _system_orbit_track_sml() -> dict:
+    return _system_sml(
+        SYS_TRACK_UID,
+        "ISS Orbit Track Publisher",
+        (
+            "Virtual sensor that generates predicted ISS ground-track products by "
+            "propagating SGP4 positions at 60-second intervals."
+        ),
+        PROC_ORBIT_UID,
+        "Orbit Track Generation v1",
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -328,6 +382,7 @@ def main():
     print(f"  ISS Tracking Bootstrap")
     print(f"  Server: {base_url}")
     print(f"  Mode:   {'DRY RUN' if dry_run else 'LIVE'}")
+    print(f"  Force-SML: {args.force_sml}")
     print(f"{'='*60}\n")
 
     # ── Clean if requested ────────────────────────────────────────────
@@ -352,9 +407,13 @@ def main():
     # ── Systems ───────────────────────────────────────────────────────
     print("\n── Systems ──")
     pos_sys_id = ensure_system(base_url, auth, SYS_POS_UID, _system_position(),
-                               dry_run=dry_run, stats=stats)
+                                         _system_position_sml(),
+                                         dry_run=dry_run, stats=stats,
+                                         force_sml=args.force_sml)
     track_sys_id = ensure_system(base_url, auth, SYS_TRACK_UID, _system_orbit_track(),
-                                  dry_run=dry_run, stats=stats)
+                                             _system_orbit_track_sml(),
+                                             dry_run=dry_run, stats=stats,
+                                             force_sml=args.force_sml)
 
     # ── Datastreams ───────────────────────────────────────────────────
     print("\n── Datastreams ──")
