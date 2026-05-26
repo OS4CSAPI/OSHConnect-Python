@@ -430,7 +430,7 @@ The established pattern for adding Go server support to any publisher:
 1. Run bootstrap against Go server:
    ```bash
    OSH_BASE_URL="https://129-80-248-53.sslip.io/csapi-go" \
-   OSH_USER=dummy OSH_PASS=dummy \
+   OSH_USER=dummy OSH_PASS=<osh-admin-password> \
    python -m publishers.<name>.bootstrap_<name>
    ```
 
@@ -440,7 +440,7 @@ The established pattern for adding Go server support to any publisher:
    Environment="OSH_ADDRESS=129-80-248-53.sslip.io"
    Environment="OSH_BASE_URL=https://129-80-248-53.sslip.io/csapi-go"
    Environment="OSH_USER=dummy"
-   Environment="OSH_PASS=dummy"
+   Environment="OSH_PASS=<osh-admin-password>"
    ExecStart=/usr/bin/python3 -m publishers.<name>.<name>_publisher
    ```
 

@@ -220,7 +220,7 @@ This is perhaps the most significant long-term benefit. The refactor transforms 
 export OSH_ADDRESS=my-osh-server.example.com
 export OSH_PORT=443
 export OSH_USER=admin
-export OSH_PASS=secret
+export OSH_PASS=<osh-admin-password>
 export SYSTEM_UID=urn:osh:sensor:iss-tracker
 export DATASTREAM_NAME="ISS Position"
 export NORAD_ID=25544

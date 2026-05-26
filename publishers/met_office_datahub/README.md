@@ -43,6 +43,14 @@ Store the API key outside git. In this workspace the preferred location is `publ
 MET_OFFICE_LAND_OBSERVATIONS_API_KEY=...
 ```
 
+On live hosts, prefer a service environment variable or a root-owned secret file instead of a repo-local `.env`:
+
+```text
+MET_OFFICE_LAND_OBSERVATIONS_API_KEY_FILE=/etc/os4csapi/secrets/met-office-land-observations.key
+```
+
+The key file may contain the raw key on the first non-comment line, or `MET_OFFICE_LAND_OBSERVATIONS_API_KEY=...`.
+
 Optional overrides:
 
 ```text

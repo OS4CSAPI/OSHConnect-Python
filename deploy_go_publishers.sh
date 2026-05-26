@@ -51,6 +51,7 @@ declare -A GO_PUBS=(
   [usgs-water-publisher-go]=usgs_water
   [usgs-nims-publisher-go]=usgs_nims
   [iss-publisher-go]=iss
+  [met-office-datahub-publisher-go]=met_office_datahub
 )
 
 for dir_name in "${!GO_PUBS[@]}"; do
@@ -73,12 +74,14 @@ fi
 echo ""
 echo "=== Running bootstraps against Go server ==="
 
-# Run each bootstrap against the Go server
-export OSH_ADDRESS=129-80-248-53.sslip.io
-export OSH_PORT=443
-export OSH_USER=os4csapi
-export OSH_PASS=ogc134mm
-export OSH_BASE_URL=$GO_URL
+# Run each bootstrap against the Go server. OSH_PASS is intentionally required
+# from the caller's environment so server credentials are not stored in git.
+export OSH_ADDRESS=${OSH_ADDRESS:-129-80-248-53.sslip.io}
+export OSH_PORT=${OSH_PORT:-443}
+export OSH_USER=${OSH_USER:-os4csapi}
+: "${OSH_PASS:?Set OSH_PASS in the shell or a host-local environment file before running this script}"
+export OSH_PASS
+export OSH_BASE_URL=${OSH_BASE_URL:-$GO_URL}
 
 # NWS bootstrap
 echo "-- NWS Bootstrap --"
@@ -120,6 +123,13 @@ echo ""
 echo "-- ISS Bootstrap --"
 cd $HOME_DIR/iss-publisher-go
 python3 -m publishers.iss.bootstrap_iss 2>&1 | tail -20
+echo ""
+
+# Met Office DataHub bootstrap (requires MET_OFFICE_LAND_OBSERVATIONS_API_KEY
+# only for publisher runtime/probe, not for resource bootstrap)
+echo "-- Met Office DataHub Bootstrap --"
+cd $HOME_DIR/met-office-datahub-publisher-go
+python3 -m publishers.met_office_datahub.bootstrap_met_office_datahub 2>&1 | tail -20
 echo ""
 
 echo "=== Bootstrap complete ==="

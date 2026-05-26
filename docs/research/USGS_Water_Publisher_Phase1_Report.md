@@ -252,7 +252,7 @@ cd ~/OSHConnect-Python && git pull origin main
 python -m publishers.usgs_water.usgs_water_publisher --once
 
 # Optional: set API key for higher rate limits
-export USGS_API_KEY=55Xjsea8288I7fnXCCGFIQMICM0ddmcvVHFT6G76
+export USGS_API_KEY=<usgs-api-key>
 
 # Create systemd service following existing publisher pattern:
 #   ExecStart=/path/to/venv/bin/python -m publishers.usgs_water.usgs_water_publisher --interval 900

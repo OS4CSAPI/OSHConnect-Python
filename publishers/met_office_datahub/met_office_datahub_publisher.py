@@ -37,7 +37,7 @@ class UpstreamRateLimit(RuntimeError):
 
 
 def _load_local_env():
-    env_path = Path(__file__).resolve().parents[1] / ".env"
+    env_path = Path(os.environ.get("PUBLISHERS_ENV_FILE") or Path(__file__).resolve().parents[1] / ".env")
     if not env_path.exists():
         return
     for raw_line in env_path.read_text(encoding="utf-8").splitlines():
@@ -49,6 +49,32 @@ def _load_local_env():
         value = value.strip().strip('"').strip("'")
         if key and key not in os.environ:
             os.environ[key] = value
+
+
+def _read_secret_file(path_value: str | None) -> str | None:
+    if not path_value:
+        return None
+    path = Path(os.path.expanduser(path_value.strip().strip('"').strip("'")))
+    if not path.exists():
+        raise SystemExit(f"ERROR: configured API key file does not exist: {path}")
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" in line:
+            _, line = line.split("=", 1)
+            line = line.strip()
+        return line.strip().strip('"').strip("'")
+    return None
+
+
+def _configured_api_key() -> str | None:
+    return (
+        os.environ.get("MET_OFFICE_LAND_OBSERVATIONS_API_KEY")
+        or os.environ.get("MET_OFFICE_DATAHUB_API_KEY")
+        or _read_secret_file(os.environ.get("MET_OFFICE_LAND_OBSERVATIONS_API_KEY_FILE"))
+        or _read_secret_file(os.environ.get("MET_OFFICE_DATAHUB_API_KEY_FILE"))
+    )
 
 
 def _load_config() -> dict:
@@ -206,14 +232,12 @@ def _select_latest(records: list[dict], parameter: dict) -> tuple[dict, str, flo
 class MetOfficeDataHubClient:
     def __init__(self):
         _load_local_env()
-        self.api_key = (
-            os.environ.get("MET_OFFICE_LAND_OBSERVATIONS_API_KEY")
-            or os.environ.get("MET_OFFICE_DATAHUB_API_KEY")
-        )
+        self.api_key = _configured_api_key()
         if not self.api_key:
             raise SystemExit(
                 "ERROR: MET_OFFICE_LAND_OBSERVATIONS_API_KEY must be set.\n"
-                "  Store it in publishers/.env or the process environment."
+                "  Store it in publishers/.env, the process environment, or set\n"
+                "  MET_OFFICE_LAND_OBSERVATIONS_API_KEY_FILE to a host-local secret file."
             )
         self.base_url = os.environ.get("MET_OFFICE_LAND_OBSERVATIONS_BASE_URL", DEFAULT_API_BASE).rstrip("/")
         self.key_header = os.environ.get("MET_OFFICE_DATAHUB_API_KEY_HEADER", "apikey")

@@ -71,6 +71,7 @@ python -m publishers.iss.bootstrap_iss
 cd publishers
 docker compose up -d          # start all
 docker compose up -d nws      # start one
+docker compose --profile access-gated up -d met-office-datahub
 docker compose logs -f nws    # follow logs
 docker compose ps             # status
 docker compose down            # stop all
@@ -115,9 +116,11 @@ python -m publishers.nws.nws_publisher --interval 3600
 | `OSH_PASS` | **Yes** | Auth password |
 | `OSH_ROOT` | **Yes** | Server root path (usually `sensorhub`) |
 | `BOOTSTRAP_URL` | No | Override the full bootstrap API URL |
+| `PUBLISHERS_ENV_FILE` | No | Standalone runtime override for the env file loaded by publishers that support local env loading |
 | `OSH_FORCE_IP` | No | Force DNS resolution to a specific IP |
 | `USGS_API_KEY` | No | USGS API key for higher rate limits |
 | `MET_OFFICE_LAND_OBSERVATIONS_API_KEY` | For Met Office | Met Office Weather DataHub Land Observations subscription key |
+| `MET_OFFICE_LAND_OBSERVATIONS_API_KEY_FILE` | For Met Office | Host-local file containing the Land Observations key; useful for Oracle/systemd secrets |
 | `BUOYCAM_CACHE_ROOT` | No | Local directory for BuoyCAM image cache |
 | `BUOYCAM_CACHE_BASE_URL` | No | Public URL serving the cached images |
 
@@ -135,6 +138,9 @@ python -m publishers.nws.nws_publisher --interval 3600
 - **BGS SensorThings** uses the public BGS Sensor Data Service SensorThings API
   and polls only curated unrestricted UKGEOS Glasgow datastreams in `stations.json`.
 - **Met Office DataHub** uses the access-gated Land Observations API and reads
-  `MET_OFFICE_LAND_OBSERVATIONS_API_KEY` from the environment. It caches nearest
-  geohash lookups in ignored runtime state to stay within the free-plan call budget.
+  `MET_OFFICE_LAND_OBSERVATIONS_API_KEY` from the environment, or
+  `MET_OFFICE_LAND_OBSERVATIONS_API_KEY_FILE` from a host-local secret file. It
+  caches nearest geohash lookups in ignored runtime state to stay within the
+  free-plan call budget. In Docker Compose it is behind the `access-gated`
+  profile, so public publishers can still start without a Met Office key.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.

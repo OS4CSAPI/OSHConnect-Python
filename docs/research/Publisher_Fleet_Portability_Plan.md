@@ -156,7 +156,7 @@ socket.getaddrinfo = _patched_getaddrinfo
    OSH_ADDRESS=your-server.example.com
    OSH_PORT=443
    OSH_USER=admin
-   OSH_PASS=changeme
+   OSH_PASS=<osh-admin-password>
    OSH_ROOT=sensorhub
 
    # ── Optional ──

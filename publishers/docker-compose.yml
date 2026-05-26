@@ -101,7 +101,7 @@ services:
     restart: always
     environment:
       <<: *osh-env
-      # USGS_API_KEY: "${USGS_API_KEY:-}"
+      USGS_API_KEY: "${USGS_API_KEY:-}"
     command: ["--interval", "900"]
 
   # ── USGS NIMS Imagery (15min cadence) ──
@@ -112,8 +112,24 @@ services:
     restart: always
     environment:
       <<: *osh-env
-      # USGS_API_KEY: "${USGS_API_KEY:-}"
+      USGS_API_KEY: "${USGS_API_KEY:-}"
     command: ["--interval", "900"]
+
+  # ── Met Office Weather DataHub Land Observations (1h cadence) ──
+  met-office-datahub:
+    profiles: ["access-gated"]
+    build:
+      context: ..
+      dockerfile: publishers/met_office_datahub/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+      MET_OFFICE_LAND_OBSERVATIONS_API_KEY: ${MET_OFFICE_LAND_OBSERVATIONS_API_KEY:-}
+      MET_OFFICE_LAND_OBSERVATIONS_BASE_URL: ${MET_OFFICE_LAND_OBSERVATIONS_BASE_URL:-https://data.hub.api.metoffice.gov.uk/observation-land/1}
+      MET_OFFICE_DATAHUB_API_KEY_HEADER: ${MET_OFFICE_DATAHUB_API_KEY_HEADER:-apikey}
+      MET_OFFICE_DATAHUB_REQUEST_DELAY: ${MET_OFFICE_DATAHUB_REQUEST_DELAY:-1.0}
+      MET_OFFICE_DATAHUB_429_BACKOFF: ${MET_OFFICE_DATAHUB_429_BACKOFF:-3600}
+    command: ["--interval", "3600"]
 
   # ── USGS Earthquake Feed (60s cadence) ──
   usgs-eq:
