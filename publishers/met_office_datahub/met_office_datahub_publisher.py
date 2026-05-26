@@ -61,7 +61,7 @@ def _read_secret_file(path_value: str | None) -> str | None:
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
-        if "=" in line:
+        if line.startswith(("MET_OFFICE_LAND_OBSERVATIONS_API_KEY=", "MET_OFFICE_DATAHUB_API_KEY=")):
             _, line = line.split("=", 1)
             line = line.strip()
         return line.strip().strip('"').strip("'")
