@@ -65,6 +65,30 @@ The live OSH backend returned latest observations for the curated Environment Ag
 | `05jg` | Groundwater level `53.8 mAOD`, `Unchecked`, stale phenomenon time `2026-04-20T07:00:00Z` |
 | `05k0` | River flow `0.291 m3/s`, `Unchecked`, phenomenon time `2026-05-26T08:45:00Z` |
 
+## Confirmed Publisher Refresh
+
+A one-shot live publisher cycle was run after UI verification:
+
+```powershell
+py -m publishers.environment_agency_hydrology.environment_agency_hydrology_publisher --once
+```
+
+Result:
+
+```text
+Published: 5
+Skipped:   0
+Errors:    0
+```
+
+The confirmed refresh posted:
+
+- Beggearn Huish river level: `0.18 m`
+- Beggearn Huish river flow: `0.218 m3/s`
+- Cosford rainfall: `0.0 mm`
+- Burton Coggles groundwater level: `53.8 mAOD`
+- Iwood river flow: `0.287 m3/s`
+
 ## Production Browser Verification
 
 Production URL:
