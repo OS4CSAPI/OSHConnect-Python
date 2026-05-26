@@ -412,6 +412,17 @@ class MetOfficeDataHubPublisher:
             elif key == "outputName" and current_id:
                 station_ds[value] = current_id
                 current_id = None
+        for offset in range(0, 25):
+            page_url = f"{self._base_url}/systems/{sys_id}/datastreams?limit=1&offset={offset}"
+            try:
+                with urlopen(Request(page_url, headers=headers), timeout=30, context=ctx) as resp:
+                    page_text = resp.read().decode()
+            except Exception:
+                continue
+            page_id = re.search(r'"id"\s*:\s*"([^"]+)"', page_text)
+            page_output = re.search(r'"outputName"\s*:\s*"([^"]+)"', page_text)
+            if page_id and page_output:
+                station_ds[page_output.group(1)] = page_id.group(1)
         return station_ds
 
     def connect(self):
