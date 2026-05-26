@@ -13,6 +13,8 @@ The recommended plan is therefore two-track:
 
 This gives the Explorer a polished, forecast-style user experience quickly while preserving technical honesty about observed data versus predicted data.
 
+Just as important: this plan should preserve the value already added by richer source-specific media. The buoy sensors, water-monitoring stations, and similar sources with working images, video clips, representative thumbnails, or other context should not be simplified into generic trend/forecast cards. Trend and forecast features should be additive: keep the media and source-specific context that make a station feel real, and improve those affordances whenever a source is touched.
+
 ## Current Live UK Source Inventory
 
 | Source | Current publisher type | Current parameters | Persistent service | Forecast status |
@@ -120,6 +122,24 @@ Add a new Explorer card section named something like `Trends` or `Recent Pattern
 
 The section should appear below `Latest readings` on deployed-system cards and in a compact form in map popups. It should behave like the existing US weather-style popup in visual density: small, useful, glanceable, and grounded in the selected station.
 
+This section should be composed around the existing card value rather than replacing it. If a card already has strong imagery, video clips, source links, station photos, platform thumbnails, or curated attribution, those elements remain first-class. The new time-series or forecast panel should sit beside or below them, not crowd them out.
+
+### Source Value Preservation Rule
+
+Every source update should start with a quick value inventory before changing the card or map behavior.
+
+Check whether the source already has:
+
+- representative thumbnails or station imagery
+- camera images, video clips, or externally linked media
+- platform-specific diagrams, such as buoy, borehole, aircraft, vessel, or station illustrations
+- source attribution, license notes, and public landing-page links
+- rich latest-reading labels, role labels, symbols, and source filters
+- special map behavior, such as tracks, areas, clustered stations, or deployment geometry
+- source-specific freshness handling, stale-data warnings, or quality flags
+
+The default rule is to preserve those features and make them better if the new work touches the source. A trend card should never cause a buoy video, water-monitoring image, station thumbnail, or curated source link to disappear. If layout pressure forces a choice, preserve the source-specific media/context and make the new trend panel collapsible or secondary.
+
 Recommended labels:
 
 | Data type | UI label | Avoid |
@@ -160,6 +180,7 @@ Implementation notes:
 - Cap the per-card request count. For example, fetch up to three datastreams, `_limit=48` or similar, and stop if the server returns no data.
 - Reuse the card's existing latest-reading labels and freshness logic so visual language stays consistent.
 - Cache per datastream for a short browser TTL, roughly 5 minutes, to avoid repeated fetches while clicking stacked features.
+- Preserve existing media slots, thumbnails, video links, source attribution, and specialized card sections. The new trend component should be a card section, not a card takeover.
 
 ### Source-Specific Behavior
 
@@ -342,30 +363,35 @@ Potential later work:
 
 ## Recommended Build Order
 
-1. Explorer-only Station Trend Card
+1. Source value inventory and preservation pass
+   - Identify existing image, video, thumbnail, attribution, symbol, source-filter, and rich-card behavior for every source being updated.
+   - Treat buoy sensors and water-monitoring stations with working media as regression sentinels.
+   - Capture before/after screenshots or browser notes for at least one rich-media source whenever the card layout changes.
+
+2. Explorer-only Station Trend Card
    - No new backend publisher required.
    - Fetch recent observations for currently selected station cards.
    - Add source-specific labels and trend rules.
    - Highest visual payoff for the least operational risk.
 
-2. Met Office Global Spot Forecast Publisher
+3. Met Office Global Spot Forecast Publisher
    - True forecast data.
    - Best match to the screenshot-style weather UI.
    - Use existing secret-file pattern and Oracle service deployment practices.
 
-3. EA Hydrology Station Scale / Hydrograph Enrichment
+4. EA Hydrology Station Scale / Hydrograph Enrichment
    - Add recent series, quality flags, and station range bands.
    - Consider station-scale metadata enrichment in bootstrap or card fetch.
 
-4. UK-AIR DAQI / Pollution Forecast Discovery
+5. UK-AIR DAQI / Pollution Forecast Discovery
    - Add observed pollutant trend cards first.
    - Only add DAQI or 5-day forecast if threshold/source semantics are correct.
 
-5. Flood-Risk Forecast Overlay
+6. Flood-Risk Forecast Overlay
    - Separate forecast-area product.
    - More complex but potentially excellent for demos.
 
-6. BGS Long-Horizon Baseline Panel
+7. BGS Long-Horizon Baseline Panel
    - Make BGS visually useful without forcing a forecast metaphor.
 
 ## Acceptance Criteria
@@ -375,6 +401,8 @@ For the immediate trend-card phase:
 - Production Explorer cards for Met Office, EA Hydrology, UK-AIR, and BGS can show recent series without blocking map load.
 - Card fetches are lazy and bounded.
 - Each source uses correct labels and units.
+- Existing source-specific value-adds, including images, video clips, thumbnails, attribution, rich role labels, source filters, and specialized map behavior, are preserved or improved.
+- Buoy sensors and water-monitoring stations with working images/video are included as regression checks when shared card layout changes are made.
 - Observation-backed UI uses `Recent trend` or equivalent, not `Forecast`.
 - True forecast cards, when added, include issue time and valid time.
 - Browser console remains clean after the recent `controlstreams` fix.
@@ -396,6 +424,8 @@ For true forecast publishers:
 - Do not request bulk hydrology history during map load; the Hydrology API has large volumes and fair-use cautions.
 - Do not use UKGEOS photographs unless their license is explicitly reusable; continue using the official non-photo borehole illustration unless better terms are found.
 - Do not make forecast points look like physical deployed stations.
+- Do not flatten rich source cards into a lowest-common-denominator telemetry panel. Preserve buoy media, water-monitoring imagery, video clips, curated thumbnails, attribution, and source-specific map/card behavior.
+- Do not let the trend/forecast component become the whole card. It is an additional time-context layer.
 - Keep all access-gated Met Office credentials out of git, logs, issue bodies, and screenshots.
 
 ## Bottom Line
@@ -405,5 +435,6 @@ The clever path is not to bolt a generic forecast card onto everything. It is to
 - `Observed now`: latest station readings.
 - `Recent pattern`: bounded recent history and trend from observed telemetry.
 - `Forecast outlook`: explicit source forecast products with issue and valid times.
+- `Source context`: the imagery, video, attribution, diagrams, station identity, and specialized behavior that make each data source worth exploring.
 
 That model lets the new UK sources feel as rich as the US weather-style cards while keeping the data story accurate and defensible.
