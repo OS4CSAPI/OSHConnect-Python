@@ -30,6 +30,7 @@ import base64
 import json
 import os
 import random
+import re
 import ssl
 import sys
 import time
@@ -197,6 +198,28 @@ class USGSWaterPublisher:
     def _system_uid(self, nwis_id: str) -> str:
         return f"urn:os4csapi:system:usgs-water:{nwis_id}:v1"
 
+    def _raw_datastream_ids(self, sys_id: str) -> dict[str, str]:
+        url = f"{self._base_url}/systems/{sys_id}/datastreams"
+        headers = {"Accept": "application/json", "Authorization": self._auth}
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        with urlopen(Request(url, headers=headers), timeout=30, context=ctx) as resp:
+            text = resp.read().decode()
+
+        station_ds: dict[str, str] = {}
+        current_id = None
+        for key, value in re.findall(r'"(id|outputName)"\s*:\s*"([^"]+)"', text):
+            if key == "id":
+                current_id = value
+            elif key == "outputName" and current_id:
+                if value == DS_DISCHARGE_OUTPUT:
+                    station_ds["00060"] = current_id
+                elif value == DS_GAGE_HEIGHT_OUTPUT:
+                    station_ds["00065"] = current_id
+                current_id = None
+        return station_ds
+
     def connect(self):
         """Resolve system and datastream IDs for each station via REST API."""
         self._ds_ids.clear()
@@ -204,22 +227,34 @@ class USGSWaterPublisher:
         for st in self.stations:
             nwis_id = st["nwisId"]
             uid = self._system_uid(nwis_id)
-            sys_id = find_by_uid(self._base_url, self._auth, "systems", uid, no_cache=True)
-            if not sys_id:
-                print(f"  [WARN] System '{uid}' not found -- skipping {nwis_id}")
-                continue
-
-            # Find datastreams
-            ds_list = api_get(self._base_url, f"systems/{sys_id}/datastreams", self._auth)
+            sys_id = None
             station_ds = {}
-            if ds_list:
-                for item in ds_list.get("items", []):
-                    output_name = item.get("outputName", "")
-                    ds_id = item.get("id")
-                    if output_name == DS_DISCHARGE_OUTPUT and ds_id:
-                        station_ds["00060"] = ds_id
-                    elif output_name == DS_GAGE_HEIGHT_OUTPUT and ds_id:
-                        station_ds["00065"] = ds_id
+            try:
+                sys_id = find_by_uid(self._base_url, self._auth, "systems", uid, no_cache=True)
+                if not sys_id:
+                    print(f"  [WARN] System '{uid}' not found -- skipping {nwis_id}")
+                    continue
+
+                ds_list = api_get(self._base_url, f"systems/{sys_id}/datastreams", self._auth)
+                if ds_list:
+                    for item in ds_list.get("items", []):
+                        output_name = item.get("outputName", "")
+                        ds_id = item.get("id")
+                        if output_name == DS_DISCHARGE_OUTPUT and ds_id:
+                            station_ds["00060"] = ds_id
+                        elif output_name == DS_GAGE_HEIGHT_OUTPUT and ds_id:
+                            station_ds["00065"] = ds_id
+            except Exception as e:
+                if sys_id:
+                    station_ds = self._raw_datastream_ids(sys_id)
+                    if station_ds:
+                        print(f"  [WARN] Used raw datastream fallback for {nwis_id}: {e}")
+                    else:
+                        print(f"  [WARN] Could not resolve datastreams for {nwis_id}: {e}")
+                        continue
+                else:
+                    print(f"  [WARN] Could not resolve system for {nwis_id}: {e}")
+                    continue
 
             if not station_ds:
                 print(f"  [WARN] No datastreams found for {nwis_id} -- skipping")
@@ -231,6 +266,8 @@ class USGSWaterPublisher:
             print(f"  Connected: {nwis_id} -> sys={sys_id} ds=[{ds_summary}]")
 
         print(f"  Ready: {connected}/{len(self.stations)} stations connected")
+        if connected == 0:
+            raise RuntimeError("No USGS Water stations connected")
 
     def connect_with_retry(self, max_attempts=10, base_delay=5.0, max_delay=120.0):
         for attempt in range(1, max_attempts + 1):

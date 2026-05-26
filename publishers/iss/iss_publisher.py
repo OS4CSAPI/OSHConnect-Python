@@ -27,8 +27,10 @@ import json
 import math
 import os
 import sys
+import tempfile
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
@@ -50,6 +52,25 @@ from publishers.base import PublisherBase
 NORAD_ID   = os.environ.get("NORAD_ID", "25544")
 ASSET_NAME = os.environ.get("ASSET_NAME", "ISS (ZARYA)")
 CELESTRAK_URL = f"https://celestrak.org/NORAD/elements/gp.php?CATNR={NORAD_ID}&FORMAT=JSON"
+TLE_CACHE_FILE = Path(os.environ.get(
+    "ISS_TLE_CACHE_FILE",
+    os.path.join(tempfile.gettempdir(), f"iss-{NORAD_ID}-omm.json"),
+))
+FALLBACK_OMM = {
+    "OBJECT_NAME": "ISS (ZARYA)",
+    "OBJECT_ID": "1998-067A",
+    "EPOCH": "2026-05-25T10:07:58.537056",
+    "MEAN_MOTION": 15.49365963,
+    "ECCENTRICITY": 0.00074701,
+    "INCLINATION": 51.633,
+    "RA_OF_ASC_NODE": 52.7989,
+    "ARG_OF_PERICENTER": 96.3597,
+    "MEAN_ANOMALY": 263.8242,
+    "NORAD_CAT_ID": 25544,
+    "BSTAR": 0.00018076148,
+    "MEAN_MOTION_DOT": 9.654e-5,
+    "MEAN_MOTION_DDOT": 0,
+}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -63,17 +84,8 @@ _tle_epoch_dt: datetime | None = None
 _tle_refresh_interval: float = 3600.0
 
 
-def fetch_tle_from_celestrak() -> Satrec:
+def _satrec_from_omm(omm: dict) -> Satrec:
     global _cached_satrec, _tle_fetched_at, _tle_epoch_str, _tle_epoch_dt
-
-    req = Request(CELESTRAK_URL, headers={"Accept": "application/json"})
-    with urlopen(req, timeout=30) as resp:
-        data = json.loads(resp.read().decode())
-
-    if isinstance(data, list) and len(data) > 0:
-        omm = data[0]
-    else:
-        raise RuntimeError(f"Unexpected CelesTrak response: {str(data)[:200]}")
 
     sat = Satrec()
     sat.sgp4init(
@@ -102,6 +114,51 @@ def fetch_tle_from_celestrak() -> Satrec:
     return sat
 
 
+def _normalize_omm_response(data: Any) -> dict:
+    if isinstance(data, list) and len(data) > 0:
+        return data[0]
+    if isinstance(data, dict):
+        return data
+    raise RuntimeError(f"Unexpected CelesTrak response: {str(data)[:200]}")
+
+
+def _write_tle_cache(omm: dict) -> None:
+    try:
+        TLE_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        TLE_CACHE_FILE.write_text(json.dumps(omm), encoding="utf-8")
+    except OSError as e:
+        print(f"  [WARN] Could not write TLE cache {TLE_CACHE_FILE}: {e}")
+
+
+def load_cached_or_fallback_tle(reason: str) -> Satrec:
+    print(f"  [WARN] TLE fetch failed ({reason}); using cached/fallback OMM")
+    if TLE_CACHE_FILE.exists():
+        try:
+            omm = _normalize_omm_response(json.loads(TLE_CACHE_FILE.read_text(encoding="utf-8")))
+            sat = _satrec_from_omm(omm)
+            print(f"  TLE cache epoch: {_tle_epoch_str}")
+            return sat
+        except Exception as e:
+            print(f"  [WARN] Could not load TLE cache {TLE_CACHE_FILE}: {e}")
+
+    sat = _satrec_from_omm(FALLBACK_OMM)
+    print(f"  TLE fallback epoch: {_tle_epoch_str}")
+    return sat
+
+
+def fetch_tle_from_celestrak() -> Satrec:
+    global _cached_satrec, _tle_fetched_at, _tle_epoch_str, _tle_epoch_dt
+
+    req = Request(CELESTRAK_URL, headers={"Accept": "application/json"})
+    with urlopen(req, timeout=30) as resp:
+        data = json.loads(resp.read().decode())
+
+    omm = _normalize_omm_response(data)
+    sat = _satrec_from_omm(omm)
+    _write_tle_cache(omm)
+    return sat
+
+
 def _epoch_to_jdsatepoch(epoch_str: str) -> float:
     dt = datetime.strptime(epoch_str, "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=timezone.utc)
     jd, fr = _datetime_to_jd(dt)
@@ -111,7 +168,14 @@ def _epoch_to_jdsatepoch(epoch_str: str) -> float:
 def get_satrec() -> Satrec:
     global _cached_satrec, _tle_fetched_at
     if _cached_satrec is None or (time.time() - _tle_fetched_at) > _tle_refresh_interval:
-        fetch_tle_from_celestrak()
+        try:
+            fetch_tle_from_celestrak()
+        except Exception as e:
+            if _cached_satrec is None:
+                load_cached_or_fallback_tle(str(e))
+            else:
+                _tle_fetched_at = time.time()
+                print(f"  [WARN] TLE refresh failed ({e}); keeping epoch {_tle_epoch_str}")
     return _cached_satrec
 
 
@@ -227,8 +291,7 @@ class ISSPublisher(PublisherBase):
             fetch_tle_from_celestrak()
             print(f"  TLE epoch: {_tle_epoch_str}")
         except Exception as e:
-            print(f"  FATAL: Could not fetch TLE: {e}")
-            sys.exit(1)
+            load_cached_or_fallback_tle(str(e))
 
     def connect(self):
         """Connect to server. Uses REST mode when OSH_BASE_URL is set, SDK otherwise."""
