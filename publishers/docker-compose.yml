@@ -131,6 +131,24 @@ services:
       MET_OFFICE_DATAHUB_429_BACKOFF: ${MET_OFFICE_DATAHUB_429_BACKOFF:-3600}
     command: ["--interval", "3600"]
 
+  # ── Met Office Weather DataHub Global Spot Forecast (1h cadence) ──
+  met-office-global-spot:
+    profiles: ["access-gated"]
+    build:
+      context: ..
+      dockerfile: publishers/met_office_global_spot/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+      MET_OFFICE_GLOBAL_SPOT_API_KEY: ${MET_OFFICE_GLOBAL_SPOT_API_KEY:-}
+      MET_OFFICE_GLOBAL_SPOT_BASE_URL: ${MET_OFFICE_GLOBAL_SPOT_BASE_URL:-https://data.hub.api.metoffice.gov.uk/sitespecific/v0}
+      MET_OFFICE_GLOBAL_SPOT_HOURLY_PATH: ${MET_OFFICE_GLOBAL_SPOT_HOURLY_PATH:-/point/hourly}
+      MET_OFFICE_GLOBAL_SPOT_FORECAST_HOURS: ${MET_OFFICE_GLOBAL_SPOT_FORECAST_HOURS:-24}
+      MET_OFFICE_DATAHUB_API_KEY_HEADER: ${MET_OFFICE_DATAHUB_API_KEY_HEADER:-apikey}
+      MET_OFFICE_GLOBAL_SPOT_REQUEST_DELAY: ${MET_OFFICE_GLOBAL_SPOT_REQUEST_DELAY:-1.0}
+      MET_OFFICE_GLOBAL_SPOT_429_BACKOFF: ${MET_OFFICE_GLOBAL_SPOT_429_BACKOFF:-3600}
+    command: ["--interval", "3600"]
+
   # ── USGS Earthquake Feed (60s cadence) ──
   usgs-eq:
     build:

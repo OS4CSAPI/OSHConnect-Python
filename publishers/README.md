@@ -21,7 +21,8 @@ server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 | **Environment Agency Hydrology** | EA river level, flow, rainfall, groundwater | 15 min |
 | **UK-AIR** | Defra UK-AIR NO2, O3, PM10, PM2.5 | 1 h |
 | **BGS SensorThings** | BGS UKGEOS Glasgow groundwater/geothermal telemetry | 15 min |
-| **Met Office DataHub** | Land Observations hourly weather data | Access-gated / planned |
+| **Met Office DataHub** | Land Observations hourly weather data | Access-gated / 1 h |
+| **Met Office Global Spot** | Site-specific deterministic hourly forecasts | Access-gated / 1 h |
 
 ## Quick Start
 
@@ -62,6 +63,8 @@ python -m publishers.uk_air.bootstrap_uk_air
 python -m publishers.bgs_sensorthings.bootstrap_bgs_sensorthings
 # Met Office DataHub is access-gated; see publishers/met_office_datahub/README.md
 python -m publishers.met_office_datahub.bootstrap_met_office_datahub
+# Met Office Global Spot is access-gated; see publishers/met_office_global_spot/README.md
+python -m publishers.met_office_global_spot.bootstrap_met_office_global_spot
 python -m publishers.iss.bootstrap_iss
 ```
 
@@ -72,6 +75,7 @@ cd publishers
 docker compose up -d          # start all
 docker compose up -d nws      # start one
 docker compose --profile access-gated up -d met-office-datahub
+docker compose --profile access-gated up -d met-office-global-spot
 docker compose logs -f nws    # follow logs
 docker compose ps             # status
 docker compose down            # stop all
@@ -121,6 +125,8 @@ python -m publishers.nws.nws_publisher --interval 3600
 | `USGS_API_KEY` | No | USGS API key for higher rate limits |
 | `MET_OFFICE_LAND_OBSERVATIONS_API_KEY` | For Met Office | Met Office Weather DataHub Land Observations subscription key |
 | `MET_OFFICE_LAND_OBSERVATIONS_API_KEY_FILE` | For Met Office | Host-local file containing the Land Observations key; useful for Oracle/systemd secrets |
+| `MET_OFFICE_GLOBAL_SPOT_API_KEY` | For Met Office Global Spot | Met Office Weather DataHub Site-Specific Forecast / Global Spot subscription key |
+| `MET_OFFICE_GLOBAL_SPOT_API_KEY_FILE` | For Met Office Global Spot | Host-local file containing the Global Spot key; useful for Oracle/systemd secrets |
 | `BUOYCAM_CACHE_ROOT` | No | Local directory for BuoyCAM image cache |
 | `BUOYCAM_CACHE_BASE_URL` | No | Public URL serving the cached images |
 
@@ -143,4 +149,10 @@ python -m publishers.nws.nws_publisher --interval 3600
   caches nearest geohash lookups in ignored runtime state to stay within the
   free-plan call budget. In Docker Compose it is behind the `access-gated`
   profile, so public publishers can still start without a Met Office key.
+- **Met Office Global Spot** uses the access-gated Site-Specific Forecast API
+  and reads `MET_OFFICE_GLOBAL_SPOT_API_KEY` from the environment, or
+  `MET_OFFICE_GLOBAL_SPOT_API_KEY_FILE` from a host-local secret file. It
+  publishes deterministic hourly forecast values for virtual forecast points,
+  not physical sensor observations, and is also behind the `access-gated`
+  Docker Compose profile.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.

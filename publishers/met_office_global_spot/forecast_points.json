@@ -1,0 +1,85 @@
+{
+  "_comment": "Curated Met Office Weather DataHub Global Spot / Site-Specific Forecast demo points. These are virtual forecast points, not physical deployed sensors.",
+  "_sources": {
+    "landingPage": "https://datahub.metoffice.gov.uk/",
+    "docsRoot": "https://datahub.metoffice.gov.uk/docs",
+    "siteSpecificOverview": "https://datahub.metoffice.gov.uk/docs/g/category/site-specific/overview",
+    "siteSpecificPricing": "https://datahub.metoffice.gov.uk/pricing/site-specific"
+  },
+  "parameters": [
+    {
+      "outputName": "air_temperature_forecast",
+      "label": "Forecast Air Temperature",
+      "resultField": "air_temperature_c",
+      "unit": "C",
+      "uom": "Cel",
+      "aliases": ["screenTemperature", "screen_temperature", "temperature", "airTemperature", "air_temperature", "temperature_at_screen_level", "temp", "t"]
+    },
+    {
+      "outputName": "relative_humidity_forecast",
+      "label": "Forecast Relative Humidity",
+      "resultField": "relative_humidity_pct",
+      "unit": "%",
+      "uom": "%",
+      "aliases": ["screenRelativeHumidity", "relativeHumidity", "relative_humidity", "humidity", "humidity_at_screen_level", "rh"]
+    },
+    {
+      "outputName": "wind_speed_forecast",
+      "label": "Forecast Wind Speed",
+      "resultField": "wind_speed_ms",
+      "unit": "m/s",
+      "uom": "m/s",
+      "aliases": ["windSpeed10m", "windSpeed", "wind_speed", "wind_speed_at_10m", "wind_speed_10m", "windSpeedAt10m"]
+    },
+    {
+      "outputName": "wind_gust_forecast",
+      "label": "Forecast Wind Gust",
+      "resultField": "wind_gust_ms",
+      "unit": "m/s",
+      "uom": "m/s",
+      "aliases": ["windGust10m", "windGust", "wind_gust", "wind_gust_at_10m", "wind_gust_10m", "windGustAt10m"]
+    },
+    {
+      "outputName": "precipitation_probability_forecast",
+      "label": "Forecast Precipitation Probability",
+      "resultField": "precipitation_probability_pct",
+      "unit": "%",
+      "uom": "%",
+      "aliases": ["probOfPrecipitation", "precipitationProbability", "precipitation_probability", "precipitation_probability_pct", "pop", "probabilityOfPrecipitation"]
+    },
+    {
+      "outputName": "weather_code_forecast",
+      "label": "Forecast Weather Code",
+      "resultField": "weather_code",
+      "unit": "code",
+      "uom": "1",
+      "aliases": ["weatherCode", "weather_code", "significantWeatherCode", "significant_weather_code", "presentWeatherCode"]
+    }
+  ],
+  "locations": [
+    {
+      "id": "london-heathrow-area",
+      "name": "London Heathrow Area",
+      "description": "Curated Met Office Global Spot forecast point for the London Heathrow area.",
+      "lat": 51.4700,
+      "lon": -0.4543,
+      "selectionReason": "Urban and airport-adjacent forecast context that complements the London Met Office land observation location and UK-AIR Camden."
+    },
+    {
+      "id": "stornoway-coastal-area",
+      "name": "Stornoway Coastal Area",
+      "description": "Curated Met Office Global Spot forecast point for the Stornoway coastal area.",
+      "lat": 58.2156,
+      "lon": -6.3311,
+      "selectionReason": "North Atlantic coastal forecast-impact reference location for UK-wide demo coverage."
+    },
+    {
+      "id": "cairngorm-upland-area",
+      "name": "Cairngorm Upland Area",
+      "description": "Curated Met Office Global Spot forecast point for the Cairngorms area.",
+      "lat": 57.1167,
+      "lon": -3.6420,
+      "selectionReason": "Upland/rural forecast reference location that complements hydrology, groundwater, and coastal weather publishers."
+    }
+  ]
+}
