@@ -109,6 +109,10 @@ def _parse_source_time(raw_time: str) -> tuple[float, str]:
 def _as_float(value) -> float | None:
     if value is None or value == "":
         return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 _CARDINAL_DEGREES = {
@@ -146,10 +150,6 @@ def _numeric_value_for_parameter(value, parameter: dict) -> float | None:
     if output_name == "pressure_tendency" and isinstance(value, str):
         return _PRESSURE_TENDENCY_CODES.get(value.strip().upper())
     return _as_float(value)
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
 
 
 def _retry_after_seconds(error: HTTPError) -> float | None:
