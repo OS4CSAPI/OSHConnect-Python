@@ -41,6 +41,36 @@ BGS_API_DOCS = "https://sensors.bgs.ac.uk/api.html"
 BGS_INTERACTIVE_DOCS = "https://sensors-docs.bgs.ac.uk/"
 BGS_API_ROOT = "https://sensors.bgs.ac.uk/FROST-Server/v1.1"
 OGL3 = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+UKGEOS_LEGAL = "https://www.ukgeos.ac.uk/legal-and-compliance"
+
+
+def _image_docs(station: dict) -> list[dict]:
+    image = station.get("image") or {}
+    if not image.get("url"):
+        return []
+    return [
+        {
+            "role": "http://dbpedia.org/resource/Illustration",
+            "name": image.get("name") or "Representative UKGEOS illustration",
+            "description": (
+                f"{image.get('description', 'Representative UKGEOS visual.')} "
+                f"Acknowledgement: {image.get('acknowledgement', 'Contains NERC materials (c) NERC 2026')}."
+            ),
+            "link": {"href": image["url"], "type": "image/svg+xml"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Representative image source",
+            "description": "UKGEOS Glasgow Observatory page containing the representative borehole infrastructure illustration.",
+            "link": {"href": image.get("pageUrl") or "https://www.ukgeos.ac.uk/glasgow-observatory", "type": "text/html"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "UKGEOS legal and attribution notes",
+            "description": image.get("license", "UKGEOS legal text documents OGL availability and image exclusions."),
+            "link": {"href": UKGEOS_LEGAL, "type": "text/html"},
+        },
+    ]
 
 
 def _load_stations() -> list[dict]:
@@ -152,7 +182,7 @@ def _system_stub(station: dict) -> dict:
 def _system_sml(station: dict) -> dict:
     site_id = station["siteId"]
     parameter_labels = ", ".join(d["label"] for d in station.get("datastreams", []))
-    docs = [
+    docs = _image_docs(station) + [
         {
             "role": "http://dbpedia.org/resource/Web_page",
             "name": "BGS SensorThings Thing",

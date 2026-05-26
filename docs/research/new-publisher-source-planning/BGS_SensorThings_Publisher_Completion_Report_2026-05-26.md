@@ -22,6 +22,7 @@ Explorer production polish was implemented separately in the Explorer repository
 - BGS role inference: `Groundwater Telemetry Site`
 - BGS symbol rule: fixed Sensor Emplaced style
 - latest-reading label fix for `Water Level maOD`
+- representative thumbnail fallback using the official UKGEOS borehole-dimensions illustration
 
 ## Source
 
@@ -122,12 +123,19 @@ Verified card after Explorer polish deployment:
 - system subtitle: `BGS GGA07 Downhole Hydro Logger`
 - outputs: Conductivity, Water Level maOD, Water Temperature
 - role badge: `GROUNDWATER TELEMETRY SITE`
+- representative thumbnail: official UKGEOS borehole-dimensions illustration
 - latest readings: Conductivity, Water Level maOD, Water Temperature
 - source links: BGS SensorThings Thing, BGS SensorThings API Docs, Open Government Licence v3.0
 
 Explorer polish was pushed and deployed to improve the card from generic `Deployed System` to `Groundwater Telemetry Site` and to keep `Water Level maOD` as the latest-reading label. Production bundle checks confirmed the new JS contains the BGS role/symbol/label updates, and the browser card check confirmed the visible production card text.
 
+## Thumbnail Research And Licensing
+
+The BGS/UKGEOS Glasgow Observatory page includes relevant visual assets, including photographs and official illustrations. UKGEOS legal text states that data/material on the website is made available under the Open Government Licence where possible with acknowledgement `Contains NERC materials (c) NERC 2026`, but also explicitly says photographic images are not subject to OGL and are identified separately to their copyright owners/license.
+
+Because no station-specific licensed photograph was identified during this pass, the BGS card uses the official UKGEOS borehole-dimensions illustration as a representative, non-photographic visual for Glasgow Observatory borehole infrastructure. The implementation labels it as representative, not station-specific.
+
 ## Remaining Follow-Up
 
 - Investigate the live OSH SensorML PUT 500 for BGS systems if richer system metadata becomes necessary.
-- Consider representative BGS/UKGEOS imagery only after separate licensing research; no image was added in this pass.
+- Consider replacing the representative illustration only if a station-specific photograph with clear reuse terms is identified.

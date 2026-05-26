@@ -24,6 +24,15 @@
       "thingUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Things(195)",
       "selectionReason": "Recent unrestricted SensorThings telemetry from the UKGEOS Glasgow observatory with a useful groundwater/geothermal parameter mix.",
       "dataUsage": "Available under the Open Government Licence subject to the following acknowledgement accompanying the reproduced UKRI materials \"Contains UKRI materials (c) UKRI [year]\"",
+      "image": {
+        "url": "https://www.ukgeos.ac.uk/assets/img/svgs/illustrations/borehole_dimmensions.svg",
+        "pageUrl": "https://www.ukgeos.ac.uk/glasgow-observatory",
+        "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "name": "Representative UKGEOS borehole dimensions illustration",
+        "description": "Official UKGEOS illustration representing Glasgow Observatory borehole infrastructure. This is a representative visual for BGS SensorThings hydro logger deployments, not a station-specific photograph.",
+        "license": "Open Government Licence v3.0 where UKGEOS website material is made available under OGL; photographic images are explicitly excluded by UKGEOS legal text.",
+        "acknowledgement": "Contains NERC materials (c) NERC 2026"
+      },
       "datastreams": [
         {
           "datastreamId": "405",
@@ -71,6 +80,15 @@
       "thingUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Things(197)",
       "selectionReason": "Recent unrestricted SensorThings telemetry from the UKGEOS Glasgow observatory with a useful groundwater/geothermal parameter mix.",
       "dataUsage": "Available under the Open Government Licence subject to the following acknowledgement accompanying the reproduced UKRI materials \"Contains UKRI materials (c) UKRI [year]\"",
+      "image": {
+        "url": "https://www.ukgeos.ac.uk/assets/img/svgs/illustrations/borehole_dimmensions.svg",
+        "pageUrl": "https://www.ukgeos.ac.uk/glasgow-observatory",
+        "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "name": "Representative UKGEOS borehole dimensions illustration",
+        "description": "Official UKGEOS illustration representing Glasgow Observatory borehole infrastructure. This is a representative visual for BGS SensorThings hydro logger deployments, not a station-specific photograph.",
+        "license": "Open Government Licence v3.0 where UKGEOS website material is made available under OGL; photographic images are explicitly excluded by UKGEOS legal text.",
+        "acknowledgement": "Contains NERC materials (c) NERC 2026"
+      },
       "datastreams": [
         {
           "datastreamId": "430",
@@ -118,6 +136,15 @@
       "thingUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Things(200)",
       "selectionReason": "Recent unrestricted SensorThings telemetry from the UKGEOS Glasgow observatory with a useful groundwater/geothermal parameter mix.",
       "dataUsage": "Available under the Open Government Licence subject to the following acknowledgement accompanying the reproduced UKRI materials \"Contains UKRI materials (c) UKRI [year]\"",
+      "image": {
+        "url": "https://www.ukgeos.ac.uk/assets/img/svgs/illustrations/borehole_dimmensions.svg",
+        "pageUrl": "https://www.ukgeos.ac.uk/glasgow-observatory",
+        "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "name": "Representative UKGEOS borehole dimensions illustration",
+        "description": "Official UKGEOS illustration representing Glasgow Observatory borehole infrastructure. This is a representative visual for BGS SensorThings hydro logger deployments, not a station-specific photograph.",
+        "license": "Open Government Licence v3.0 where UKGEOS website material is made available under OGL; photographic images are explicitly excluded by UKGEOS legal text.",
+        "acknowledgement": "Contains NERC materials (c) NERC 2026"
+      },
       "datastreams": [
         {
           "datastreamId": "404",
