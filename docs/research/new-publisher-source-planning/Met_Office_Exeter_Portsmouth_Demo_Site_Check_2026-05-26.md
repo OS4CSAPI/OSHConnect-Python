@@ -79,3 +79,30 @@ For Global Spot, the same curated point labels and coordinates are added as virt
 Adding two Land Observations locations increases the default Met Office Land Observations cycle from 3 to 5 locations. With geohashes cached in config, the publisher should make one observation endpoint request per location per cycle, still far below the documented 360 calls/day free-plan limit at hourly cadence.
 
 The Global Spot default set also increases from 3 to 5 locations. At one hourly forecast API request per location per hour, the default operational cadence is about 120 calls/day, still below the documented 360 calls/day free-plan allowance.
+
+## Oracle Deployment Result
+
+Commit `39acf75` (`Add Exeter and Portsmouth Met Office demo points`) was pushed and deployed to the Oracle Met Office Land Observations service copy.
+
+Deployment actions completed:
+
+- Updated durable checkout `/home/ubuntu/oshconnect-python-publishers` to `39acf75`.
+- Copied the expanded `publishers/met_office_datahub/stations.json` into `/home/ubuntu/met-office-datahub-publisher`.
+- Ran the idempotent Met Office Land Observations bootstrap with existing host-local service credentials.
+- Created two new systems:
+	- `urn:os4csapi:system:met-office-datahub-land-observations:exeter-airport-area:v1` -> server id `05q0`
+	- `urn:os4csapi:system:met-office-datahub-land-observations:portsmouth-thorney-island-area:v1` -> server id `05qg`
+- Created 18 new datastreams, 9 per new location.
+- Created two new deployments:
+	- `urn:os4csapi:deployment:met-office-datahub-land-observations-exeter-airport-area:v1` -> server id `05ng`
+	- `urn:os4csapi:deployment:met-office-datahub-land-observations-portsmouth-thorney-island-area:v1` -> server id `05o0`
+- Ran a dry publish cycle for only the two new stations: 0 errors.
+- Ran one live publish cycle for only the two new stations: 18 observations published, 0 errors.
+- Restarted `met-office-datahub-publisher.service`; it loaded all five stations and remains active.
+
+Public CSAPI verification after deployment:
+
+- Exeter Airport Area system `05q0` has 9 datastreams. Latest air temperature observation: `26.73 C` at `2026-05-26T18:00:00Z`.
+- Portsmouth / Thorney Island Area system `05qg` has 9 datastreams. Latest air temperature observation: `25.54 C` at `2026-05-26T18:00:00Z`.
+
+Known follow-up: service restart logs still show the pre-existing Cairngorm datastream-list JSON parse fallback, and that fallback currently resolves only two Cairngorm datastreams for scheduled cycles. The new Exeter and Portsmouth sites are unaffected and resolved all 9 datastreams each. Treat the Cairngorm warning as a separate service-hardening item rather than part of this site addition.
