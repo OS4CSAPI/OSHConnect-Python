@@ -109,6 +109,43 @@ def _parse_source_time(raw_time: str) -> tuple[float, str]:
 def _as_float(value) -> float | None:
     if value is None or value == "":
         return None
+
+
+_CARDINAL_DEGREES = {
+    "N": 0.0,
+    "NNE": 22.5,
+    "NE": 45.0,
+    "ENE": 67.5,
+    "E": 90.0,
+    "ESE": 112.5,
+    "SE": 135.0,
+    "SSE": 157.5,
+    "S": 180.0,
+    "SSW": 202.5,
+    "SW": 225.0,
+    "WSW": 247.5,
+    "W": 270.0,
+    "WNW": 292.5,
+    "NW": 315.0,
+    "NNW": 337.5,
+}
+
+_PRESSURE_TENDENCY_CODES = {
+    "F": -1.0,
+    "S": 0.0,
+    "R": 1.0,
+}
+
+
+def _numeric_value_for_parameter(value, parameter: dict) -> float | None:
+    if value is None:
+        return None
+    output_name = parameter.get("outputName")
+    if output_name == "wind_direction" and isinstance(value, str):
+        return _CARDINAL_DEGREES.get(value.strip().upper())
+    if output_name == "pressure_tendency" and isinstance(value, str):
+        return _PRESSURE_TENDENCY_CODES.get(value.strip().upper())
+    return _as_float(value)
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -190,7 +227,7 @@ def _candidate_records(data: dict) -> list[dict]:
 
 
 def _record_time(record: dict) -> str | None:
-    for key in ("dateTime", "observationTime", "timestamp", "time", "validTime", "endTime"):
+    for key in ("datetime", "dateTime", "observationTime", "timestamp", "time", "validTime", "endTime"):
         value = record.get(key)
         if isinstance(value, str) and value:
             return value
@@ -216,7 +253,7 @@ def _select_latest(records: list[dict], parameter: dict) -> tuple[dict, str, flo
     for record in records:
         raw_time = _record_time(record)
         value = _value_for_parameter(record, parameter)
-        numeric = _as_float(value)
+        numeric = _numeric_value_for_parameter(value, parameter)
         if raw_time and numeric is not None:
             try:
                 timestamp, phenomenon_time = _parse_source_time(raw_time)

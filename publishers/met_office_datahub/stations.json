@@ -76,9 +76,9 @@
     {
       "outputName": "pressure_tendency",
       "label": "Pressure Tendency",
-      "resultField": "pressure_tendency_hpa",
-      "unit": "hPa",
-      "uom": "hPa",
+      "resultField": "pressure_tendency_code",
+      "unit": "code (-1 falling, 0 steady, 1 rising)",
+      "uom": "1",
       "aliases": ["pressureTendency", "pressure_tendency", "pressure_tendency_at_10m"]
     }
   ],
