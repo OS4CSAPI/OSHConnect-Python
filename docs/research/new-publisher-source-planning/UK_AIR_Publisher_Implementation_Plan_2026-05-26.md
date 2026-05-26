@@ -2,6 +2,8 @@
 
 Date: 2026-05-26
 
+Status update: first-pass implementation, live bootstrap, live publish, and server read-back were completed on 2026-05-26. See `UK_AIR_Publisher_Completion_Report_2026-05-26.md` for validation details. Remaining follow-up is production Explorer visual review for marker styling, side-card polish, and any representative image decision.
+
 ## Purpose
 
 This plan defines the second new publisher activity from the candidate-source triage: a UK-AIR air pollution publisher for OSHConnect-Python. The goal is to add a curated, public, standards-aligned air-quality station network to the OS4CSAPI demo, using the same disciplined workflow proven by Environment Agency Hydrology.

@@ -1,0 +1,102 @@
+{
+  "_comment": "Phase 0 curated UK-AIR station/timeseries set for OS4CSAPI demo use.",
+  "_sources": {
+    "overview": "https://uk-air.defra.gov.uk/data/about_sos",
+    "apiDocs": "https://uk-air.defra.gov.uk/data/sos/static/doc/api-doc/",
+    "apiBase": "https://uk-air.defra.gov.uk/sos-ukair/api/v1/"
+  },
+  "stations": [
+    {
+      "siteId": "camden-kerbside",
+      "name": "Camden Kerbside",
+      "fullName": "UK-AIR air pollution monitoring station Camden Kerbside",
+      "lat": 51.544233,
+      "lon": -0.175227999994221,
+      "siteType": "urban roadside",
+      "stationUrl": "https://uk-air.defra.gov.uk/sos-ukair/api/v1/timeseries/3",
+      "selectionReason": "Recognizable London roadside nitrogen dioxide station with recent hourly values.",
+      "timeseries": [
+        {
+          "timeseriesId": "3",
+          "sourceStationId": "804",
+          "sourceStationLabel": "Camden Kerbside-Nitrogen dioxide (air)",
+          "pollutantCode": "NO2",
+          "pollutantName": "Nitrogen Dioxide",
+          "pollutantUri": "http://dd.eionet.europa.eu/vocabulary/aq/pollutant/8",
+          "label": "Camden Kerbside nitrogen dioxide concentration",
+          "unit": "ug.m-3",
+          "displayUnit": "ug/m3",
+          "uom": "ug/m3",
+          "outputName": "ukAirNO2",
+          "resultField": "no2_ugm3"
+        }
+      ]
+    },
+    {
+      "siteId": "auchencorth-moss",
+      "name": "Auchencorth Moss",
+      "fullName": "UK-AIR rural background air pollution station Auchencorth Moss",
+      "lat": 55.79216,
+      "lon": -3.242899999893278,
+      "siteType": "rural background",
+      "stationUrl": "https://uk-air.defra.gov.uk/sos-ukair/api/v1/timeseries/24",
+      "selectionReason": "Rural background ozone station with recent hourly values.",
+      "timeseries": [
+        {
+          "timeseriesId": "24",
+          "sourceStationId": "2674",
+          "sourceStationLabel": "Auchencorth Moss-Ozone (air)",
+          "pollutantCode": "O3",
+          "pollutantName": "Ozone",
+          "pollutantUri": "http://dd.eionet.europa.eu/vocabulary/aq/pollutant/7",
+          "label": "Auchencorth Moss ozone concentration",
+          "unit": "ug.m-3",
+          "displayUnit": "ug/m3",
+          "uom": "ug/m3",
+          "outputName": "ukAirO3",
+          "resultField": "o3_ugm3"
+        }
+      ]
+    },
+    {
+      "siteId": "toft-newton",
+      "name": "Toft Newton",
+      "fullName": "UK-AIR particulate monitoring station Toft Newton",
+      "lat": 53.374133,
+      "lon": -0.449787999985167,
+      "siteType": "background particulate monitoring",
+      "stationUrl": "https://uk-air.defra.gov.uk/sos-ukair/api/v1/timeseries/5125",
+      "selectionReason": "Co-located PM10 and PM2.5 timeseries with recent hourly values.",
+      "timeseries": [
+        {
+          "timeseriesId": "5125",
+          "sourceStationId": "788034",
+          "sourceStationLabel": "Toft Newton-Particulate matter less than 10 micro m (aerosol)",
+          "pollutantCode": "PM10",
+          "pollutantName": "Particulate Matter less than 10 micrometers",
+          "pollutantUri": "http://dd.eionet.europa.eu/vocabulary/aq/pollutant/5",
+          "label": "Toft Newton PM10 concentration",
+          "unit": "ug.m-3",
+          "displayUnit": "ug/m3",
+          "uom": "ug/m3",
+          "outputName": "ukAirPM10",
+          "resultField": "pm10_ugm3"
+        },
+        {
+          "timeseriesId": "5130",
+          "sourceStationId": "788035",
+          "sourceStationLabel": "Toft Newton-Particulate matter less than 2.5 micro m (aerosol)",
+          "pollutantCode": "PM2.5",
+          "pollutantName": "Fine Particulate Matter less than 2.5 micrometers",
+          "pollutantUri": "http://dd.eionet.europa.eu/vocabulary/aq/pollutant/6001",
+          "label": "Toft Newton PM2.5 concentration",
+          "unit": "ug.m-3",
+          "displayUnit": "ug/m3",
+          "uom": "ug/m3",
+          "outputName": "ukAirPM25",
+          "resultField": "pm25_ugm3"
+        }
+      ]
+    }
+  ]
+}

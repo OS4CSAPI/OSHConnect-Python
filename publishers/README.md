@@ -19,6 +19,7 @@ server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 | **USGS NIMS** | USGS NIMS Camera Imagery | 15 min |
 | **USGS EQ** | USGS Earthquake Hazards | 60 s |
 | **Environment Agency Hydrology** | EA river level, flow, rainfall, groundwater | 15 min |
+| **UK-AIR** | Defra UK-AIR NO2, O3, PM10, PM2.5 | 1 h |
 
 ## Quick Start
 
@@ -55,6 +56,7 @@ python -m publishers.usgs_water.bootstrap_usgs_water
 python -m publishers.usgs_nims.bootstrap_usgs_nims
 python -m publishers.usgs_eq.bootstrap_usgs_eq
 python -m publishers.environment_agency_hydrology.bootstrap_environment_agency_hydrology
+python -m publishers.uk_air.bootstrap_uk_air
 python -m publishers.iss.bootstrap_iss
 ```
 
@@ -122,4 +124,6 @@ python -m publishers.nws.nws_publisher --interval 3600
 - **USGS Water / NIMS** benefit from an optional `USGS_API_KEY`.
 - **Environment Agency Hydrology** uses public OGL Hydrology API JSON endpoints
   and polls only the curated measures in `stations.json`.
+- **UK-AIR** uses public OGL SOS / 52 North Timeseries REST endpoints and polls
+  only the curated pollutant timeseries in `stations.json`.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.
