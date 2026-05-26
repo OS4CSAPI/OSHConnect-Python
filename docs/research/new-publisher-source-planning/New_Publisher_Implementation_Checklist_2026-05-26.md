@@ -73,6 +73,7 @@ This checklist captures the repeatable workflow proven during the Environment Ag
 - Verify backend observations directly.
 - Verify Explorer visibility on the correct preset.
 - Verify production bundle content after pushing Explorer changes.
+- Verify the public reverse proxy from the production Explorer origin so browser CORS failures are caught, not just command-line endpoint success.
 - Record any server warnings separately from publisher failures.
 
 ## 9. Documentation
@@ -99,6 +100,7 @@ A new publisher is not done until all of these are true:
 - runtime can publish at least one clean live cycle,
 - observations can be read back from CSAPI,
 - Explorer can find and explain the resources,
+- the production Explorer can load the public endpoint without CORS-blocked OSH requests,
 - side-card/popup output is domain-meaningful,
 - docs explain source, model, commands, validation, and limitations,
 - commits are pushed to the relevant repositories.
