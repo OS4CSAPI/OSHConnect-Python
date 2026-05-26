@@ -68,6 +68,22 @@ PARAM_FIELD = {
 FETCH_LIMIT = 5
 
 
+class UpstreamRateLimit(RuntimeError):
+    def __init__(self, message: str, retry_after: float | None = None):
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
+def _retry_after_seconds(error: HTTPError) -> float | None:
+    raw = error.headers.get("Retry-After") if error.headers else None
+    if not raw:
+        return None
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return None
+
+
 def _load_stations() -> list[dict]:
     here = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(here, "stations.json")) as f:
@@ -106,6 +122,11 @@ def fetch_continuous_values(nwis_id: str, parameter_code: str,
     except HTTPError as e:
         if e.code == 404:
             return []
+        if e.code == 429:
+            raise UpstreamRateLimit(
+                f"HTTP 429 Too Many Requests for {nwis_id}/{parameter_code}",
+                _retry_after_seconds(e),
+            ) from e
         raise
     except Exception as e:
         print(f"    [WARN] USGS fetch failed for {nwis_id}/{parameter_code}: {e}")
@@ -185,6 +206,9 @@ class USGSWaterPublisher:
 
         # Track last observation timestamp per (station, param) to avoid duplicates
         self._last_obs_ts: dict[str, float] = {}
+        self._usgs_cooldown_until = 0.0
+        self._request_delay = float(os.environ.get("USGS_REQUEST_DELAY", "2.0"))
+        self._rate_limit_backoff = float(os.environ.get("USGS_429_BACKOFF", "900"))
 
         # REST config
         self._base_url = os.environ.get(
@@ -327,6 +351,12 @@ class USGSWaterPublisher:
             station_ds = self._ds_ids.get(nwis_id, {})
 
             for param_code in st.get("parameterCodes", []):
+                cooldown_remaining = self._usgs_cooldown_until - time.time()
+                if cooldown_remaining > 0:
+                    self.stats["skipped"] += 1
+                    print(f"  [{ts_label}] USGS cooldown active; skipping fetches for {cooldown_remaining:.0f}s")
+                    return published
+
                 ds_id = station_ds.get(param_code)
                 if ds_id is None and not dry_run:
                     continue
@@ -338,6 +368,12 @@ class USGSWaterPublisher:
                     values = fetch_continuous_values(
                         nwis_id, param_code,
                         api_key=self.api_key, limit=1)
+                except UpstreamRateLimit as e:
+                    backoff = e.retry_after or self._rate_limit_backoff
+                    self._usgs_cooldown_until = time.time() + backoff
+                    self.stats["skipped"] += 1
+                    print(f"  [{ts_label}] {nwis_id}/{param_code}: RATE LIMITED; backing off {backoff:.0f}s")
+                    return published
                 except Exception as e:
                     self.stats["errors"] += 1
                     print(f"  [{ts_label}] {nwis_id}/{param_code}: FETCH ERR {e}")
@@ -389,8 +425,7 @@ class USGSWaterPublisher:
                         self.stats["errors"] += 1
                         print(f"  [{ts_label}] {nwis_id}/{param_code}: ERR {e}")
 
-                # Be polite to USGS API
-                time.sleep(0.3)
+                time.sleep(self._request_delay)
 
         return published
 

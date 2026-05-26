@@ -55,6 +55,22 @@ DS_OUTPUT_NAME = "usgsNimsImage"
 FILENAME_TS_RE = re.compile(r"___(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})Z\.jpg$")
 
 
+class UpstreamRateLimit(RuntimeError):
+    def __init__(self, message: str, retry_after: float | None = None):
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
+def _retry_after_seconds(error: HTTPError) -> float | None:
+    raw = error.headers.get("Retry-After") if error.headers else None
+    if not raw:
+        return None
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return None
+
+
 def _load_cameras() -> list[dict]:
     here = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(here, "cameras.json")) as f:
@@ -100,6 +116,11 @@ def fetch_latest_image(cam: dict, api_key: str | None = None) -> dict | None:
     except HTTPError as e:
         if e.code == 404:
             return None
+        if e.code == 429:
+            raise UpstreamRateLimit(
+                f"HTTP 429 Too Many Requests for {cam_id}",
+                _retry_after_seconds(e),
+            ) from e
         raise
     except Exception as e:
         print(f"    [WARN] NIMS listFiles failed for {cam_id}: {e}")
@@ -175,6 +196,9 @@ class USGSNimsPublisher:
 
         # Track last image filename per camera to avoid duplicate publishes
         self._last_filename: dict[str, str] = {}
+        self._usgs_cooldown_until = 0.0
+        self._request_delay = float(os.environ.get("USGS_NIMS_REQUEST_DELAY", "3.0"))
+        self._rate_limit_backoff = float(os.environ.get("USGS_NIMS_429_BACKOFF", "900"))
 
         # REST config
         self._base_url = os.environ.get(
@@ -276,6 +300,12 @@ class USGSNimsPublisher:
         for cam in self.cameras:
             nwis_id = cam["nwisId"]
             cam_id = cam["camId"]
+            cooldown_remaining = self._usgs_cooldown_until - time.time()
+            if cooldown_remaining > 0:
+                self.stats["skipped"] += 1
+                print(f"  [{ts_label}] NIMS cooldown active; skipping fetches for {cooldown_remaining:.0f}s")
+                return published
+
             ds_id = self._ds_ids.get(nwis_id)
             if ds_id is None and not dry_run:
                 continue
@@ -283,6 +313,12 @@ class USGSNimsPublisher:
             # Fetch latest image from NIMS
             try:
                 img = fetch_latest_image(cam, api_key=self.api_key)
+            except UpstreamRateLimit as e:
+                backoff = e.retry_after or self._rate_limit_backoff
+                self._usgs_cooldown_until = time.time() + backoff
+                self.stats["skipped"] += 1
+                print(f"  [{ts_label}] {nwis_id}/{cam_id}: RATE LIMITED; backing off {backoff:.0f}s")
+                return published
             except Exception as e:
                 self.stats["errors"] += 1
                 print(f"  [{ts_label}] {nwis_id}/{cam_id}: FETCH ERR {e}")
@@ -333,8 +369,7 @@ class USGSNimsPublisher:
                     self.stats["errors"] += 1
                     print(f"  [{ts_label}] {nwis_id}/{cam_id}: ERR {e}")
 
-            # Be polite to NIMS API
-            time.sleep(0.5)
+            time.sleep(self._request_delay)
 
         return published
 
