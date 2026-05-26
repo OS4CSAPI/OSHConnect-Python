@@ -13,6 +13,7 @@ Explorer repository:
 ```text
 OS4CSAPI/ogc-csapi-explorer main
 8712d11 Show hydrology latest readings on map cards
+5323b4d Show hydrology station thumbnail fallback
 ```
 
 Publisher/documentation repository:
@@ -20,12 +21,14 @@ Publisher/documentation repository:
 ```text
 OS4CSAPI/OSHConnect-Python main
 a6acc37 Add Environment Agency hydrology publisher
+87a8f77 Add hydrology station thumbnail metadata
 ```
 
 The production Pages route served a new built JavaScript asset:
 
 ```text
 https://ogc-csapi-explorer.pages.dev/assets/index-BWlscW-4.js
+https://ogc-csapi-explorer.pages.dev/assets/index-BdKjP1gZ.js
 ```
 
 The production asset contains the expected update strings:
@@ -35,6 +38,9 @@ The production asset contains the expected update strings:
 - `popup-latest-readings`
 - `environment agency`
 - `SFGPEWRH-------`
+- `Environment_Agency_Morton_River_Gauge_Station`
+
+The `index-BdKjP1gZ.js` bundle check confirmed the production Explorer includes the Environment Agency Hydrology representative gauge-photo fallback.
 
 ## Correct Live Demo Preset
 
