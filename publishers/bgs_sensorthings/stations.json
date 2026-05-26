@@ -1,0 +1,155 @@
+{
+  "source": {
+    "name": "British Geological Survey Sensor Data Service",
+    "apiRoot": "https://sensors.bgs.ac.uk/FROST-Server/v1.1",
+    "landingPage": "https://sensors.bgs.ac.uk/",
+    "apiDocs": "https://sensors.bgs.ac.uk/api.html",
+    "interactiveDocs": "https://sensors-docs.bgs.ac.uk/",
+    "license": "Open Government Licence with UKRI acknowledgement",
+    "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "acknowledgement": "Contains UKRI materials (c) UKRI [year]"
+  },
+  "stations": [
+    {
+      "siteId": "gga01-03",
+      "thingId": "195",
+      "name": "Downhole hydro logger GGA01",
+      "shortName": "GGA01",
+      "description": "BGS UKGEOS Glasgow downhole hydro logger measuring groundwater temperature, conductivity, and pressure-derived water level.",
+      "category": "Groundwater Monitoring",
+      "arrays": ["Geothermal Monitoring", "Groundwater Monitoring"],
+      "boreholeReference": "GGA01",
+      "lat": 55.839415,
+      "lon": -4.200163,
+      "thingUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Things(195)",
+      "selectionReason": "Recent unrestricted SensorThings telemetry from the UKGEOS Glasgow observatory with a useful groundwater/geothermal parameter mix.",
+      "dataUsage": "Available under the Open Government Licence subject to the following acknowledgement accompanying the reproduced UKRI materials \"Contains UKRI materials (c) UKRI [year]\"",
+      "datastreams": [
+        {
+          "datastreamId": "405",
+          "outputName": "water_temperature",
+          "label": "Water Temperature",
+          "observedProperty": "Water Temperature",
+          "resultField": "waterTemperatureC",
+          "unit": "C",
+          "uom": "Cel",
+          "datastreamUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Datastreams(405)"
+        },
+        {
+          "datastreamId": "421",
+          "outputName": "conductivity",
+          "label": "Conductivity",
+          "observedProperty": "Conductivity",
+          "resultField": "conductivityUsCm",
+          "unit": "uS/cm",
+          "uom": "uS/cm",
+          "datastreamUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Datastreams(421)"
+        },
+        {
+          "datastreamId": "749",
+          "outputName": "water_level_maod",
+          "label": "Water Level maOD",
+          "observedProperty": "Water Level maOD",
+          "resultField": "waterLevelMaodM",
+          "unit": "m",
+          "uom": "m",
+          "datastreamUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Datastreams(749)"
+        }
+      ]
+    },
+    {
+      "siteId": "gga05-03",
+      "thingId": "197",
+      "name": "Downhole hydro logger GGA05",
+      "shortName": "GGA05",
+      "description": "BGS UKGEOS Glasgow downhole hydro logger measuring groundwater temperature, conductivity, and pressure-derived water level.",
+      "category": "Groundwater Monitoring",
+      "arrays": ["Geothermal Monitoring", "Groundwater Monitoring"],
+      "boreholeReference": "GGA05",
+      "lat": 55.83769,
+      "lon": -4.199619,
+      "thingUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Things(197)",
+      "selectionReason": "Recent unrestricted SensorThings telemetry from the UKGEOS Glasgow observatory with a useful groundwater/geothermal parameter mix.",
+      "dataUsage": "Available under the Open Government Licence subject to the following acknowledgement accompanying the reproduced UKRI materials \"Contains UKRI materials (c) UKRI [year]\"",
+      "datastreams": [
+        {
+          "datastreamId": "430",
+          "outputName": "water_temperature",
+          "label": "Water Temperature",
+          "observedProperty": "Water Temperature",
+          "resultField": "waterTemperatureC",
+          "unit": "C",
+          "uom": "Cel",
+          "datastreamUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Datastreams(430)"
+        },
+        {
+          "datastreamId": "427",
+          "outputName": "conductivity",
+          "label": "Conductivity",
+          "observedProperty": "Conductivity",
+          "resultField": "conductivityUsCm",
+          "unit": "uS/cm",
+          "uom": "uS/cm",
+          "datastreamUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Datastreams(427)"
+        },
+        {
+          "datastreamId": "754",
+          "outputName": "water_level_maod",
+          "label": "Water Level maOD",
+          "observedProperty": "Water Level maOD",
+          "resultField": "waterLevelMaodM",
+          "unit": "m",
+          "uom": "m",
+          "datastreamUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Datastreams(754)"
+        }
+      ]
+    },
+    {
+      "siteId": "gga07-03",
+      "thingId": "200",
+      "name": "Downhole hydro logger GGA07",
+      "shortName": "GGA07",
+      "description": "BGS UKGEOS Glasgow downhole hydro logger measuring groundwater temperature, conductivity, and pressure-derived water level.",
+      "category": "Groundwater Monitoring",
+      "arrays": ["Geothermal Monitoring", "Groundwater Monitoring"],
+      "boreholeReference": "GGA07",
+      "lat": 55.838337,
+      "lon": -4.201172,
+      "thingUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Things(200)",
+      "selectionReason": "Recent unrestricted SensorThings telemetry from the UKGEOS Glasgow observatory with a useful groundwater/geothermal parameter mix.",
+      "dataUsage": "Available under the Open Government Licence subject to the following acknowledgement accompanying the reproduced UKRI materials \"Contains UKRI materials (c) UKRI [year]\"",
+      "datastreams": [
+        {
+          "datastreamId": "404",
+          "outputName": "water_temperature",
+          "label": "Water Temperature",
+          "observedProperty": "Water Temperature",
+          "resultField": "waterTemperatureC",
+          "unit": "C",
+          "uom": "Cel",
+          "datastreamUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Datastreams(404)"
+        },
+        {
+          "datastreamId": "428",
+          "outputName": "conductivity",
+          "label": "Conductivity",
+          "observedProperty": "Conductivity",
+          "resultField": "conductivityUsCm",
+          "unit": "uS/cm",
+          "uom": "uS/cm",
+          "datastreamUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Datastreams(428)"
+        },
+        {
+          "datastreamId": "750",
+          "outputName": "water_level_maod",
+          "label": "Water Level maOD",
+          "observedProperty": "Water Level maOD",
+          "resultField": "waterLevelMaodM",
+          "unit": "m",
+          "uom": "m",
+          "datastreamUrl": "https://sensors.bgs.ac.uk/FROST-Server/v1.1/Datastreams(750)"
+        }
+      ]
+    }
+  ]
+}

@@ -20,6 +20,7 @@ server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 | **USGS EQ** | USGS Earthquake Hazards | 60 s |
 | **Environment Agency Hydrology** | EA river level, flow, rainfall, groundwater | 15 min |
 | **UK-AIR** | Defra UK-AIR NO2, O3, PM10, PM2.5 | 1 h |
+| **BGS SensorThings** | BGS UKGEOS Glasgow groundwater/geothermal telemetry | 15 min |
 
 ## Quick Start
 
@@ -57,6 +58,7 @@ python -m publishers.usgs_nims.bootstrap_usgs_nims
 python -m publishers.usgs_eq.bootstrap_usgs_eq
 python -m publishers.environment_agency_hydrology.bootstrap_environment_agency_hydrology
 python -m publishers.uk_air.bootstrap_uk_air
+python -m publishers.bgs_sensorthings.bootstrap_bgs_sensorthings
 python -m publishers.iss.bootstrap_iss
 ```
 
@@ -126,4 +128,6 @@ python -m publishers.nws.nws_publisher --interval 3600
   and polls only the curated measures in `stations.json`.
 - **UK-AIR** uses public OGL SOS / 52 North Timeseries REST endpoints and polls
   only the curated pollutant timeseries in `stations.json`.
+- **BGS SensorThings** uses the public BGS Sensor Data Service SensorThings API
+  and polls only curated unrestricted UKGEOS Glasgow datastreams in `stations.json`.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.
