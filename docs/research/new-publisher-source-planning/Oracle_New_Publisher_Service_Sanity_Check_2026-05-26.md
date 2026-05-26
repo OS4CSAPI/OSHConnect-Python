@@ -90,3 +90,22 @@ Representative latest-observation read-back after service installation:
 | Met Office air temperature | `05r0` | latest observation returned |
 
 The BGS source currently reports older observations from 2026-04-13, which matches the upstream latest value observed during the publisher completion work. This is stale source data, not a service failure.
+
+## Production Explorer Smoke Test
+
+After installing the persistent Environment Agency Hydrology, UK-AIR, and BGS services, production Explorer was smoke-tested at:
+
+```text
+https://ogc-csapi-explorer.pages.dev/map
+```
+
+Observed result:
+
+- Map loaded successfully.
+- Feature summary: `809 FEATURES`.
+- Source filters present: `EA Hydrology4`, `UK-AIR4`, `BGS / UKGEOS9`, `Met Office15`.
+- No CORS failure was observed.
+- UK-AIR Camden Kerbside deployed-system card opened successfully with `Air Quality Site`, latest nitrogen dioxide reading `25.63 ug/m3`, `recent` freshness, and the representative air-quality-monitoring-station thumbnail.
+- BGS GGA01 UKGEOS deployed-system card opened successfully with the UKGEOS borehole illustration and stale-but-source-current groundwater readings.
+
+Non-blocking 400 responses are still visible for optional `systems/{id}/controlStreams?limit=100` probes. They do not block feature loading, source filters, or deployed-system cards, but should remain a follow-up Explorer cleanup item.
