@@ -1,0 +1,1 @@
+"""Met Office Weather DataHub publisher package."""

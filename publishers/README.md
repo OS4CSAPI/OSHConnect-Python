@@ -21,6 +21,7 @@ server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 | **Environment Agency Hydrology** | EA river level, flow, rainfall, groundwater | 15 min |
 | **UK-AIR** | Defra UK-AIR NO2, O3, PM10, PM2.5 | 1 h |
 | **BGS SensorThings** | BGS UKGEOS Glasgow groundwater/geothermal telemetry | 15 min |
+| **Met Office DataHub** | Land Observations hourly weather data | Access-gated / planned |
 
 ## Quick Start
 
@@ -59,6 +60,7 @@ python -m publishers.usgs_eq.bootstrap_usgs_eq
 python -m publishers.environment_agency_hydrology.bootstrap_environment_agency_hydrology
 python -m publishers.uk_air.bootstrap_uk_air
 python -m publishers.bgs_sensorthings.bootstrap_bgs_sensorthings
+# Met Office DataHub is access-gated; see publishers/met_office_datahub/README.md
 python -m publishers.iss.bootstrap_iss
 ```
 
@@ -114,6 +116,7 @@ python -m publishers.nws.nws_publisher --interval 3600
 | `BOOTSTRAP_URL` | No | Override the full bootstrap API URL |
 | `OSH_FORCE_IP` | No | Force DNS resolution to a specific IP |
 | `USGS_API_KEY` | No | USGS API key for higher rate limits |
+| `MET_OFFICE_DATAHUB_API_KEY` | Planned | Met Office Weather DataHub subscription key for Land Observations |
 | `BUOYCAM_CACHE_ROOT` | No | Local directory for BuoyCAM image cache |
 | `BUOYCAM_CACHE_BASE_URL` | No | Public URL serving the cached images |
 
@@ -130,4 +133,7 @@ python -m publishers.nws.nws_publisher --interval 3600
   only the curated pollutant timeseries in `stations.json`.
 - **BGS SensorThings** uses the public BGS Sensor Data Service SensorThings API
   and polls only curated unrestricted UKGEOS Glasgow datastreams in `stations.json`.
+- **Met Office DataHub** is started as an access-gated publisher target for Land
+  Observations. It requires account/subscription credentials before live runtime
+  implementation can be completed.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.
