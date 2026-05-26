@@ -113,6 +113,23 @@ Verified examples:
 - `deployments?uid=urn:os4csapi:deployment:uk-air-demo:v1&limit=1000` returned one item.
 - `deployments?uid=urn:os4csapi:deployment:uk-air-stations:v1&limit=1000` returned one item.
 
+## Explorer Visual Validation
+
+Production Explorer was connected to the `OSH (OS4CSAPI)` preset and the map was filtered for `UK-AIR`. The live card for `UK-AIR Auchencorth Moss` opened successfully and displayed:
+
+- Context path: `UK-AIR Air Quality Demo > UK-AIR Monitoring Stations > UK-AIR Auchencorth Moss`
+- Output: `Ozone`
+- Latest reading: `67.85 ug/m3`
+- Freshness: `recent`, approximately two hours old at validation time
+- Source links: UK-AIR representative timeseries, UK-AIR REST API docs, Open Government Licence v3.0
+
+Two UI polish issues were found and fixed in the Explorer repo:
+
+1. UK-AIR deployments initially fell through to the generic `Monitoring Site` classification. The Explorer now recognizes `UK-AIR`, `air quality`, `air pollution`, pollutant names, and pollutant codes as air-quality sites and labels the side card `Air Quality Site`.
+2. Latest-reading value/unit text rendered without a visible space in the card text extraction. The card now formats the display as `67.85 ug/m3`.
+
+The UK-AIR symbol rule now maps air-quality stations to the same friendly emplaced sensor family used for Environment Agency Hydrology, USGS Water, CO-OPS, NDBC, and weather station markers.
+
 ## Validation Commands
 
 ```powershell
@@ -125,9 +142,16 @@ py -m publishers.uk_air.uk_air_publisher --once
 
 All final validation commands completed successfully.
 
+Explorer validation command:
+
+```powershell
+npm --prefix demo run build
+```
+
+The patched Explorer build completed successfully and was validated locally through Vite preview at `http://127.0.0.1:4174/` against the live `OSH (OS4CSAPI)` backend.
+
 ## Follow-Up Items
 
-1. Open the production Explorer map with the `OSH (OS4CSAPI)` preset and visually confirm marker styling, side-card labels, and popup latest-reading display for UK-AIR deployments.
-2. If the marker falls back to a blank/generic NATO symbol, add a targeted UK-AIR / air-quality keyword mapping in the Explorer symbol mapper.
-3. Consider adding a representative monitoring-station image/fallback after the visual pass, following the Environment Agency Hydrology pattern.
-4. Consider expanding the curated sidecar after demo validation, especially for additional urban NO2/PM sites and rural background stations.
+1. After the Explorer deployment completes, spot-check production again to confirm the patched `Air Quality Site` label and value/unit spacing are live.
+2. Consider adding a representative monitoring-station image/fallback after a verified public image source is selected, following the Environment Agency Hydrology pattern.
+3. Consider expanding the curated sidecar after demo validation, especially for additional urban NO2/PM sites and rural background stations.
