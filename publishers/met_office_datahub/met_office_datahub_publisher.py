@@ -513,7 +513,6 @@ class MetOfficeDataHubPublisher:
             record, phenomenon_time, value = selected
             timestamp, _ = _parse_source_time(phenomenon_time)
             result = {
-                "timestamp": timestamp,
                 "locationId": station["id"],
                 "geohash": location["geohash"],
                 "parameter": parameter["label"],
@@ -525,6 +524,7 @@ class MetOfficeDataHubPublisher:
                 "station": station,
                 "parameter": parameter,
                 "phenomenonTime": phenomenon_time,
+                "timestamp": timestamp,
                 "value": value,
                 "result": result,
                 "dedupeKey": f"{station['id']}|{parameter['outputName']}|{phenomenon_time}|{value}",

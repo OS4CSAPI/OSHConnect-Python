@@ -246,7 +246,6 @@ def _datastream_schema(station: dict, parameter: dict) -> dict:
                 "label": f"Met Office {parameter['label']} Observation",
                 "description": "Met Office Land Observations reading with source metadata.",
                 "fields": [
-                    {"type": "Time", "name": "timestamp", "label": "Observation Time", "definition": "http://www.opengis.net/def/property/OGC/0/SamplingTime", "referenceTime": "1970-01-01T00:00:00Z", "uom": {"code": "s"}},
                     {"type": "Text", "name": "locationId", "label": "Curated Location ID", "definition": "http://sensorml.com/ont/swe/property/StationID"},
                     {"type": "Text", "name": "geohash", "label": "Met Office Geohash", "definition": "http://sensorml.com/ont/swe/property/Identifier"},
                     {"type": "Text", "name": "parameter", "label": "Parameter", "definition": "http://sensorml.com/ont/swe/property/ObservableProperty"},
