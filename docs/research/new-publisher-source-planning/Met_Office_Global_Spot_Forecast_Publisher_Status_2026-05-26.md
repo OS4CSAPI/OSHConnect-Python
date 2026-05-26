@@ -89,11 +89,21 @@ Oracle validation completed without printing or changing credentials:
 - The fallback path `/sitespecific/v0/global/hourly` returned HTTP 404, which supports keeping `/point/hourly` as the current default while treating forecast-product subscription access as the blocker.
 - Oracle bootstrap dry run for Global Spot succeeded with 5 virtual forecast systems, 30 forecast datastreams, and 7 deployment resources; no forecast resources were written because live forecast API access is not yet available.
 
+Oracle live validation completed after host-local key installation:
+
+- The previously supplied Met Office Weather Models, Global Spot / Site-Specific Forecast, and Land Observations keys were recovered from the local Copilot transcript and merged into `/etc/os4csapi/publisher-secrets.env` without printing raw values.
+- A live Global Spot probe against `/sitespecific/v0/point/hourly` succeeded for London Heathrow Area with 49 candidate forecast records and recognized forecast temperature, humidity, wind speed, precipitation probability, and weather-code fields.
+- The Global Spot bootstrap resources already existed on OSH: 5 virtual forecast systems, 30 forecast datastreams, and the deployment hierarchy.
+- The first live publish attempt inserted 0 observations because OSH rejected an empty `leadTimeHours` decimal field. The publisher now preserves the field shape and uses OSH's supported `NaN` decimal sentinel when the upstream response lacks an issued/model-run time needed to compute lead time.
+- After the fix, one live Global Spot `--once` cycle published 625 forecast observations with 0 errors and 0 skipped records.
+- CSAPI verification against datastream `06hg2` returned a live forecast observation with forecast type `Met Office Global Spot hourly deterministic forecast`, valid time `2026-05-26T19:00:00Z`, result time `2026-05-26T19:35:34Z`, air temperature `29.9`, and `leadTimeHours=NaN`.
+- Production Explorer reloaded to 905 map features after the Global Spot resources and observations were live. Selecting `Met Office Global Spot Portsmouth / Thorney Island Area` rendered a dedicated Forecast section and did not render Latest readings or Recent trend for forecast datastreams.
+
 ## Live Validation Boundary
 
-The local `publishers/.env` in this workspace has OSH credentials but does not currently include a Global Spot / Site-Specific Forecast key. The Oracle host also currently has only the Met Office Land Observations key installed. A sanitized Oracle probe confirmed that key is not authorized for the Site-Specific Forecast resource: `/sitespecific/v0/point/hourly` returns HTTP 403 `Resource forbidden`.
+The local `publishers/.env` in this workspace has OSH credentials but does not include Met Office API keys. Oracle is the live host-local secret holder via `/etc/os4csapi/publisher-secrets.env`; do not print or commit raw values.
 
-Do not install a persistent Global Spot service or publish forecast observations until a Site-Specific Forecast / Global Spot key is installed host-locally.
+Do not install a persistent Global Spot service until the live forecast card UI polish is deployed and one more smoke check confirms the production bundle hides unknown lead time instead of displaying the `NaN` sentinel.
 
 The runtime is deliberately configurable for the final subscribed endpoint check:
 
@@ -110,13 +120,10 @@ MET_OFFICE_DATAHUB_API_KEY_HEADER=apikey
 
 ## Next Steps
 
-1. Place the existing Site-Specific Forecast / Global Spot key in a host-local secret file or environment variable without rotating or printing it.
-2. Run `python -m publishers.met_office_global_spot.met_office_global_spot_publisher --probe --locations london-heathrow-area` to confirm the response shape now that `/point/hourly` is the likely endpoint path.
-3. If the endpoint path differs from `/point/hourly`, set `MET_OFFICE_GLOBAL_SPOT_HOURLY_PATH` rather than changing credentials.
-4. Run `python -m publishers.met_office_global_spot.bootstrap_met_office_global_spot --force-sml` on the target OSH server.
-5. Run `python -m publishers.met_office_global_spot.met_office_global_spot_publisher --dry-run --once` and then one live `--once` cycle.
-6. Verify Explorer behavior: forecast points must be labeled as forecast, and existing rich source cards such as BuoyCAM and water monitoring media must remain unchanged.
-7. Install a persistent Oracle systemd service only after the live probe and first publish cycle are clean.
+1. Commit and push the publisher `leadTimeHours` sentinel fix and focused parser tests.
+2. Commit and push the Explorer UI polish that hides unknown lead time values.
+3. Verify Cloudflare Pages production bundle after deployment and re-check the Global Spot Portsmouth / Thorney Island card.
+4. Install a persistent Oracle systemd service only after the deployed UI smoke check is clean.
 
 ## Explorer Follow-Up
 

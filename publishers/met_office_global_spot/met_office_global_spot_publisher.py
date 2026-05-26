@@ -462,7 +462,7 @@ class MetOfficeGlobalSpotPublisher:
                     "forecastType": FORECAST_TYPE,
                     "issuedTime": issued_time or "",
                     "validTime": valid_time,
-                    "leadTimeHours": lead_time if lead_time is not None else "",
+                    "leadTimeHours": lead_time if lead_time is not None else "NaN",
                     "parameter": parameter["label"],
                     parameter["resultField"]: value,
                     "unit": parameter["unit"],
