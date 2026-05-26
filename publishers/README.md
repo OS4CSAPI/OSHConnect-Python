@@ -1,6 +1,6 @@
 # OSHConnect Publisher Fleet
 
-A fleet of 9 real-time data publishers that fetch observations from public APIs
+A fleet of real-time data publishers that fetch observations from public APIs
 and push them into a [CSAPI](https://ogcapi.ogc.org/connectedsystems/)-compliant
 server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 
@@ -18,6 +18,7 @@ server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 | **USGS Water** | USGS NWIS Water Monitoring | 15 min |
 | **USGS NIMS** | USGS NIMS Camera Imagery | 15 min |
 | **USGS EQ** | USGS Earthquake Hazards | 60 s |
+| **Environment Agency Hydrology** | EA river level, flow, rainfall, groundwater | 15 min |
 
 ## Quick Start
 
@@ -53,6 +54,7 @@ python -m publishers.opensky.bootstrap_opensky
 python -m publishers.usgs_water.bootstrap_usgs_water
 python -m publishers.usgs_nims.bootstrap_usgs_nims
 python -m publishers.usgs_eq.bootstrap_usgs_eq
+python -m publishers.environment_agency_hydrology.bootstrap_environment_agency_hydrology
 python -m publishers.iss.bootstrap_iss
 ```
 
@@ -118,4 +120,6 @@ python -m publishers.nws.nws_publisher --interval 3600
   `BUOYCAM_CACHE_BASE_URL` to the matching public URL.
 - **OpenSky** uses the unauthenticated public API. Rate limit is 100 req/day.
 - **USGS Water / NIMS** benefit from an optional `USGS_API_KEY`.
+- **Environment Agency Hydrology** uses public OGL Hydrology API JSON endpoints
+  and polls only the curated measures in `stations.json`.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.

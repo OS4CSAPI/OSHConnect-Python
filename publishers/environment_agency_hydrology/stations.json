@@ -1,0 +1,129 @@
+{
+  "_comment": "Phase 0 curated Environment Agency Hydrology station/measure set for OS4CSAPI demo use.",
+  "_sources": {
+    "dataset": "https://www.data.gov.uk/dataset/98a4d46e-23e7-4430-883c-9e5f14645e8f/hydrological-open-data",
+    "apiReference": "https://environment.data.gov.uk/hydrology/doc/reference",
+    "apiBase": "https://environment.data.gov.uk/hydrology"
+  },
+  "stations": [
+    {
+      "stationNotation": "48513a18-e485-4317-ae92-93bf4f7f3e54",
+      "name": "Beggearn Huish",
+      "fullName": "Environment Agency hydrology station Beggearn Huish",
+      "lat": 51.146322,
+      "lon": -3.373695,
+      "riverName": "Washford River",
+      "stationUrl": "https://environment.data.gov.uk/hydrology/id/stations/48513a18-e485-4317-ae92-93bf4f7f3e54",
+      "selectionReason": "Current 15-minute river level and flow readings from one station.",
+      "measures": [
+        {
+          "measureNotation": "48513a18-e485-4317-ae92-93bf4f7f3e54-level-i-900-m-qualified",
+          "measureUri": "http://environment.data.gov.uk/hydrology/id/measures/48513a18-e485-4317-ae92-93bf4f7f3e54-level-i-900-m-qualified",
+          "label": "15min Level (m) time series for Beggearn Huish",
+          "parameter": "level",
+          "parameterName": "River Level",
+          "period": 900,
+          "periodName": "15 min",
+          "valueType": "instantaneous",
+          "unit": "m",
+          "observedProperty": "waterLevel",
+          "outputName": "eaRiverLevel",
+          "resultField": "level_m"
+        },
+        {
+          "measureNotation": "48513a18-e485-4317-ae92-93bf4f7f3e54-flow-i-900-m3s-qualified",
+          "measureUri": "http://environment.data.gov.uk/hydrology/id/measures/48513a18-e485-4317-ae92-93bf4f7f3e54-flow-i-900-m3s-qualified",
+          "label": "15min Flow (m3/s) time series for Beggearn Huish",
+          "parameter": "flow",
+          "parameterName": "River Flow",
+          "period": 900,
+          "periodName": "15 min",
+          "valueType": "instantaneous",
+          "unit": "m3/s",
+          "observedProperty": "waterFlow",
+          "outputName": "eaRiverFlow",
+          "resultField": "flow_m3s"
+        }
+      ]
+    },
+    {
+      "stationNotation": "d52d0eab-1e64-4d76-a1f2-e81c7948d2c0_435510",
+      "name": "Cosford",
+      "fullName": "Environment Agency hydrology rainfall station Cosford",
+      "lat": 52.639315,
+      "lon": -2.326238,
+      "riverName": "",
+      "stationUrl": "https://environment.data.gov.uk/hydrology/id/stations/d52d0eab-1e64-4d76-a1f2-e81c7948d2c0_435510",
+      "selectionReason": "Current 15-minute rainfall total readings.",
+      "measures": [
+        {
+          "measureNotation": "d52d0eab-1e64-4d76-a1f2-e81c7948d2c0_435510-rainfall-t-900-mm-qualified",
+          "measureUri": "http://environment.data.gov.uk/hydrology/id/measures/d52d0eab-1e64-4d76-a1f2-e81c7948d2c0_435510-rainfall-t-900-mm-qualified",
+          "label": "15min total Rainfall (mm) time series for Cosford",
+          "parameter": "rainfall",
+          "parameterName": "Rainfall",
+          "period": 900,
+          "periodName": "15 min",
+          "valueType": "total",
+          "unit": "mm",
+          "observedProperty": "rainfall",
+          "outputName": "eaRainfall",
+          "resultField": "rainfall_mm"
+        }
+      ]
+    },
+    {
+      "stationNotation": "c7e13884-4a02-4df3-b184-09aea28cf8e8_3_020",
+      "name": "Burton Coggles",
+      "fullName": "Environment Agency groundwater station Burton Coggles",
+      "lat": 52.814674,
+      "lon": -0.533054,
+      "riverName": "",
+      "stationUrl": "https://environment.data.gov.uk/hydrology/id/stations/c7e13884-4a02-4df3-b184-09aea28cf8e8_3_020",
+      "selectionReason": "Groundwater logged level readings exposed as level parameter with mAOD units.",
+      "measures": [
+        {
+          "measureNotation": "c7e13884-4a02-4df3-b184-09aea28cf8e8_3_020-gw-logged-i-subdaily-mAOD-qualified",
+          "measureUri": "http://environment.data.gov.uk/hydrology/id/measures/c7e13884-4a02-4df3-b184-09aea28cf8e8_3_020-gw-logged-i-subdaily-mAOD-qualified",
+          "label": "Sub-daily Groundwater Logged (mAOD) time series for Burton Coggles",
+          "parameter": "level",
+          "parameterName": "Groundwater Level",
+          "period": 900,
+          "periodName": "sub-daily",
+          "uom": "m",
+          "valueType": "instantaneous",
+          "unit": "mAOD",
+          "observedProperty": "groundwaterLevel",
+          "outputName": "eaGroundwaterLevel",
+          "resultField": "groundwater_level_mAOD"
+        }
+      ]
+    },
+    {
+      "stationNotation": "959f3e4f-bb6e-4f4a-8082-0157eea99482",
+      "name": "Iwood",
+      "fullName": "Environment Agency hydrology station Iwood",
+      "lat": 51.363977,
+      "lon": -2.78889,
+      "riverName": "",
+      "stationUrl": "https://environment.data.gov.uk/hydrology/id/stations/959f3e4f-bb6e-4f4a-8082-0157eea99482",
+      "selectionReason": "Fresh 15-minute flow reading from the discovery pass.",
+      "measures": [
+        {
+          "measureNotation": "959f3e4f-bb6e-4f4a-8082-0157eea99482-flow-i-900-m3s-qualified",
+          "measureUri": "http://environment.data.gov.uk/hydrology/id/measures/959f3e4f-bb6e-4f4a-8082-0157eea99482-flow-i-900-m3s-qualified",
+          "label": "15min Flow (m3/s) time series for Iwood",
+          "parameter": "flow",
+          "parameterName": "River Flow",
+          "period": 900,
+          "periodName": "15 min",
+          "valueType": "instantaneous",
+          "unit": "m3/s",
+          "observedProperty": "waterFlow",
+          "outputName": "eaRiverFlow",
+          "resultField": "flow_m3s"
+        }
+      ]
+    }
+  ]
+}
