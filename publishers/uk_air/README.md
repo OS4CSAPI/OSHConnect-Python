@@ -15,6 +15,11 @@ Source data comes from the UK-AIR SOS / 52 North Timeseries REST API:
 - https://uk-air.defra.gov.uk/data/sos/static/doc/api-doc/
 - https://uk-air.defra.gov.uk/sos-ukair/api/v1/
 
+Station thumbnails use representative UK air-quality monitoring station photographs from Wikimedia Commons / Geograph Britain and Ireland because the UK-AIR API exposes no station photo media:
+
+- Camden Kerbside uses a roadside monitoring-station cabinet photograph by Jonathan Thacker, CC BY-SA 2.0.
+- Auchencorth Moss and Toft Newton use a vegetation/background monitoring-station cabinet photograph by Albert Bridge, CC BY-SA 2.0.
+
 ## Bootstrap
 
 ```bash
@@ -42,3 +47,4 @@ Use `--stations` with comma-separated curated site IDs, such as `camden-kerbside
 - Source units such as `ug.m-3` are preserved in observation results as `unit`, while SWE schemas use the display-friendly `ug/m3` code.
 - The first-pass model consolidates co-located pollutant streams only where the source metadata clearly supports it, such as Toft Newton PM10 and PM2.5.
 - Explorer cards should show latest pollutant concentrations in the same latest-reading section used by other station-style publishers.
+- Explorer cards should show the representative thumbnail from SensorML `documents` when the server preserves it; the Explorer also carries a UK-AIR fallback while current OSH system SensorML update behavior is uneven.

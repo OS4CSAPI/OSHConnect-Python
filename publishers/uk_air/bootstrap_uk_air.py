@@ -44,6 +44,32 @@ UK_AIR_SOS_CAPABILITIES = "https://uk-air.defra.gov.uk/data/sos/service?service=
 OGL3 = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 
+def _image_docs(station: dict) -> list[dict]:
+    image = station.get("image") or {}
+    if not image.get("url"):
+        return []
+    description = image.get("description") or "Representative UK air quality monitoring station image."
+    attribution = "; ".join(part for part in [
+        image.get("author"),
+        image.get("source"),
+        image.get("license"),
+    ] if part)
+    return [
+        {
+            "role": "http://dbpedia.org/resource/Photograph",
+            "name": image.get("name") or "Representative air quality monitoring station image",
+            "description": f"{description} Attribution: {attribution}.",
+            "link": {"href": image["url"], "type": "image/jpeg"},
+        },
+        {
+            "role": "http://dbpedia.org/resource/Web_page",
+            "name": "Representative image source and license",
+            "description": f"Image source page and reuse terms ({image.get('license', 'license documented at source')}).",
+            "link": {"href": image.get("pageUrl") or image["url"], "type": "text/html"},
+        },
+    ]
+
+
 def _load_stations() -> list[dict]:
     here = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(here, "stations.json"), encoding="utf-8") as f:
@@ -156,7 +182,7 @@ def _system_stub(station: dict) -> dict:
 def _system_sml(station: dict) -> dict:
     site_id = station["siteId"]
     pollutant_labels = ", ".join(s["pollutantCode"] for s in station.get("timeseries", []))
-    docs = [
+    docs = _image_docs(station) + [
         {
             "role": "http://dbpedia.org/resource/Web_page",
             "name": "UK-AIR Representative Timeseries",

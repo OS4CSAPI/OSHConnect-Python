@@ -15,6 +15,16 @@
       "siteType": "urban roadside",
       "stationUrl": "https://uk-air.defra.gov.uk/sos-ukair/api/v1/timeseries/3",
       "selectionReason": "Recognizable London roadside nitrogen dioxide station with recent hourly values.",
+      "image": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Air_Quality_Monitoring_Station_-_geograph.org.uk_-_2573031.jpg",
+        "pageUrl": "https://commons.wikimedia.org/wiki/File:Air_Quality_Monitoring_Station_-_geograph.org.uk_-_2573031.jpg",
+        "name": "Representative roadside air quality monitoring station",
+        "description": "Representative UK air quality monitoring station cabinet, used for the urban roadside Camden Kerbside demo site because the UK-AIR API exposes no station photo.",
+        "author": "Jonathan Thacker",
+        "source": "Geograph Britain and Ireland via Wikimedia Commons",
+        "license": "CC BY-SA 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/"
+      },
       "timeseries": [
         {
           "timeseriesId": "3",
@@ -41,6 +51,16 @@
       "siteType": "rural background",
       "stationUrl": "https://uk-air.defra.gov.uk/sos-ukair/api/v1/timeseries/24",
       "selectionReason": "Rural background ozone station with recent hourly values.",
+      "image": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/75/Air-quality_monitoring_station%2C_Dundonald_-_geograph.org.uk_-_3201697.jpg",
+        "pageUrl": "https://commons.wikimedia.org/wiki/File:Air-quality_monitoring_station,_Dundonald_-_geograph.org.uk_-_3201697.jpg",
+        "name": "Representative background air quality monitoring station",
+        "description": "Representative UK air quality monitoring station cabinet in a vegetated setting, used for Auchencorth Moss because the UK-AIR API exposes no station photo.",
+        "author": "Albert Bridge",
+        "source": "Geograph Britain and Ireland via Wikimedia Commons",
+        "license": "CC BY-SA 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/"
+      },
       "timeseries": [
         {
           "timeseriesId": "24",
@@ -67,6 +87,16 @@
       "siteType": "background particulate monitoring",
       "stationUrl": "https://uk-air.defra.gov.uk/sos-ukair/api/v1/timeseries/5125",
       "selectionReason": "Co-located PM10 and PM2.5 timeseries with recent hourly values.",
+      "image": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/75/Air-quality_monitoring_station%2C_Dundonald_-_geograph.org.uk_-_3201697.jpg",
+        "pageUrl": "https://commons.wikimedia.org/wiki/File:Air-quality_monitoring_station,_Dundonald_-_geograph.org.uk_-_3201697.jpg",
+        "name": "Representative background particulate monitoring station",
+        "description": "Representative UK air quality monitoring station cabinet in a vegetated setting, used for Toft Newton because the UK-AIR API exposes no station photo.",
+        "author": "Albert Bridge",
+        "source": "Geograph Britain and Ireland via Wikimedia Commons",
+        "license": "CC BY-SA 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/"
+      },
       "timeseries": [
         {
           "timeseriesId": "5125",

@@ -130,6 +130,22 @@ Two UI polish issues were found and fixed in the Explorer repo:
 
 The UK-AIR symbol rule now maps air-quality stations to the same friendly emplaced sensor family used for Environment Agency Hydrology, USGS Water, CO-OPS, NDBC, and weather station markers.
 
+## Representative Station Thumbnails
+
+The UK-AIR SOS / 52 North API was checked for station and timeseries media fields. It exposes useful station/timeseries metadata, coordinates, units, pollutant URIs, and latest values, but no station photo or thumbnail media. Representative imagery was therefore selected from Wikimedia Commons / Geograph Britain and Ireland using reusable CC BY-SA 2.0 images that depict actual UK air-quality monitoring stations.
+
+Selected images:
+
+| Demo station | Image | Author | License | Rationale |
+| --- | --- | --- | --- | --- |
+| Camden Kerbside | `Air Quality Monitoring Station - geograph.org.uk - 2573031.jpg` | Jonathan Thacker | CC BY-SA 2.0 | Roadside/industrial monitoring cabinet is the closest visual match for an urban kerbside NO2 site. |
+| Auchencorth Moss | `Air-quality monitoring station, Dundonald - geograph.org.uk - 3201697.jpg` | Albert Bridge | CC BY-SA 2.0 | Vegetated/background cabinet is a better fit for a rural background ozone station than the roadside cabinet. |
+| Toft Newton | `Air-quality monitoring station, Dundonald - geograph.org.uk - 3201697.jpg` | Albert Bridge | CC BY-SA 2.0 | Used as a representative background particulate monitoring station image because no Toft Newton station photo is exposed by UK-AIR. |
+
+The station image metadata is stored in `publishers/uk_air/stations.json` and emitted by `bootstrap_uk_air.py` as SensorML `documents` entries with role `http://dbpedia.org/resource/Photograph`, `image/jpeg` media type, source page, author, source, and license attribution. The live OSH server accepted a forced SensorML update for all three UK-AIR systems, and read-back confirmed the image documents persisted.
+
+Explorer also carries a UK-AIR thumbnail fallback for resilience, but the local validation used the live SensorML media path: the side card for `UK-AIR Auchencorth Moss` rendered the Dundonald representative station image with natural dimensions `632 x 570`.
+
 ## Validation Commands
 
 ```powershell
@@ -138,6 +154,7 @@ py -m publishers.uk_air.uk_air_publisher --dry-run --once
 py -m publishers.uk_air.bootstrap_uk_air --dry-run
 py -m publishers.uk_air.bootstrap_uk_air
 py -m publishers.uk_air.uk_air_publisher --once
+py -m publishers.uk_air.bootstrap_uk_air --force-sml
 ```
 
 All final validation commands completed successfully.
@@ -148,10 +165,10 @@ Explorer validation command:
 npm --prefix demo run build
 ```
 
-The patched Explorer build completed successfully and was validated locally through Vite preview at `http://127.0.0.1:4174/` against the live `OSH (OS4CSAPI)` backend.
+The patched Explorer build completed successfully and was validated locally through Vite preview at `http://127.0.0.1:4174/` against the live `OSH (OS4CSAPI)` backend. The validation confirmed the UK-AIR thumbnail image appears in the deployed-system side card.
 
 ## Follow-Up Items
 
-1. After the Explorer deployment completes, spot-check production again to confirm the patched `Air Quality Site` label and value/unit spacing are live.
-2. Consider adding a representative monitoring-station image/fallback after a verified public image source is selected, following the Environment Agency Hydrology pattern.
+1. After the Explorer deployment completes, spot-check production again to confirm the patched `Air Quality Site` label, value/unit spacing, and thumbnail fallback are live in the production bundle.
+2. Consider replacing representative images with exact station photos if Defra/UK-AIR later publishes station-specific media under reusable terms.
 3. Consider expanding the curated sidecar after demo validation, especially for additional urban NO2/PM sites and rural background stations.
