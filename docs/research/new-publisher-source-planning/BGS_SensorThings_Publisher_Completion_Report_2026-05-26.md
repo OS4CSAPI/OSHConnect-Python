@@ -116,18 +116,18 @@ Representative values:
 
 Production Explorer found the BGS deployments after filtering by `BGS` and narrowing visible layers to deployments/systems.
 
-Verified card before Explorer polish deployment:
+Verified card after Explorer polish deployment:
 
 - `BGS GGA07 UKGEOS Deployment`
 - system subtitle: `BGS GGA07 Downhole Hydro Logger`
 - outputs: Conductivity, Water Level maOD, Water Temperature
-- latest readings: Conductivity, water level, water temperature
+- role badge: `GROUNDWATER TELEMETRY SITE`
+- latest readings: Conductivity, Water Level maOD, Water Temperature
 - source links: BGS SensorThings Thing, BGS SensorThings API Docs, Open Government Licence v3.0
 
-Explorer polish was pushed to improve the card from generic `Deployed System` to `Groundwater Telemetry Site` and to keep `Water Level maOD` as the latest-reading label.
+Explorer polish was pushed and deployed to improve the card from generic `Deployed System` to `Groundwater Telemetry Site` and to keep `Water Level maOD` as the latest-reading label. Production bundle checks confirmed the new JS contains the BGS role/symbol/label updates, and the browser card check confirmed the visible production card text.
 
 ## Remaining Follow-Up
 
-- Recheck Cloudflare after Explorer deploy completes and confirm the production bundle includes `Groundwater Telemetry Site`.
 - Investigate the live OSH SensorML PUT 500 for BGS systems if richer system metadata becomes necessary.
 - Consider representative BGS/UKGEOS imagery only after separate licensing research; no image was added in this pass.
