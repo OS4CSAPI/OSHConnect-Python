@@ -66,6 +66,16 @@ OPENSKY_API_DOC = "https://openskynetwork.github.io/opensky-api/rest.html"
 OPENSKY_ABOUT = "https://opensky-network.org/about/about-us"
 OPENSKY_STATE_VECTORS_DOC = "https://openskynetwork.github.io/opensky-api/index.html#state-vectors"
 OPENSKY_AUTH_TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
+OPENSKY_THUMBNAIL_DATA_URI = (
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E"
+    "%3Crect width='320' height='200' fill='%230f172a'/%3E"
+    "%3Cpath d='M42 150 C95 92 220 92 278 150' fill='none' stroke='%2338bdf8' stroke-width='4' stroke-dasharray='10 8'/%3E"
+    "%3Cpath d='M72 132 C122 96 198 96 248 132' fill='none' stroke='%237dd3fc' stroke-width='3' stroke-dasharray='7 7'/%3E"
+    "%3Ccircle cx='160' cy='150' r='8' fill='%23f8fafc'/%3E"
+    "%3Cpath d='M160 52 l78 31 -64 10 -18 46 -16 -49 -58 -12z' fill='%23e0f2fe' stroke='%230ea5e9' stroke-width='3'/%3E"
+    "%3Ctext x='160' y='178' text-anchor='middle' font-family='Arial,sans-serif' font-size='20' font-weight='700' fill='%23f8fafc'%3EOpenSky ADS-B Feed%3C/text%3E"
+    "%3C/svg%3E"
+)
 
 # ── Contact ──────────────────────────────────────────────────────────────
 OPENSKY_CONTACT_ORG = "The OpenSky Network Association"
@@ -338,6 +348,15 @@ def _system_sml(config: dict) -> dict:
                 "name": "About OpenSky",
                 "description": "Operator/about page for the OpenSky Network Association.",
                 "link": {"href": OPENSKY_ABOUT, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Photograph",
+                "name": "Representative OpenSky ADS-B Feed Thumbnail",
+                "description": (
+                    "Original OS4CSAPI SVG thumbnail representing the OpenSky ADS-B feed adapter. "
+                    "This is not a station-specific photograph or an aircraft-specific observation."
+                ),
+                "link": {"href": OPENSKY_THUMBNAIL_DATA_URI, "type": "image/svg+xml"},
             },
         ],
         "characteristics": [
