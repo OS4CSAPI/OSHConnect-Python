@@ -1,0 +1,1 @@
+"""FMI weather publisher package."""

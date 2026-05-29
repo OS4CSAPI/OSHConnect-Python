@@ -1,0 +1,1 @@
+"""FMI air-quality publisher package."""

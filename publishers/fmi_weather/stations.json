@@ -1,0 +1,10 @@
+{
+  "stations": [
+    {"stationId": "helsinki-kaisaniemi", "name": "Helsinki Kaisaniemi", "place": "Helsinki", "lat": 60.17523, "lon": 24.94459, "region": "Uusimaa", "selectionReason": "Capital-region reference weather station with fresh FMI simple observations."},
+    {"stationId": "turku-artukainen", "name": "Turku Artukainen", "place": "Turku", "lat": 60.45439, "lon": 22.17870, "region": "Southwest Finland", "selectionReason": "Southwest coastal city weather coverage."},
+    {"stationId": "oulu-vihreasaari", "name": "Oulu Vihreasaari", "place": "Oulu", "lat": 64.99685, "lon": 25.52233, "region": "North Ostrobothnia", "selectionReason": "Northern coastal city weather coverage."},
+    {"stationId": "rovaniemi-apukka", "name": "Rovaniemi Apukka", "place": "Rovaniemi", "lat": 66.49832, "lon": 25.70880, "region": "Lapland", "selectionReason": "Lapland inland weather coverage."},
+    {"stationId": "kuopio-maaninka", "name": "Kuopio Maaninka", "place": "Kuopio", "lat": 62.89256, "lon": 27.63331, "region": "North Savo", "selectionReason": "Eastern Finland weather coverage."},
+    {"stationId": "vaasa-airport", "name": "Vaasa Airport", "place": "Vaasa", "lat": 63.09871, "lon": 21.63938, "region": "Ostrobothnia", "selectionReason": "West-coast weather coverage."}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "stations": [
+    {"stationId": "uto-baltic-background", "name": "Uto Baltic Background", "bbox": "21.35479,59.75909,21.39479,59.79909", "lat": 59.77909, "lon": 21.37479, "region": "Archipelago Sea", "selectionReason": "Fresh FMI background air-quality observations with NO2, O3, PM10, and PM2.5."},
+    {"stationId": "hyytiala-forest-background", "name": "Hyytiala Forest Background", "bbox": "24.26696,61.82591,24.30696,61.86591", "lat": 61.84591, "lon": 24.28696, "region": "Pirkanmaa", "selectionReason": "Fresh inland background air-quality observations with NO2 and O3."},
+    {"stationId": "oulanka-background", "name": "Oulanka Background", "bbox": "29.37967,66.30027,29.41967,66.34027", "lat": 66.32027, "lon": 29.39967, "region": "North Ostrobothnia / Kuusamo", "selectionReason": "Fresh northern background air-quality observations."},
+    {"stationId": "sodankyla-arctic", "name": "Sodankyla Arctic Research", "bbox": "26.61834,67.34247,26.65834,67.38247", "lat": 67.36247, "lon": 26.63834, "region": "Lapland", "selectionReason": "Fresh Arctic-region ozone and air-quality index observations."},
+    {"stationId": "pallas-background", "name": "Pallas Background", "bbox": "24.09559,67.95328,24.13559,67.99328", "lat": 67.97328, "lon": 24.11559, "region": "Lapland", "selectionReason": "Fresh northern background observations with O3 and particulates."},
+    {"stationId": "virolahti-background", "name": "Virolahti Background", "bbox": "27.53873,60.51774,27.57873,60.55774", "lat": 60.53774, "lon": 27.55873, "region": "Southeast Finland", "selectionReason": "Fresh southeastern Finland background air-quality observations."}
+  ]
+}
