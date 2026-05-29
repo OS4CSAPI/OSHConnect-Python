@@ -13,7 +13,7 @@ Resources created without `--clean`:
 - Station group deployment: `urn:os4csapi:deployment:digitraffic-road-weather-stations:v1`
 - Six station systems and `roadWeatherObs` datastreams
 
-Two station system creates returned the known SensorHub HTTP 500-after-create/SensorML-PUT warning path and were recovered by UID lookup. Live SensorML checks still confirmed `Publish Interval=300s` for verified systems.
+Two station system creates returned the known SensorHub HTTP 500-after-create/SensorML-PUT warning path and were recovered by UID lookup. Live SensorML checks confirmed `Publish Interval=300s` for five station systems. Station `12091` remained observation-live after a targeted deployment/datastream restore, but SensorHub still returned HTTP 500 for SensorML PUT on that system.
 
 ## Live Publish Result
 
@@ -26,9 +26,9 @@ One publisher cycle posted six observations successfully:
 | 2002 | 05v0 | 076g2 | 2026-05-29T20:56:54Z | 6.2 | 10.2 |
 | 3036 | 05vg | 07702 | 2026-05-29T20:57:54Z | 8.5 | 9.5 |
 | 4010 | 06002 | 077g2 | 2026-05-29T20:57:54Z | 8.5 | 12.6 |
-| 12091 | 060g2 | 07802 | 2026-05-29T20:56:54Z | 7.4 | 8.8 |
+| 12091 | 060g2 | 07802 | 2026-05-29T21:06:54Z | 7.9 | 8.7 |
 
-Publisher output summary: `Published: 6`, `Skipped: 0`, `Errors: 0`.
+Publisher output summary: initial all-station cycle `Published: 6`, `Skipped: 0`, `Errors: 0`; follow-up 12091 restore cycle `Published: 1`, `Skipped: 0`, `Errors: 0`.
 
 ## Verification Commands
 
