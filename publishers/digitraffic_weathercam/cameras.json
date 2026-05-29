@@ -1,0 +1,76 @@
+{
+  "cameras": [
+    {
+      "roadWeatherStationId": "1014",
+      "roadWeatherStationName": "vt25_Hanko",
+      "cameraStationId": "C01507",
+      "cameraStationName": "vt25_Hanko",
+      "presetId": "C0150701",
+      "region": "Uusimaa south coast",
+      "lat": 59.856454,
+      "lon": 23.021452,
+      "distanceKm": 0.03,
+      "selectionReason": "Exact road-weather camera co-located with the Hanko road-weather station."
+    },
+    {
+      "roadWeatherStationId": "1003",
+      "roadWeatherStationName": "st110_Vihti_Myllylampi",
+      "cameraStationId": "C01506",
+      "cameraStationName": "vt25_Myllylampi",
+      "presetId": "C0150601",
+      "region": "Helsinki western approach",
+      "lat": 60.311546,
+      "lon": 24.241007,
+      "distanceKm": 0.04,
+      "selectionReason": "Nearest camera station is effectively co-located with the Vihti Myllylampi road-weather station."
+    },
+    {
+      "roadWeatherStationId": "2002",
+      "roadWeatherStationName": "vt8_Pyharanta_Ihode",
+      "cameraStationId": "C02551",
+      "cameraStationName": "vt8_Laitila_Palttila",
+      "presetId": "C0255101",
+      "region": "Southwest Finland",
+      "lat": 60.890499,
+      "lon": 21.660864,
+      "distanceKm": 10.88,
+      "selectionReason": "Nearest fresh VT8 camera preset to the Pyharanta Ihode road-weather station."
+    },
+    {
+      "roadWeatherStationId": "3036",
+      "roadWeatherStationName": "vt6_Lappeenranta_Karki",
+      "cameraStationId": "C03572",
+      "cameraStationName": "vt6_Lappeenranta_Lavola",
+      "presetId": "C0357201",
+      "region": "Southeast Finland",
+      "lat": 61.034965,
+      "lon": 28.115215,
+      "distanceKm": 1.02,
+      "selectionReason": "Nearest VT6 weather camera to the Lappeenranta Karki station."
+    },
+    {
+      "roadWeatherStationId": "4010",
+      "roadWeatherStationName": "vt12_Hollola_Hameenkoski",
+      "cameraStationId": "C04541",
+      "cameraStationName": "kt54_Karkola_Jarvela",
+      "presetId": "C0454101",
+      "region": "Central southern Finland",
+      "lat": 60.881068,
+      "lon": 25.267874,
+      "distanceKm": 13.82,
+      "selectionReason": "Nearest fresh road camera to the Hollola Hameenkoski road-weather station."
+    },
+    {
+      "roadWeatherStationId": "12091",
+      "roadWeatherStationName": "kt92_Inari_Naatamo",
+      "cameraStationId": "C14516",
+      "cameraStationName": "kt92_Inari_Naatamo",
+      "presetId": "C1451601",
+      "region": "Lapland / Inari",
+      "lat": 69.66367,
+      "lon": 29.100175,
+      "distanceKm": 0.0,
+      "selectionReason": "Exact KT92 weather camera co-located with the Inari Naatamo road-weather station."
+    }
+  ]
+}
