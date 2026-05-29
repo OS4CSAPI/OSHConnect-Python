@@ -56,6 +56,7 @@ DEPLOY_ROOT_UID = "urn:os4csapi:deployment:awx-metar-demo:v1"
 DEPLOY_GROUP_UID = "urn:os4csapi:deployment:awx-stations:v1"
 
 DS_OUTPUT_NAME = "metarObs"
+PUBLISH_INTERVAL_SECONDS = 300
 
 # ── AviationWeather.gov Official URLs ────────────────────────────────────
 AWX_HOME = "https://aviationweather.gov/"
@@ -319,13 +320,29 @@ def _system_sml(station: dict) -> dict:
             },
         ],
         "documents": docs,
-        # NOTE: characteristics/capabilities are part of OGC SensorML JSON encoding
-        # but the strict csapi-go-v2 server does not accept them on the
-        # SystemSensorMLFeature struct (see empirical probe 2026-05-09).
-        # Field-elevation, station_type, operator, and update_interval information
-        # is preserved in identifiers/classifiers/position above. char_items
-        # (operator, station_type, faa_id, field_elevation) are intentionally not
-        # serialised here; restore once upstream adds these fields back.
+        "capabilities": [
+            {
+                "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+                "label": "Publisher Capabilities",
+                "capabilities": [
+                    {
+                        "type": "Quantity",
+                        "name": "publish_interval",
+                        "definition": "http://qudt.org/vocab/quantitykind/Period",
+                        "label": "Publish Interval",
+                        "uom": {"code": "s"},
+                        "value": PUBLISH_INTERVAL_SECONDS,
+                    },
+                    {
+                        "type": "Text",
+                        "name": "source_query_mode",
+                        "definition": "http://sensorml.com/ont/swe/property/ReportingFrequency",
+                        "label": "Source Query Mode",
+                        "value": "Latest AviationWeather.gov METAR observations polled in a multi-station API request",
+                    },
+                ],
+            },
+        ],
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"]],
