@@ -1,0 +1,64 @@
+{
+  "stations": [
+    {
+      "stationId": "1014",
+      "name": "Hanko",
+      "sourceName": "vt25_Hanko",
+      "route": "VT25",
+      "region": "Uusimaa south coast",
+      "lat": 59.856517,
+      "lon": 23.021749,
+      "selectionReason": "Southern coastal road-weather station with fresh air, road, wind, precipitation, condition, and warning values."
+    },
+    {
+      "stationId": "1003",
+      "name": "Vihti Myllylampi",
+      "sourceName": "st110_Vihti_Myllylampi",
+      "route": "ST110",
+      "region": "Helsinki western approach",
+      "lat": 60.311628,
+      "lon": 24.24062,
+      "selectionReason": "Fresh southern Finland road-weather station near the Helsinki region."
+    },
+    {
+      "stationId": "2002",
+      "name": "Pyharanta Ihode",
+      "sourceName": "vt8_Pyharanta_Ihode",
+      "route": "VT8",
+      "region": "Southwest Finland",
+      "lat": 60.96268,
+      "lon": 21.594519,
+      "selectionReason": "Fresh west-coast station for geographic spread beyond Helsinki."
+    },
+    {
+      "stationId": "3036",
+      "name": "Lappeenranta Karki",
+      "sourceName": "vt6_Lappeenranta_Karki",
+      "route": "VT6",
+      "region": "Southeast Finland",
+      "lat": 61.036434,
+      "lon": 28.1243,
+      "selectionReason": "Fresh eastern Finland station with a rich sensor set."
+    },
+    {
+      "stationId": "4010",
+      "name": "Hollola Hameenkoski",
+      "sourceName": "vt12_Hollola_Hameenkoski",
+      "route": "VT12",
+      "region": "Central southern Finland",
+      "lat": 61.004725,
+      "lon": 25.281987,
+      "selectionReason": "Fresh inland road-weather station near central southern Finland."
+    },
+    {
+      "stationId": "12091",
+      "name": "Inari Naatamo",
+      "sourceName": "kt92_Inari_Naatamo",
+      "route": "KT92",
+      "region": "Lapland / Inari",
+      "lat": 69.66367,
+      "lon": 29.100175,
+      "selectionReason": "Fresh far-northern Lapland station for national coverage."
+    }
+  ]
+}
