@@ -113,6 +113,7 @@ def _fdsn_query_url(event_id: str) -> str:
 # ── Contact ──────────────────────────────────────────────────────────────
 USGS_CONTACT_ORG = "U.S. Geological Survey (USGS)"
 USGS_CONTACT_URL = "https://www.usgs.gov/"
+DEFAULT_PUBLISH_INTERVAL_SECONDS = 60
 
 
 def _load_config() -> dict:
@@ -188,10 +189,12 @@ def _system_stub(config: dict) -> dict:
 
 def _system_sml(config: dict) -> dict:
     """Rich SensorML body for PUT after system creation."""
+    publish_interval = config.get("pollingIntervalSeconds", DEFAULT_PUBLISH_INTERVAL_SECONDS)
     return {
-        "type": "SimpleProcess",
+        "type": "PhysicalSystem",
         "id": SYSTEM_UID,
         "uniqueId": SYSTEM_UID,
+        "definition": "sosa:System",
         "name": "USGS Earthquake Feed",
         "label": "USGS Earthquake Feed",
         "description": (
@@ -202,43 +205,40 @@ def _system_sml(config: dict) -> dict:
             "skipped, revised events are re-published."
         ),
         "identifiers": [
-            {"label": "System UID", "value": SYSTEM_UID},
-            {"label": "Procedure UID", "value": PROC_UID},
-            {"label": "Short Name", "value": "USGS-EQ-Feed"},
-            {"label": "Publisher", "value": "OSHConnect-Python"},
+            {"definition": "http://sensorml.com/ont/swe/property/UniqueID", "label": "OS4CSAPI UID", "value": SYSTEM_UID},
+            {"definition": "http://sensorml.com/ont/swe/property/ProcedureID", "label": "Procedure UID", "value": PROC_UID},
+            {"definition": "http://sensorml.com/ont/swe/property/ShortName", "label": "Short Name", "value": "USGS-EQ-Feed"},
+            {"definition": "http://sensorml.com/ont/swe/property/Publisher", "label": "Publisher", "value": "OSHConnect-Python"},
         ],
         "classifiers": [
-            {"label": "Intended Application", "value": "Seismic Event Monitoring"},
-            {"label": "Sensor Type", "value": "Feed Adapter (not a physical sensor)"},
-            {"label": "Data Source", "value": "USGS Earthquake Hazards Program"},
-            {"label": "Observation Pattern", "value": "Pattern C: one event per observation"},
-            {"label": "Coverage", "value": "Global"},
+            {"definition": "http://sensorml.com/ont/swe/property/IntendedApplication", "label": "Intended Application", "value": "Seismic Event Monitoring"},
+            {"definition": "http://sensorml.com/ont/swe/property/SensorType", "label": "System Type", "value": "Feed Adapter (not a physical sensor)"},
+            {"definition": "http://sensorml.com/ont/swe/property/DataSource", "label": "Data Source", "value": "USGS Earthquake Hazards Program"},
+            {"definition": "http://sensorml.com/ont/swe/property/SystemRole", "label": "Observation Pattern", "value": "Pattern C: one event per observation"},
+            {"definition": "http://sensorml.com/ont/swe/property/Coverage", "label": "Coverage", "value": "Global"},
         ],
         "contacts": [
             {
-                "role": "http://sensorml.com/ont/swe/property/Operator",
+                "role": "operator",
                 "organisationName": USGS_CONTACT_ORG,
-                "links": [
-                    {"href": USGS_CONTACT_URL, "title": "USGS"},
-                ],
+                "contactInfo": {"onlineResource": {"linkage": USGS_CONTACT_URL}},
             },
             {
-                "role": "http://sensorml.com/ont/swe/property/Author",
+                "role": "publisher",
                 "organisationName": "OS4CSAPI Project",
-                "links": [
-                    {"href": "https://github.com/OS4CSAPI", "title": "OS4CSAPI GitHub"},
-                ],
+                "contactInfo": {"onlineResource": {"linkage": "https://github.com/OS4CSAPI"}},
             },
         ],
         "documents": [
-            {"name": "USGS Earthquake Hazards Program", "description": "Program home", "link": {"href": USGS_EQ_HOME}},
-            {"name": "GeoJSON Summary Feed Documentation", "description": "Summary feed format and variant documentation", "link": {"href": USGS_EQ_FEED_DOC}},
-            {"name": "GeoJSON Detail Feed Documentation", "description": "Detail feed structure and product documentation", "link": {"href": USGS_EQ_DETAIL_DOC}},
-            {"name": "Feed Lifecycle Policy", "description": "Production feed availability and deprecation policy", "link": {"href": USGS_EQ_LIFECYCLE}},
-            {"name": "ComCat Documentation", "description": "Catalog and product documentation", "link": {"href": USGS_EQ_GLOSSARY}},
-            {"name": "Event Terms", "description": "Official field semantics", "link": {"href": USGS_EQ_EVENT_TERMS}},
-            {"name": "FDSN Event API", "description": "Official query interface for targeted retrieval and future backfill", "link": {"href": USGS_EQ_FDSN_EVENT_API}},
+            {"role": "http://dbpedia.org/resource/Web_page", "name": "USGS Earthquake Hazards Program", "description": "Program home", "link": {"href": USGS_EQ_HOME, "type": "text/html"}},
+            {"role": "http://dbpedia.org/resource/Web_page", "name": "GeoJSON Summary Feed Documentation", "description": "Summary feed format and variant documentation", "link": {"href": USGS_EQ_FEED_DOC, "type": "text/html"}},
+            {"role": "http://dbpedia.org/resource/Web_page", "name": "GeoJSON Detail Feed Documentation", "description": "Detail feed structure and product documentation", "link": {"href": USGS_EQ_DETAIL_DOC, "type": "text/html"}},
+            {"role": "http://dbpedia.org/resource/Web_page", "name": "Feed Lifecycle Policy", "description": "Production feed availability and deprecation policy", "link": {"href": USGS_EQ_LIFECYCLE, "type": "text/html"}},
+            {"role": "http://dbpedia.org/resource/Web_page", "name": "ComCat Documentation", "description": "Catalog and product documentation", "link": {"href": USGS_EQ_GLOSSARY, "type": "text/html"}},
+            {"role": "http://dbpedia.org/resource/Web_page", "name": "Event Terms", "description": "Official field semantics", "link": {"href": USGS_EQ_EVENT_TERMS, "type": "text/html"}},
+            {"role": "http://dbpedia.org/resource/Web_page", "name": "FDSN Event API", "description": "Official query interface for targeted retrieval and future backfill", "link": {"href": USGS_EQ_FDSN_EVENT_API, "type": "text/html"}},
             {
+                "role": "http://dbpedia.org/resource/Photograph",
                 "name": "Representative Earthquake Feed Thumbnail",
                 "description": (
                     "Original OS4CSAPI SVG thumbnail representing the USGS earthquake event feed adapter. "
@@ -310,11 +310,11 @@ def _system_sml(config: dict) -> dict:
                 "capabilities": [
                     {
                         "type": "Quantity",
-                        "name": "update_interval",
+                        "name": "publish_interval",
                         "definition": "http://qudt.org/vocab/quantitykind/Period",
-                        "label": "Polling Interval",
+                        "label": "Publish Interval",
                         "uom": {"code": "s"},
-                        "value": config.get("pollingIntervalSeconds", 60),
+                        "value": publish_interval,
                     },
                     {
                         "type": "Text",
