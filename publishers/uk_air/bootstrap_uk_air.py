@@ -42,6 +42,7 @@ UK_AIR_API_DOCS = "https://uk-air.defra.gov.uk/data/sos/static/doc/api-doc/"
 UK_AIR_API = "https://uk-air.defra.gov.uk/sos-ukair/api/v1"
 UK_AIR_SOS_CAPABILITIES = "https://uk-air.defra.gov.uk/data/sos/service?service=SOS&request=GetCapabilities"
 OGL3 = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+PUBLISH_INTERVAL_SECONDS = 3600
 
 
 def _image_docs(station: dict) -> list[dict]:
@@ -242,6 +243,27 @@ def _system_sml(station: dict) -> dict:
         ],
         "documents": docs,
         "characteristics": [{"label": "Station Properties", "characteristics": characteristics}],
+        "capabilities": [{
+            "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+            "label": "Publisher Capabilities",
+            "capabilities": [
+                {
+                    "type": "Quantity",
+                    "name": "publish_interval",
+                    "definition": "http://qudt.org/vocab/quantitykind/Period",
+                    "label": "Publish Interval",
+                    "uom": {"code": "s"},
+                    "value": PUBLISH_INTERVAL_SECONDS,
+                },
+                {
+                    "type": "Text",
+                    "name": "source_query_mode",
+                    "definition": "http://sensorml.com/ont/swe/property/ReportingFrequency",
+                    "label": "Source Query Mode",
+                    "value": "Recent UK-AIR SOS timeseries readings polled from a bounded lookback window",
+                },
+            ],
+        }],
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"]],
