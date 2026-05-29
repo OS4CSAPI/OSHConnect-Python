@@ -84,6 +84,7 @@ USGS_NIMS_IMAGE_BASE = "https://usgs-nims-images.s3.amazonaws.com"
 # Series semantics
 STATISTIC_INSTANTANEOUS = "00011"
 STATISTIC_INSTANTANEOUS_NAME = "Instantaneous"
+PUBLISH_INTERVAL_SECONDS = 900
 
 
 def _load_stations() -> list[dict]:
@@ -532,6 +533,27 @@ def _system_sml(station: dict) -> dict:
             },
         ],
         "capabilities": [
+            {
+                "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+                "label": "Publisher Capabilities",
+                "capabilities": [
+                    {
+                        "type": "Quantity",
+                        "name": "publish_interval",
+                        "definition": "http://qudt.org/vocab/quantitykind/Period",
+                        "label": "Publish Interval",
+                        "uom": {"code": "s"},
+                        "value": PUBLISH_INTERVAL_SECONDS,
+                    },
+                    {
+                        "type": "Text",
+                        "name": "source_query_mode",
+                        "definition": "http://sensorml.com/ont/swe/property/ReportingFrequency",
+                        "label": "Source Query Mode",
+                        "value": "Latest USGS Water instantaneous discharge and gage-height values polled from OGC API continuous observations",
+                    },
+                ],
+            },
             {
                 "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
                 "label": "Published Datastreams",
