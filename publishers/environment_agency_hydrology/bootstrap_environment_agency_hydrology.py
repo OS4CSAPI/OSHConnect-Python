@@ -56,6 +56,7 @@ EA_GAUGE_PHOTO_PAGE = (
     "File:Environment_Agency_Morton_River_Gauge_Station_-_geograph.org.uk_-_283345.jpg"
 )
 CC_BY_SA_20 = "https://creativecommons.org/licenses/by-sa/2.0/"
+PUBLISH_INTERVAL_SECONDS = 900
 
 
 def _load_stations() -> list[dict]:
@@ -254,6 +255,27 @@ def _system_sml(station: dict) -> dict:
         ],
         "documents": docs,
         "characteristics": [{"label": "Station Properties", "characteristics": characteristics}],
+        "capabilities": [{
+            "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+            "label": "Publisher Capabilities",
+            "capabilities": [
+                {
+                    "type": "Quantity",
+                    "name": "publish_interval",
+                    "definition": "http://qudt.org/vocab/quantitykind/Period",
+                    "label": "Publish Interval",
+                    "uom": {"code": "s"},
+                    "value": PUBLISH_INTERVAL_SECONDS,
+                },
+                {
+                    "type": "Text",
+                    "name": "source_query_mode",
+                    "definition": "http://sensorml.com/ont/swe/property/ReportingFrequency",
+                    "label": "Source Query Mode",
+                    "value": "Latest Environment Agency Hydrology readings polled with latest=true",
+                },
+            ],
+        }],
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"]],
