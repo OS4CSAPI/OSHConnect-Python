@@ -33,6 +33,7 @@ SITE_SPECIFIC_PRICING = "https://datahub.metoffice.gov.uk/pricing/site-specific"
 GLOBAL_SPOT_API_CONTEXT = "/sitespecific/v0"
 GLOBAL_SPOT_BASE_URL = "https://data.hub.api.metoffice.gov.uk/sitespecific/v0"
 GLOBAL_SPOT_DEFAULT_HOURLY_PATH = "/point/hourly"
+PUBLISH_INTERVAL_SECONDS = 3600
 GLOBAL_SPOT_THUMBNAIL_DATA_URI = (
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E"
     "%3Crect width='320' height='200' fill='%23082f49'/%3E"
@@ -205,6 +206,27 @@ def _system_sml(location: dict) -> dict:
             {"type": "Text", "name": "selection_reason", "label": "Selection Reason", "value": location.get("selectionReason", "Curated demo forecast point")},
             {"type": "Text", "name": "free_plan_limit", "label": "Free Plan Limit", "value": "360 calls per day"},
         ]}],
+        "capabilities": [{
+            "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+            "label": "Publisher Capabilities",
+            "capabilities": [
+                {
+                    "type": "Quantity",
+                    "name": "publish_interval",
+                    "definition": "http://qudt.org/vocab/quantitykind/Period",
+                    "label": "Publish Interval",
+                    "uom": {"code": "s"},
+                    "value": PUBLISH_INTERVAL_SECONDS,
+                },
+                {
+                    "type": "Text",
+                    "name": "source_forecast_cadence",
+                    "definition": "http://sensorml.com/ont/swe/property/ReportingFrequency",
+                    "label": "Source Forecast Cadence",
+                    "value": "Hourly deterministic forecasts from Met Office Global Spot",
+                },
+            ],
+        }],
         "position": {
             "type": "Point",
             "coordinates": [location["lon"], location["lat"]],

@@ -33,6 +33,7 @@ LAND_OBS_API_DOCS = "https://datahub.metoffice.gov.uk/docs/g/category/observatio
 LAND_OBS_PRICING = "https://datahub.metoffice.gov.uk/pricing/observations"
 LAND_OBS_API_CONTEXT = "/observation-land/1"
 LAND_OBS_BASE_URL = "https://data.hub.api.metoffice.gov.uk/observation-land/1"
+PUBLISH_INTERVAL_SECONDS = 3600
 
 
 def _load_config() -> dict:
@@ -208,6 +209,27 @@ def _system_sml(station: dict) -> dict:
             {"type": "Text", "name": "selection_reason", "label": "Selection Reason", "value": station.get("selectionReason", "Curated demo location")},
             {"type": "Text", "name": "free_plan_limit", "label": "Free Plan Limit", "value": "360 calls per day"},
         ]}],
+        "capabilities": [{
+            "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+            "label": "Publisher Capabilities",
+            "capabilities": [
+                {
+                    "type": "Quantity",
+                    "name": "publish_interval",
+                    "definition": "http://qudt.org/vocab/quantitykind/Period",
+                    "label": "Publish Interval",
+                    "uom": {"code": "s"},
+                    "value": PUBLISH_INTERVAL_SECONDS,
+                },
+                {
+                    "type": "Text",
+                    "name": "source_reporting_cadence",
+                    "definition": "http://sensorml.com/ont/swe/property/ReportingFrequency",
+                    "label": "Source Reporting Cadence",
+                    "value": "Hourly land observations from Met Office Weather DataHub",
+                },
+            ],
+        }],
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"]],
