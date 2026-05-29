@@ -42,6 +42,7 @@ BGS_INTERACTIVE_DOCS = "https://sensors-docs.bgs.ac.uk/"
 BGS_API_ROOT = "https://sensors.bgs.ac.uk/FROST-Server/v1.1"
 OGL3 = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 UKGEOS_LEGAL = "https://www.ukgeos.ac.uk/legal-and-compliance"
+PUBLISH_INTERVAL_SECONDS = 900
 
 
 def _image_docs(station: dict) -> list[dict]:
@@ -251,6 +252,27 @@ def _system_sml(station: dict) -> dict:
         ],
         "documents": docs,
         "characteristics": [{"label": "Station Properties", "characteristics": characteristics}],
+        "capabilities": [{
+            "definition": "http://www.w3.org/ns/ssn/systems/SystemCapability",
+            "label": "Publisher Capabilities",
+            "capabilities": [
+                {
+                    "type": "Quantity",
+                    "name": "publish_interval",
+                    "definition": "http://qudt.org/vocab/quantitykind/Period",
+                    "label": "Publish Interval",
+                    "uom": {"code": "s"},
+                    "value": PUBLISH_INTERVAL_SECONDS,
+                },
+                {
+                    "type": "Text",
+                    "name": "source_query_mode",
+                    "definition": "http://sensorml.com/ont/swe/property/ReportingFrequency",
+                    "label": "Source Query Mode",
+                    "value": "Latest BGS SensorThings observations polled by phenomenon time descending",
+                },
+            ],
+        }],
         "position": {
             "type": "Point",
             "coordinates": [station["lon"], station["lat"]],
