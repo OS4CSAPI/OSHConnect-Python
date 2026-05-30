@@ -23,6 +23,7 @@ DEPLOY_GROUP_UID = "urn:os4csapi:deployment:fmi-weather-stations:v1"
 DS_OUTPUT_NAME = "fmiWeatherObs"
 FMI_HOME = "https://en.ilmatieteenlaitos.fi/open-data"
 FMI_WFS = "https://opendata.fmi.fi/wfs"
+FMI_WEATHER_STATION_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/2/21/S%C3%A4%C3%A4asema_Kylm%C3%A4pihlaja.jpg"
 
 
 def _load_stations() -> list[dict]:
@@ -45,6 +46,10 @@ def _deploy_uid(station_id: str) -> str:
 
 def _datastream_uid(station: dict) -> str:
     return f"urn:os4csapi:datastream:fmi-weather:{_uid_token(station['stationId'])}:{DS_OUTPUT_NAME}:v1"
+
+
+def _image_docs(station: dict) -> list[dict]:
+    return [{"role": "http://dbpedia.org/resource/Photograph", "name": "Actual Finnish weather station instrumentation", "description": f"Photograph of real Finnish weather-station instrumentation used as the representative sensor image for FMI weather station {station['name']}. Source: Wikimedia Commons.", "link": {"href": FMI_WEATHER_STATION_IMAGE, "type": "image/jpeg"}}]
 
 
 PROCEDURE_STUB = {"type": "Feature", "geometry": None, "properties": {"uid": PROC_UID, "featureType": "sosa:ObservingProcedure", "name": "FMI Weather Observation v1", "description": "Publishes curated Finnish Meteorological Institute weather observations from FMI Open Data WFS.", "validTime": [VALID_TIME_START, ".."]}}
@@ -77,7 +82,7 @@ def _system_sml(station: dict) -> dict:
         "identifiers": [{"definition": "http://sensorml.com/ont/swe/property/ShortName", "label": "Short Name", "value": f"FMI Wx {station['name']}"}, {"definition": "http://sensorml.com/ont/swe/property/StationID", "label": "Curated Station ID", "value": station["stationId"]}, {"definition": "http://sensorml.com/ont/swe/property/UniqueID", "label": "OS4CSAPI UID", "value": _system_uid(station["stationId"])}],
         "classifiers": [{"definition": "http://sensorml.com/ont/swe/property/SensorType", "label": "Source Type", "value": "FMI weather observation station"}, {"definition": "http://sensorml.com/ont/swe/property/IntendedApplication", "label": "Intended Application", "value": "Weather monitoring and environmental situational awareness"}],
         "contacts": [{"role": "operator", "organisationName": "Finnish Meteorological Institute", "contactInfo": {"onlineResource": {"linkage": FMI_HOME}}}],
-        "documents": [{"role": "http://dbpedia.org/resource/Web_page", "name": "FMI Open Data", "link": {"href": FMI_HOME, "type": "text/html"}}, {"role": "http://dbpedia.org/resource/Web_page", "name": "FMI WFS", "link": {"href": FMI_WFS, "type": "text/xml"}}],
+        "documents": _image_docs(station) + [{"role": "http://dbpedia.org/resource/Web_page", "name": "FMI Open Data", "link": {"href": FMI_HOME, "type": "text/html"}}, {"role": "http://dbpedia.org/resource/Web_page", "name": "FMI WFS", "link": {"href": FMI_WFS, "type": "text/xml"}}],
         "characteristics": [{"label": "Station Properties", "characteristics": [{"type": "Text", "name": "place", "label": "FMI Place Query", "value": station.get("place", station["name"])}, {"type": "Text", "name": "region", "label": "Region", "value": station.get("region", "")}, {"type": "Text", "name": "selection_reason", "label": "Selection Reason", "value": station.get("selectionReason", "Curated FMI weather station")}, {"type": "Text", "name": "license", "label": "License", "value": "FMI Open Data terms and attribution"}]}],
         "capabilities": [{"definition": "http://www.w3.org/ns/ssn/systems/SystemCapability", "label": "Publisher Capabilities", "capabilities": [{"type": "Quantity", "name": "publish_interval", "definition": "http://qudt.org/vocab/quantitykind/Period", "label": "Publish Interval", "uom": {"code": "s"}, "value": PUBLISH_INTERVAL_SECONDS}]}],
         "position": {"type": "Point", "coordinates": [station["lon"], station["lat"]], "srsName": "http://www.opengis.net/def/crs/EPSG/0/4326"},

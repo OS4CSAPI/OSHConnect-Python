@@ -26,6 +26,7 @@ DIGITRAFFIC_HOME = "https://www.digitraffic.fi/en/road-traffic/"
 DIGITRAFFIC_LICENSE = "https://www.digitraffic.fi/en/terms-of-use/"
 DIGITRAFFIC_STATIONS = "https://tie.digitraffic.fi/api/weather/v1/stations"
 DIGITRAFFIC_LATEST = "https://tie.digitraffic.fi/api/weather/v1/stations/data"
+DIGITRAFFIC_ROAD_WEATHER_STATION_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/9/94/Traffic_weather_station_general_view.jpg"
 
 
 def _load_stations() -> list[dict]:
@@ -138,6 +139,7 @@ def _system_sml(station: dict) -> dict:
         ],
         "contacts": [{"role": "operator", "organisationName": "Fintraffic / Digitraffic", "contactInfo": {"onlineResource": {"linkage": DIGITRAFFIC_HOME}}}],
         "documents": [
+            {"role": "http://dbpedia.org/resource/Photograph", "name": "Actual traffic weather station hardware", "description": "Photograph of real road-weather station sensor hardware used as the representative hardware image for Digitraffic road-weather station cards. Source: Wikimedia Commons.", "link": {"href": DIGITRAFFIC_ROAD_WEATHER_STATION_IMAGE, "type": "image/jpeg"}},
             {"role": "http://dbpedia.org/resource/Web_page", "name": "Digitraffic Road Weather Station Data", "link": {"href": _station_data_url(station_id), "type": "application/json"}},
             {"role": "http://dbpedia.org/resource/Web_page", "name": "Digitraffic Terms of Use", "link": {"href": DIGITRAFFIC_LICENSE, "type": "text/html"}},
         ],
