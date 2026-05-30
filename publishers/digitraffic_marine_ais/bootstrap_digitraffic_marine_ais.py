@@ -18,7 +18,7 @@ VALID_TIME_START = "2026-01-01T00:00:00Z"
 PROC_UID = "urn:os4csapi:procedure:digitraffic-marine-ais:v1"
 SYSTEM_UID = "urn:os4csapi:system:digitraffic-marine-ais-feed:v1"
 DEPLOY_ROOT_UID = "urn:os4csapi:deployment:digitraffic-marine-ais-demo:v1"
-DEPLOY_FEED_UID = "urn:os4csapi:deployment:digitraffic-marine-ais-feed:v1"
+LEGACY_DEPLOY_FEED_UID = "urn:os4csapi:deployment:digitraffic-marine-ais-feed:v1"
 DS_OUTPUT_NAME = "digitrafficMarineAisPosition"
 
 DIGITRAFFIC_MARINE_HOME = "https://www.digitraffic.fi/en/marine-traffic/"
@@ -88,13 +88,8 @@ def _deploy_root(config: dict) -> dict:
     return {"type": "Feature", "geometry": {"type": "Point", "coordinates": [lon, lat]}, "properties": {"uid": DEPLOY_ROOT_UID, "featureType": "sosa:Deployment", "name": "Digitraffic Marine AIS Demo", "description": "Top-level grouping for the Finnish Digitraffic Marine AIS feed-adapter demo.", "validTime": [VALID_TIME_START, ".."]}}
 
 
-def _deploy_feed(config: dict, system_server_id: str, base_url: str) -> dict:
-    lon, lat = _bbox_center(config)
-    return {"type": "Feature", "geometry": {"type": "Point", "coordinates": [lon, lat]}, "properties": {"uid": DEPLOY_FEED_UID, "featureType": "sosa:Deployment", "name": "Digitraffic Marine AIS Feed", "description": f"Deployment linking the Digitraffic Marine AIS feed adapter to the configured Gulf of Finland query window ({_bbox_label(config)}).", "validTime": [VALID_TIME_START, ".."], "platform@link": {"href": f"{base_url.rstrip('/')}/systems/{system_server_id}", "uid": SYSTEM_UID, "title": "Digitraffic Marine AIS Feed - Gulf of Finland"}}}
-
-
 def clean_all(base_url: str, auth: str, *, dry_run: bool, stats: dict):
-    clean_resource(base_url, auth, "deployments", DEPLOY_FEED_UID, dry_run=dry_run, stats=stats, cascade=True)
+    clean_resource(base_url, auth, "deployments", LEGACY_DEPLOY_FEED_UID, dry_run=dry_run, stats=stats, cascade=True)
     clean_resource(base_url, auth, "deployments", DEPLOY_ROOT_UID, dry_run=dry_run, stats=stats, cascade=True)
     clean_resource(base_url, auth, "systems", SYSTEM_UID, dry_run=dry_run, stats=stats, cascade=True)
     clean_resource(base_url, auth, "procedures", PROC_UID, dry_run=dry_run, stats=stats)
@@ -111,9 +106,7 @@ def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = 
     print("  -- System + Datastream --"); system_id = ensure_system(base_url, auth, SYSTEM_UID, _system_stub(config), _system_sml(config), dry_run=dry_run, stats=stats, force_sml=force_sml)
     if system_id:
         ensure_datastream(base_url, auth, system_id, DS_OUTPUT_NAME, _datastream_schema(), dry_run=dry_run, stats=stats)
-    print("  -- Deployments --"); ensure_deployment(base_url, auth, DEPLOY_ROOT_UID, _deploy_root(config), dry_run=dry_run, stats=stats)
-    if system_id:
-        ensure_deployment(base_url, auth, DEPLOY_FEED_UID, _deploy_feed(config, system_id, base_url), dry_run=dry_run, stats=stats)
+    print("  -- Deployments --"); clean_resource(base_url, auth, "deployments", LEGACY_DEPLOY_FEED_UID, dry_run=dry_run, stats=stats, cascade=False); ensure_deployment(base_url, auth, DEPLOY_ROOT_UID, _deploy_root(config), dry_run=dry_run, stats=stats)
     print_summary(stats, dry_run)
 
 
