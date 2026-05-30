@@ -1,0 +1,20 @@
+{
+  "digitraffic_marine_ais": {
+    "description": "Fintraffic Digitraffic Marine AIS vessel positions for a bounded Gulf of Finland demo window.",
+    "bounding_box": {
+      "description": "Gulf of Finland and Helsinki approaches",
+      "lamin": 59.0,
+      "lomin": 22.5,
+      "lamax": 60.8,
+      "lomax": 28.7
+    },
+    "cadence_seconds": 300,
+    "max_vessels_per_cycle": 60,
+    "locations_endpoint": "https://meri.digitraffic.fi/api/ais/v1/locations",
+    "vessels_endpoint": "https://meri.digitraffic.fi/api/ais/v1/vessels",
+    "auth": {
+      "mode": "none",
+      "note": "Public Digitraffic API; no key required."
+    }
+  }
+}

@@ -1,0 +1,1 @@
+"""Digitraffic Marine AIS publisher package."""
