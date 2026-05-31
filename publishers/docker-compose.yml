@@ -149,6 +149,17 @@ services:
       MET_OFFICE_GLOBAL_SPOT_429_BACKOFF: ${MET_OFFICE_GLOBAL_SPOT_429_BACKOFF:-3600}
     command: ["--interval", "3600"]
 
+  # ── Digitraffic Weather Camera Image References (5min cadence) ──
+  digitraffic-weathercam:
+    build:
+      context: ..
+      dockerfile: publishers/digitraffic_weathercam/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+      DIGITRAFFIC_WEATHERCAM_REQUEST_DELAY: ${DIGITRAFFIC_WEATHERCAM_REQUEST_DELAY:-0.5}
+    command: ["--interval", "300"]
+
   # ── USGS Earthquake Feed (60s cadence) ──
   usgs-eq:
     build:

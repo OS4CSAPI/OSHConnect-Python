@@ -23,6 +23,11 @@ server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 | **BGS SensorThings** | BGS UKGEOS Glasgow groundwater/geothermal telemetry | 15 min |
 | **Met Office DataHub** | Land Observations hourly weather data | Access-gated / 1 h |
 | **Met Office Global Spot** | Site-specific deterministic hourly forecasts | Access-gated / 1 h |
+| **Digitraffic Marine AIS** | Finnish Fintraffic/Digitraffic AIS vessel positions | 5 min |
+| **Digitraffic Road Weather** | Finnish Fintraffic/Digitraffic road-weather stations | 5 min |
+| **Digitraffic Weathercam** | Finnish Fintraffic/Digitraffic road-camera image references | 5 min |
+| **FMI Weather** | Finnish Meteorological Institute weather observations | 10 min |
+| **FMI Air Quality** | Finnish Meteorological Institute air-quality observations | 1 h |
 
 ## Quick Start
 
@@ -65,6 +70,11 @@ python -m publishers.bgs_sensorthings.bootstrap_bgs_sensorthings
 python -m publishers.met_office_datahub.bootstrap_met_office_datahub
 # Met Office Global Spot is access-gated; see publishers/met_office_global_spot/README.md
 python -m publishers.met_office_global_spot.bootstrap_met_office_global_spot
+python -m publishers.digitraffic_marine_ais.bootstrap_digitraffic_marine_ais
+python -m publishers.digitraffic_road_weather.bootstrap_digitraffic_road_weather
+python -m publishers.digitraffic_weathercam.bootstrap_digitraffic_weathercam
+python -m publishers.fmi_weather.bootstrap_fmi_weather
+python -m publishers.fmi_air_quality.bootstrap_fmi_air_quality
 python -m publishers.iss.bootstrap_iss
 ```
 
@@ -155,4 +165,7 @@ python -m publishers.nws.nws_publisher --interval 3600
   publishes deterministic hourly forecast values for virtual forecast points,
   not physical sensor observations, and is also behind the `access-gated`
   Docker Compose profile.
+- **Digitraffic Weathercam** attaches image-reference observations to curated
+  Digitraffic road-weather station systems, using direct Fintraffic JPEG and
+  thumbnail URLs for road camera presets.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.
