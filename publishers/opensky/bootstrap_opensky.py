@@ -66,16 +66,9 @@ OPENSKY_API_DOC = "https://openskynetwork.github.io/opensky-api/rest.html"
 OPENSKY_ABOUT = "https://opensky-network.org/about/about-us"
 OPENSKY_STATE_VECTORS_DOC = "https://openskynetwork.github.io/opensky-api/index.html#state-vectors"
 OPENSKY_AUTH_TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
-OPENSKY_THUMBNAIL_DATA_URI = (
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E"
-    "%3Crect width='320' height='200' fill='%230f172a'/%3E"
-    "%3Cpath d='M42 150 C95 92 220 92 278 150' fill='none' stroke='%2338bdf8' stroke-width='4' stroke-dasharray='10 8'/%3E"
-    "%3Cpath d='M72 132 C122 96 198 96 248 132' fill='none' stroke='%237dd3fc' stroke-width='3' stroke-dasharray='7 7'/%3E"
-    "%3Ccircle cx='160' cy='150' r='8' fill='%23f8fafc'/%3E"
-    "%3Cpath d='M160 52 l78 31 -64 10 -18 46 -16 -49 -58 -12z' fill='%23e0f2fe' stroke='%230ea5e9' stroke-width='3'/%3E"
-    "%3Ctext x='160' y='178' text-anchor='middle' font-family='Arial,sans-serif' font-size='20' font-weight='700' fill='%23f8fafc'%3EOpenSky ADS-B Feed%3C/text%3E"
-    "%3C/svg%3E"
-)
+OPENSKY_ADSB_ANTENNA_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/6/68/Homemade_1090_MHz_ADS-B_dipole_antenna.jpg"
+OPENSKY_ADSB_ANTENNA_SOURCE = "https://commons.wikimedia.org/wiki/File:Homemade_1090_MHz_ADS-B_dipole_antenna.jpg"
+OPENSKY_ADSB_ANTENNA_LICENSE = "https://creativecommons.org/licenses/by-sa/3.0/"
 
 # ── Contact ──────────────────────────────────────────────────────────────
 OPENSKY_CONTACT_ORG = "The OpenSky Network Association"
@@ -236,8 +229,8 @@ def _system_stub(config: dict) -> dict:
                 "credit_budget_note": _daily_budget_note(config),
             },
             "image": {
-                "href": "./metadata_enrichment_pack/assets/opensky_feed_adapter_generic.svg",
-                "title": "Representative OpenSky feed-adapter coverage graphic",
+                "href": OPENSKY_ADSB_ANTENNA_IMAGE,
+                "title": "Representative 1090 MHz ADS-B antenna photograph",
             },
             "validTime": [VALID_TIME_START, ".."],
         },
@@ -351,12 +344,26 @@ def _system_sml(config: dict) -> dict:
             },
             {
                 "role": "http://dbpedia.org/resource/Photograph",
-                "name": "Representative OpenSky ADS-B Feed Thumbnail",
+                "name": "Representative 1090 MHz ADS-B Antenna Photograph",
                 "description": (
-                    "Original OS4CSAPI SVG thumbnail representing the OpenSky ADS-B feed adapter. "
-                    "This is not a station-specific photograph or an aircraft-specific observation."
+                    "Photograph of real 1090 MHz ADS-B antenna hardware used as the representative "
+                    "source image for the OpenSky ADS-B feed adapter. The OpenSky resource is a "
+                    "crowd-sourced receiver-network feed rather than a single station. "
+                    "Photo: Happy-marmotte, CC BY-SA 3.0, via Wikimedia Commons."
                 ),
-                "link": {"href": OPENSKY_THUMBNAIL_DATA_URI, "type": "image/svg+xml"},
+                "link": {"href": OPENSKY_ADSB_ANTENNA_IMAGE, "type": "image/jpeg"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "Representative ADS-B Antenna Photo Source",
+                "description": "Wikimedia Commons source page for the ADS-B antenna photograph.",
+                "link": {"href": OPENSKY_ADSB_ANTENNA_SOURCE, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "Representative ADS-B Antenna Photo License",
+                "description": "Creative Commons Attribution-ShareAlike 3.0 license for the ADS-B antenna photograph.",
+                "link": {"href": OPENSKY_ADSB_ANTENNA_LICENSE, "type": "text/html"},
             },
         ],
         "characteristics": [

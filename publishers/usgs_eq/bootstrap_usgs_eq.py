@@ -72,17 +72,9 @@ USGS_EQ_DETAIL_DOC = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson_
 USGS_EQ_LIFECYCLE = "https://earthquake.usgs.gov/earthquakes/feed/policy.php"
 USGS_EQ_EVENT_TERMS = "https://earthquake.usgs.gov/data/comcat/data-eventterms.php"
 USGS_EQ_FDSN_EVENT_API = "https://earthquake.usgs.gov/fdsnws/event/1/"
-USGS_EQ_THUMBNAIL_DATA_URI = (
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E"
-    "%3Crect width='320' height='200' fill='%2318120f'/%3E"
-    "%3Cpath d='M0 142 L42 142 L56 116 L70 164 L88 72 L106 152 L124 132 L142 142 L320 142' fill='none' stroke='%23f97316' stroke-width='5'/%3E"
-    "%3Ccircle cx='92' cy='142' r='46' fill='none' stroke='%23fed7aa' stroke-width='3' opacity='.75'/%3E"
-    "%3Ccircle cx='92' cy='142' r='78' fill='none' stroke='%23fdba74' stroke-width='2' opacity='.45'/%3E"
-    "%3Ccircle cx='92' cy='142' r='110' fill='none' stroke='%23fb923c' stroke-width='2' opacity='.25'/%3E"
-    "%3Ctext x='160' y='48' text-anchor='middle' font-family='Arial,sans-serif' font-size='22' font-weight='700' fill='%23fff7ed'%3EUSGS Earthquake Feed%3C/text%3E"
-    "%3Ctext x='160' y='178' text-anchor='middle' font-family='Arial,sans-serif' font-size='14' fill='%23fed7aa'%3Eevent stream thumbnail%3C/text%3E"
-    "%3C/svg%3E"
-)
+USGS_SEISMOMETER_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/3/3d/Installing_a_temporary_seismometer.jpg"
+USGS_SEISMOMETER_SOURCE = "https://commons.wikimedia.org/wiki/File:Installing_a_temporary_seismometer.jpg"
+USGS_COPYRIGHT_POLICY = "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits"
 
 USGS_EQ_FEED_VARIANTS = {
     "all_hour": "All earthquakes, past hour",
@@ -239,12 +231,26 @@ def _system_sml(config: dict) -> dict:
             {"role": "http://dbpedia.org/resource/Web_page", "name": "FDSN Event API", "description": "Official query interface for targeted retrieval and future backfill", "link": {"href": USGS_EQ_FDSN_EVENT_API, "type": "text/html"}},
             {
                 "role": "http://dbpedia.org/resource/Photograph",
-                "name": "Representative Earthquake Feed Thumbnail",
+                "name": "USGS Temporary Seismometer Installation Photograph",
                 "description": (
-                    "Original OS4CSAPI SVG thumbnail representing the USGS earthquake event feed adapter. "
-                    "This is not an event-specific image."
+                    "USGS photograph of a real temporary seismometer installation used as the representative "
+                    "source image for the USGS earthquake feed adapter. The feed is event-catalog data, not "
+                    "a single station, so this image represents the seismic sensing infrastructure behind "
+                    "earthquake observations. Photo: Thomas Pratt, USGS, public domain."
                 ),
-                "link": {"href": USGS_EQ_THUMBNAIL_DATA_URI, "type": "image/svg+xml"},
+                "link": {"href": USGS_SEISMOMETER_IMAGE, "type": "image/jpeg"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "USGS Seismometer Photo Source",
+                "description": "Wikimedia Commons source page for the USGS temporary seismometer installation photograph.",
+                "link": {"href": USGS_SEISMOMETER_SOURCE, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "USGS Public Domain Copyright Policy",
+                "description": "USGS copyright and credit policy covering public-domain USGS media.",
+                "link": {"href": USGS_COPYRIGHT_POLICY, "type": "text/html"},
             },
         ],
         "characteristics": [
