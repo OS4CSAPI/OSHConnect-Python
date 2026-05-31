@@ -34,17 +34,9 @@ GLOBAL_SPOT_API_CONTEXT = "/sitespecific/v0"
 GLOBAL_SPOT_BASE_URL = "https://data.hub.api.metoffice.gov.uk/sitespecific/v0"
 GLOBAL_SPOT_DEFAULT_HOURLY_PATH = "/point/hourly"
 PUBLISH_INTERVAL_SECONDS = 3600
-GLOBAL_SPOT_THUMBNAIL_DATA_URI = (
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E"
-    "%3Crect width='320' height='200' fill='%23082f49'/%3E"
-    "%3Cpath d='M0 138 C44 112 82 160 128 132 S210 92 320 126 L320 200 L0 200 Z' fill='%230f766e'/%3E"
-    "%3Cpath d='M0 158 C58 128 104 178 166 144 S258 118 320 146' fill='none' stroke='%235eead4' stroke-width='3' opacity='.75'/%3E"
-    "%3Ccircle cx='238' cy='58' r='26' fill='%23fef3c7'/%3E"
-    "%3Cpath d='M70 66 h86 a26 26 0 0 0 -44 -18 a35 35 0 0 0 -66 11 a22 22 0 0 0 24 7z' fill='%23e0f2fe'/%3E"
-    "%3Cpath d='M68 96 h178' stroke='%2393c5fd' stroke-width='4' stroke-linecap='round' stroke-dasharray='12 9'/%3E"
-    "%3Ctext x='160' y='178' text-anchor='middle' font-family='Arial,sans-serif' font-size='19' font-weight='700' fill='%23f8fafc'%3EGlobal Spot Forecast%3C/text%3E"
-    "%3C/svg%3E"
-)
+MET_OFFICE_WEATHER_STATION_IMAGE = "https://upload.wikimedia.org/wikipedia/commons/3/3b/Met_Office_Weather_Station_at_Lusa_-_geograph.org.uk_-_808151.jpg"
+MET_OFFICE_WEATHER_STATION_SOURCE = "https://commons.wikimedia.org/wiki/File:Met_Office_Weather_Station_at_Lusa_-_geograph.org.uk_-_808151.jpg"
+MET_OFFICE_WEATHER_STATION_LICENSE = "https://creativecommons.org/licenses/by-sa/2.0/"
 
 
 def _load_config() -> dict:
@@ -154,6 +146,10 @@ def _system_stub(location: dict) -> dict:
             "featureType": "sosa:System",
             "name": f"Met Office Global Spot Forecast {location['name']}",
             "description": location["description"],
+            "image": {
+                "href": MET_OFFICE_WEATHER_STATION_IMAGE,
+                "title": "Representative Met Office weather station photograph",
+            },
             "validTime": [VALID_TIME_START, ".."],
         },
     }
@@ -191,12 +187,27 @@ def _system_sml(location: dict) -> dict:
             {"role": "http://dbpedia.org/resource/Web_page", "name": "Weather DataHub Glossary", "link": {"href": MET_OFFICE_GLOSSARY, "type": "text/html"}},
             {
                 "role": "http://dbpedia.org/resource/Photograph",
-                "name": "Representative Global Spot Forecast Thumbnail",
+                "name": "Representative Met Office Weather Station Photograph",
                 "description": (
-                    "Original OS4CSAPI SVG thumbnail for a Met Office Global Spot virtual forecast point. "
-                    "This represents forecast data, not a physical deployed sensor."
+                    "Photograph of a real Met Office weather station used as the representative source image "
+                    "for Met Office Global Spot virtual forecast points. These resources are configured forecast "
+                    "locations rather than physical deployed sensors, so this image represents the meteorological "
+                    "observing infrastructure behind the forecast service. Photo: Dave Fergusson, CC BY-SA 2.0, "
+                    "via Wikimedia Commons / Geograph Britain and Ireland."
                 ),
-                "link": {"href": GLOBAL_SPOT_THUMBNAIL_DATA_URI, "type": "image/svg+xml"},
+                "link": {"href": MET_OFFICE_WEATHER_STATION_IMAGE, "type": "image/jpeg"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "Representative Met Office Weather Station Photo Source",
+                "description": "Wikimedia Commons source page for the Met Office weather station photograph.",
+                "link": {"href": MET_OFFICE_WEATHER_STATION_SOURCE, "type": "text/html"},
+            },
+            {
+                "role": "http://dbpedia.org/resource/Web_page",
+                "name": "Representative Met Office Weather Station Photo License",
+                "description": "Creative Commons Attribution-ShareAlike 2.0 license for the weather station photograph.",
+                "link": {"href": MET_OFFICE_WEATHER_STATION_LICENSE, "type": "text/html"},
             },
         ],
         "characteristics": [{"label": "Forecast Point Properties", "characteristics": [
