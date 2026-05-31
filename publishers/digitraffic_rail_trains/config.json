@@ -1,0 +1,21 @@
+{
+  "digitraffic_rail_trains": {
+    "description": "Fintraffic Digitraffic Rail latest train locations for a Finland-wide demo window.",
+    "bounding_box": {
+      "description": "Mainland Finland rail operating area",
+      "lamin": 59.5,
+      "lomin": 19.0,
+      "lamax": 70.2,
+      "lomax": 31.7
+    },
+    "cadence_seconds": 300,
+    "max_trains_per_cycle": 80,
+    "locations_endpoint": "https://rata.digitraffic.fi/api/v1/train-locations/latest/",
+    "live_trains_endpoint": "https://rata.digitraffic.fi/api/v1/live-trains",
+    "metadata_stations_endpoint": "https://rata.digitraffic.fi/api/v1/metadata/stations",
+    "auth": {
+      "mode": "none",
+      "note": "Public Digitraffic Rail API; no key required."
+    }
+  }
+}

@@ -27,6 +27,7 @@ All services use the host-local environment file:
 | Service | Command | Cadence |
 | --- | --- | --- |
 | `digitraffic-marine-ais-publisher.service` | `python3 -u -m publishers.digitraffic_marine_ais.digitraffic_marine_ais_publisher --interval 300` | 5 min |
+| `digitraffic-rail-trains-publisher.service` | `python3 -u -m publishers.digitraffic_rail_trains.digitraffic_rail_trains_publisher --interval 300` | 5 min |
 | `digitraffic-road-weather-publisher.service` | `python3 -u -m publishers.digitraffic_road_weather.digitraffic_road_weather_publisher --interval 300` | 5 min |
 | `digitraffic-weathercam-publisher.service` | `python3 -u -m publishers.digitraffic_weathercam.digitraffic_weathercam_publisher --interval 300` | 5 min |
 | `fmi-weather-publisher.service` | `python3 -u -m publishers.fmi_weather.fmi_weather_publisher --interval 600` | 10 min |
@@ -41,6 +42,7 @@ Observed first service-managed cycles in `journalctl`:
 | Source | Result |
 | --- | --- |
 | Digitraffic Marine AIS | 60 vessels published, 0 skipped, 0 errors |
+| Digitraffic Rail Trains | 80 train positions published, 0 skipped, 0 errors |
 | Digitraffic Road Weather | 6 stations connected and published, 0 visible errors |
 | Digitraffic Weathercam | 6 cameras connected and published, 0 visible errors |
 | FMI Weather | 6 stations connected and published, 0 visible errors |
@@ -53,6 +55,7 @@ Verified through `https://ogc-csapi-explorer.pages.dev/api/osh` that fresh obser
 | Source | Datastream | Verified timestamp |
 | --- | --- | --- |
 | Digitraffic Marine AIS | `07hg2` | `2026-05-31T05:25:32Z` |
+| Digitraffic Rail Trains | `07i02` | `2026-05-31T08:12:22Z` |
 | Digitraffic Road Weather | `075g2` | `2026-05-31T05:25:24Z` |
 | Digitraffic Weathercam | `078g2` | `2026-05-31T05:15:49Z` |
 | FMI Weather | `07bg2` | `2026-05-31T05:20:00Z` |

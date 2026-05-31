@@ -24,6 +24,7 @@ server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 | **Met Office DataHub** | Land Observations hourly weather data | Access-gated / 1 h |
 | **Met Office Global Spot** | Site-specific deterministic hourly forecasts | Access-gated / 1 h |
 | **Digitraffic Marine AIS** | Finnish Fintraffic/Digitraffic AIS vessel positions | 5 min |
+| **Digitraffic Rail Trains** | Finnish Fintraffic/Digitraffic live train positions | 5 min |
 | **Digitraffic Road Weather** | Finnish Fintraffic/Digitraffic road-weather stations | 5 min |
 | **Digitraffic Weathercam** | Finnish Fintraffic/Digitraffic road-camera image references | 5 min |
 | **FMI Weather** | Finnish Meteorological Institute weather observations | 10 min |
@@ -71,6 +72,7 @@ python -m publishers.met_office_datahub.bootstrap_met_office_datahub
 # Met Office Global Spot is access-gated; see publishers/met_office_global_spot/README.md
 python -m publishers.met_office_global_spot.bootstrap_met_office_global_spot
 python -m publishers.digitraffic_marine_ais.bootstrap_digitraffic_marine_ais
+python -m publishers.digitraffic_rail_trains.bootstrap_digitraffic_rail_trains
 python -m publishers.digitraffic_road_weather.bootstrap_digitraffic_road_weather
 python -m publishers.digitraffic_weathercam.bootstrap_digitraffic_weathercam
 python -m publishers.fmi_weather.bootstrap_fmi_weather
@@ -168,4 +170,6 @@ python -m publishers.nws.nws_publisher --interval 3600
 - **Digitraffic Weathercam** attaches image-reference observations to curated
   Digitraffic road-weather station systems, using direct Fintraffic JPEG and
   thumbnail URLs for road camera presets.
+- **Digitraffic Rail Trains** publishes live Finnish train positions from the
+  public Digitraffic Rail latest-location JSON endpoint.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.

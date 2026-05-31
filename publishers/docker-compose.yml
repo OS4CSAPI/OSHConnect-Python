@@ -160,6 +160,16 @@ services:
       DIGITRAFFIC_WEATHERCAM_REQUEST_DELAY: ${DIGITRAFFIC_WEATHERCAM_REQUEST_DELAY:-0.5}
     command: ["--interval", "300"]
 
+  # ── Digitraffic Rail Live Trains (5min cadence) ──
+  digitraffic-rail-trains:
+    build:
+      context: ..
+      dockerfile: publishers/digitraffic_rail_trains/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+    command: ["--interval", "300"]
+
   # ── USGS Earthquake Feed (60s cadence) ──
   usgs-eq:
     build:
