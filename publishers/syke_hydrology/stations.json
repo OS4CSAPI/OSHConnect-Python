@@ -1,0 +1,135 @@
+{
+  "_comment": "Curated SYKE hydrology station/measure set for Finland demo use. Paikka_Id values are measure-specific; shared Nro identifies the physical station.",
+  "_sources": {
+    "apiBase": "https://rajapinnat.ymparisto.fi/api/Hydrologiarajapinta/1.0/odata",
+    "dataset": "https://www.syke.fi/fi-FI/Avoin_tieto",
+    "publicPortal": "https://www.vesi.fi/"
+  },
+  "stations": [
+    {
+      "stationNotation": "0400520",
+      "name": "Jongunjoki, Viitakoski",
+      "fullName": "SYKE hydrology station Jongunjoki, Viitakoski",
+      "municipality": "Lieksa",
+      "lat": 63.5625,
+      "lon": 30.018056,
+      "basin": "Vuoksi",
+      "subBasin": "Jongunjoen a",
+      "selectionReason": "Current same-day water level and discharge readings from one Finnish hydrology station.",
+      "measures": [
+        {
+          "entity": "Vedenkorkeus",
+          "placeId": 1732,
+          "label": "Water level at Jongunjoki, Viitakoski",
+          "parameter": "waterLevel",
+          "parameterName": "Water Level",
+          "unit": "cm",
+          "outputName": "sykeWaterLevel",
+          "resultField": "water_level_cm"
+        },
+        {
+          "entity": "Virtaama",
+          "placeId": 900,
+          "label": "Discharge at Jongunjoki, Viitakoski",
+          "parameter": "discharge",
+          "parameterName": "Discharge",
+          "unit": "m3/s",
+          "outputName": "sykeDischarge",
+          "resultField": "discharge_m3s"
+        }
+      ]
+    },
+    {
+      "stationNotation": "0406010",
+      "name": "Sonkajärvi",
+      "fullName": "SYKE hydrology station Sonkajärvi",
+      "municipality": "Sonkajärvi",
+      "lat": 63.705833,
+      "lon": 27.4425,
+      "basin": "Vuoksi",
+      "subBasin": "Matkusjoen yläosan a",
+      "lake": "Sonkajärvi",
+      "selectionReason": "Current same-day lake outlet water level and discharge readings.",
+      "measures": [
+        {
+          "entity": "Vedenkorkeus",
+          "placeId": 1822,
+          "label": "Water level at Sonkajärvi",
+          "parameter": "waterLevel",
+          "parameterName": "Water Level",
+          "unit": "cm",
+          "outputName": "sykeWaterLevel",
+          "resultField": "water_level_cm"
+        },
+        {
+          "entity": "Virtaama",
+          "placeId": 933,
+          "label": "Discharge at Sonkajärvi - luusua",
+          "parameter": "discharge",
+          "parameterName": "Discharge",
+          "unit": "m3/s",
+          "outputName": "sykeDischarge",
+          "resultField": "discharge_m3s"
+        }
+      ]
+    },
+    {
+      "stationNotation": "0407410",
+      "name": "Keyritty",
+      "fullName": "SYKE hydrology station Keyritty",
+      "municipality": "Kuopio",
+      "lat": 63.37,
+      "lon": 28.378333,
+      "basin": "Vuoksi",
+      "subBasin": "Keyrityn a",
+      "lake": "Keyritty",
+      "selectionReason": "Current same-day water level and discharge readings from eastern Finland.",
+      "measures": [
+        {
+          "entity": "Vedenkorkeus",
+          "placeId": 1839,
+          "label": "Water level at Keyritty",
+          "parameter": "waterLevel",
+          "parameterName": "Water Level",
+          "unit": "cm",
+          "outputName": "sykeWaterLevel",
+          "resultField": "water_level_cm"
+        },
+        {
+          "entity": "Virtaama",
+          "placeId": 949,
+          "label": "Discharge at Keyritty - luusua",
+          "parameter": "discharge",
+          "parameterName": "Discharge",
+          "unit": "m3/s",
+          "outputName": "sykeDischarge",
+          "resultField": "discharge_m3s"
+        }
+      ]
+    },
+    {
+      "stationNotation": "1403900",
+      "name": "Konnevesi - luusua",
+      "fullName": "SYKE hydrology station Konnevesi - luusua",
+      "municipality": "Konnevesi",
+      "lat": 62.608056,
+      "lon": 26.323611,
+      "basin": "Kymijoki",
+      "subBasin": "Konneveden la",
+      "lake": "Kellanvirta",
+      "selectionReason": "Current same-day discharge reading from the Kymijoki basin.",
+      "measures": [
+        {
+          "entity": "Virtaama",
+          "placeId": 1008,
+          "label": "Discharge at Konnevesi - luusua",
+          "parameter": "discharge",
+          "parameterName": "Discharge",
+          "unit": "m3/s",
+          "outputName": "sykeDischarge",
+          "resultField": "discharge_m3s"
+        }
+      ]
+    }
+  ]
+}

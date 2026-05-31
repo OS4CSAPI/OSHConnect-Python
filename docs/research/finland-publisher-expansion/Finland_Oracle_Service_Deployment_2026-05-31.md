@@ -32,6 +32,7 @@ All services use the host-local environment file:
 | `digitraffic-weathercam-publisher.service` | `python3 -u -m publishers.digitraffic_weathercam.digitraffic_weathercam_publisher --interval 300` | 5 min |
 | `fmi-weather-publisher.service` | `python3 -u -m publishers.fmi_weather.fmi_weather_publisher --interval 600` | 10 min |
 | `fmi-air-quality-publisher.service` | `python3 -u -m publishers.fmi_air_quality.fmi_air_quality_publisher --interval 3600` | 1 h |
+| `syke-hydrology-publisher.service` | `python3 -u -m publishers.syke_hydrology.syke_hydrology_publisher --interval 900` | 15 min |
 
 Each service is enabled and active under systemd.
 
@@ -47,6 +48,7 @@ Observed first service-managed cycles in `journalctl`:
 | Digitraffic Weathercam | 6 cameras connected and published, 0 visible errors |
 | FMI Weather | 6 stations connected and published, 0 visible errors |
 | FMI Air Quality | 6 stations connected and published, 0 visible errors |
+| SYKE Hydrology | 4 stations connected, 7 readings published, 0 errors |
 
 ## Public Verification
 
@@ -60,3 +62,4 @@ Verified through `https://ogc-csapi-explorer.pages.dev/api/osh` that fresh obser
 | Digitraffic Weathercam | `078g2` | `2026-05-31T05:15:49Z` |
 | FMI Weather | `07bg2` | `2026-05-31T05:20:00Z` |
 | FMI Air Quality | `07eg2` | `2026-05-31T05:00:00Z` |
+| SYKE Hydrology | `07ig2` | `2026-05-31T00:00:00Z` |

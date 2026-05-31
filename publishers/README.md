@@ -29,6 +29,7 @@ server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 | **Digitraffic Weathercam** | Finnish Fintraffic/Digitraffic road-camera image references | 5 min |
 | **FMI Weather** | Finnish Meteorological Institute weather observations | 10 min |
 | **FMI Air Quality** | Finnish Meteorological Institute air-quality observations | 1 h |
+| **SYKE Hydrology** | Finnish Environment Institute water level and discharge readings | 15 min |
 
 ## Quick Start
 
@@ -77,6 +78,7 @@ python -m publishers.digitraffic_road_weather.bootstrap_digitraffic_road_weather
 python -m publishers.digitraffic_weathercam.bootstrap_digitraffic_weathercam
 python -m publishers.fmi_weather.bootstrap_fmi_weather
 python -m publishers.fmi_air_quality.bootstrap_fmi_air_quality
+python -m publishers.syke_hydrology.bootstrap_syke_hydrology
 python -m publishers.iss.bootstrap_iss
 ```
 
@@ -172,4 +174,6 @@ python -m publishers.nws.nws_publisher --interval 3600
   thumbnail URLs for road camera presets.
 - **Digitraffic Rail Trains** publishes live Finnish train positions from the
   public Digitraffic Rail latest-location JSON endpoint.
+- **SYKE Hydrology** publishes curated Finnish water level and discharge readings
+  from the public SYKE Hydrologiarajapinta OData API.
 - All publishers use `--interval <seconds>` and `--dry-run` CLI flags.

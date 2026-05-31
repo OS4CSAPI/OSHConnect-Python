@@ -170,6 +170,17 @@ services:
       <<: *osh-env
     command: ["--interval", "300"]
 
+  # ── SYKE Hydrology (15min cadence) ──
+  syke-hydrology:
+    build:
+      context: ..
+      dockerfile: publishers/syke_hydrology/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+      SYKE_HYDROLOGY_REQUEST_DELAY: ${SYKE_HYDROLOGY_REQUEST_DELAY:-0.5}
+    command: ["--interval", "900"]
+
   # ── USGS Earthquake Feed (60s cadence) ──
   usgs-eq:
     build:
