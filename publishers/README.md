@@ -27,6 +27,7 @@ server (e.g. [OpenSensorHub](https://opensensorhub.org/)).
 | **Digitraffic Rail Trains** | Finnish Fintraffic/Digitraffic live train positions | 5 min |
 | **Digitraffic Road Weather** | Finnish Fintraffic/Digitraffic road-weather stations | 5 min |
 | **Digitraffic Weathercam** | Finnish Fintraffic/Digitraffic road-camera image references | 5 min |
+| **Storebaelt Webcams** | Danish Storebaelt traffic/weather webcam image references | 5 min |
 | **FMI Weather** | Finnish Meteorological Institute weather observations | 10 min |
 | **FMI Air Quality** | Finnish Meteorological Institute air-quality observations | 1 h |
 | **SYKE Hydrology** | Finnish Environment Institute water level and discharge readings | 15 min |
@@ -76,6 +77,7 @@ python -m publishers.digitraffic_marine_ais.bootstrap_digitraffic_marine_ais
 python -m publishers.digitraffic_rail_trains.bootstrap_digitraffic_rail_trains
 python -m publishers.digitraffic_road_weather.bootstrap_digitraffic_road_weather
 python -m publishers.digitraffic_weathercam.bootstrap_digitraffic_weathercam
+python -m publishers.storebaelt_webcams.bootstrap_storebaelt_webcams
 python -m publishers.fmi_weather.bootstrap_fmi_weather
 python -m publishers.fmi_air_quality.bootstrap_fmi_air_quality
 python -m publishers.syke_hydrology.bootstrap_syke_hydrology
@@ -172,6 +174,9 @@ python -m publishers.nws.nws_publisher --interval 3600
 - **Digitraffic Weathercam** attaches image-reference observations to curated
   Digitraffic road-weather station systems, using direct Fintraffic JPEG and
   thumbnail URLs for road camera presets.
+- **Storebaelt Webcams** publishes image-reference observations for the public
+  Storebaelt traffic/weather webcams, using the player poster JPEGs and retaining
+  the public page and embedded player URLs as provenance.
 - **Digitraffic Rail Trains** publishes live Finnish train positions from the
   public Digitraffic Rail latest-location JSON endpoint.
 - **SYKE Hydrology** publishes curated Finnish water level and discharge readings

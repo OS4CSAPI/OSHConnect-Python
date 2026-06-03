@@ -1,0 +1,1 @@
+"""Storebaelt webcam publisher package."""

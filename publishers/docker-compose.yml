@@ -160,6 +160,17 @@ services:
       DIGITRAFFIC_WEATHERCAM_REQUEST_DELAY: ${DIGITRAFFIC_WEATHERCAM_REQUEST_DELAY:-0.5}
     command: ["--interval", "300"]
 
+  # -- Storebaelt Webcam Image References (5min cadence) --
+  storebaelt-webcams:
+    build:
+      context: ..
+      dockerfile: publishers/storebaelt_webcams/Dockerfile
+    restart: always
+    environment:
+      <<: *osh-env
+      STOREBAELT_WEBCAMS_REQUEST_DELAY: ${STOREBAELT_WEBCAMS_REQUEST_DELAY:-0.5}
+    command: ["--interval", "300"]
+
   # ── Digitraffic Rail Live Trains (5min cadence) ──
   digitraffic-rail-trains:
     build:

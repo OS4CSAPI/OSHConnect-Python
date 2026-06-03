@@ -1,0 +1,28 @@
+{
+  "cameras": [
+    {
+      "id": "storebaelt-tower",
+      "title": "Storebaelt Tower Webcam",
+      "siteTitle": "Folg med fra Storebaelt tarnet",
+      "locationName": "Storebaelt East Bridge tower",
+      "lat": 55.3373,
+      "lon": 11.0365,
+      "pageUrl": "https://storebaelt.dk/trafik-vejr/webcams/",
+      "playerUrl": "https://player.sob.m-dn.net/sb1-live.html",
+      "posterUrl": "https://stream.sob.m-dn.net/res/sb1-live.jpg",
+      "selectionReason": "Public Storebaelt traffic/weather webcam embedded on the official webcams page."
+    },
+    {
+      "id": "sprogo",
+      "title": "Sprogo Webcam",
+      "siteTitle": "Folg med pa webcam fra Sprogo",
+      "locationName": "Sprogo",
+      "lat": 55.3314,
+      "lon": 10.9688,
+      "pageUrl": "https://storebaelt.dk/trafik-vejr/webcams/",
+      "playerUrl": "https://player.sob.m-dn.net/sb2-live.html",
+      "posterUrl": "https://stream.sob.m-dn.net/res/sb2-live.jpg",
+      "selectionReason": "Public Storebaelt traffic/weather webcam embedded on the official webcams page."
+    }
+  ]
+}
