@@ -116,6 +116,24 @@ def test_freshness_status_tracks_changed_and_unchanged_images():
     assert second["result"]["lastChangedTime"] == "2026-06-03T12:00:00Z"
 
 
+def test_freshness_fields_are_emitted_before_source_url_for_strict_swe_order():
+    publisher = StorebaeltWebcamsPublisher.__new__(StorebaeltWebcamsPublisher)
+    publisher._image_state = {}
+    publisher._stale_seconds = 900
+    latest = {
+        "phenomenonTime": "2026-06-03T12:00:00Z",
+        "dedupeKey": "sprogo|abc",
+        "result": {"cameraId": "sprogo", "imageSha256": "abc", "sourceUrl": "https://example.test/image.jpg"},
+    }
+
+    updated = publisher._apply_freshness_status("sprogo", latest, datetime(2026, 6, 3, 12, 0, tzinfo=timezone.utc))
+    keys = list(updated["result"].keys())
+
+    assert keys.index("imageChanged") < keys.index("sourceUrl")
+    assert keys.index("sourceAgeSeconds") < keys.index("sourceUrl")
+    assert updated["result"]["sourceUrl"] == "https://example.test/image.jpg"
+
+
 def test_freshness_status_marks_stale_after_threshold():
     publisher = StorebaeltWebcamsPublisher.__new__(StorebaeltWebcamsPublisher)
     publisher._image_state = {

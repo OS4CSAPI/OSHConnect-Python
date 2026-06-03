@@ -265,6 +265,7 @@ class StorebaeltWebcamsPublisher:
         else:
             staleness_status = "unchanged"
 
+        source_url = result.pop("sourceUrl", "")
         result.update({
             "imageChanged": image_changed,
             "firstSeenTime": first_seen,
@@ -274,6 +275,7 @@ class StorebaeltWebcamsPublisher:
             "stalenessStatus": staleness_status,
             "sourceAgeSeconds": source_age_seconds,
         })
+        result["sourceUrl"] = source_url
         self._image_state[camera_id] = {
             "imageSha256": image_sha256,
             "firstSeenTime": first_seen,
