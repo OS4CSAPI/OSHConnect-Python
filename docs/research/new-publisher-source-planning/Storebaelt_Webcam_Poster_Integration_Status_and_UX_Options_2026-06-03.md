@@ -3,6 +3,8 @@
 **Date:** 2026-06-03  
 **Scope:** Storebaelt public traffic/weather webcam publisher behavior, image freshness semantics, and UI/UX optimization options.
 
+**Follow-on plan:** `Storebaelt_On_Demand_Live_Webcam_Enhancement_Plan_2026-06-03.md` describes the recommended lease-based design for demand-driven live/HLS mode.
+
 ## Current Integration Behavior
 
 The Storebaelt integration is intentionally conservative: it publishes references to the two stable poster JPEG URLs, not frames pulled from the HLS live video stream.
@@ -100,6 +102,8 @@ Tradeoffs:
 
 This should be treated as a second-phase enhancement, not the default first fix.
 
+If implemented, live/HLS ingestion should be demand-driven. The publisher should not continuously pull live video while no client is viewing the resource. The recommended pattern is a short-lived lease with TTL: Explorer requests live mode for a specific camera, renews the lease while the webcam card is open, and lets the live worker deactivate automatically when renewals stop. See `Storebaelt_On_Demand_Live_Webcam_Enhancement_Plan_2026-06-03.md` for the detailed plan.
+
 ### 5. Improve Explorer UI for Webcam Deployments
 
 For Storebaelt webcam deployments, the Explorer card should show:
@@ -124,5 +128,6 @@ Recommended implementation order:
 4. Update Explorer's deployed-system card to display "last checked" separately from "image changed."
 5. Add a stale badge when the same image has persisted longer than a threshold.
 6. Research HLS extraction only after the poster-source UX is truthful and useful.
+7. For live/HLS mode, follow the lease-based on-demand plan so heavier capture work activates only when a client requests it and shuts down when not in use.
 
 This gives a better user experience without prematurely building a fragile video ingestion pipeline.
