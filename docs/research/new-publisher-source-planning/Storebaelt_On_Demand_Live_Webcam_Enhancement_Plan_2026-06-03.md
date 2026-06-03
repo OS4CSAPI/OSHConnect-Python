@@ -2,7 +2,10 @@
 
 **Date:** 2026-06-03  
 **Scope:** Demand-driven live/HLS enhancement for the Storebaelt webcam publisher and Explorer UI.  
-**Related background:** `Storebaelt_Webcam_Poster_Integration_Status_and_UX_Options_2026-06-03.md`
+**Related background:**
+
+- `Storebaelt_Webcam_Poster_Integration_Status_and_UX_Options_2026-06-03.md`
+- `Storebaelt_Phase_2A_Live_Playback_Reconnaissance_2026-06-03.md`
 
 ## Goal
 
@@ -32,6 +35,25 @@ Known source surfaces:
 | Sprogo | `https://stream.sob.m-dn.net/res/sb2-live.jpg` | `https://player.sob.m-dn.net/sb2-live.html` | `https://stream.sob.m-dn.net/live/sb2/index.m3u8` |
 
 The HLS URLs should still be rediscovered/validated during implementation rather than hard-coded forever, because the provider can change player internals.
+
+## Phase 2A Reconnaissance Outcome
+
+Phase 2A browser/player reconnaissance found that the cheapest live path is viable enough to implement before building backend frame extraction.
+
+Key findings:
+
+- The Storebaelt player pages load in an iframe from the Explorer origin.
+- Browser JavaScript cannot `fetch()` the player pages because they do not send CORS headers, but iframe/open-tab usage does not require JS fetch.
+- HLS master playlists, variant playlists, `init.mp4`, and `.m4s` media segments are CORS-readable from `https://ogc-csapi-explorer.pages.dev`.
+- Chromium/Edge does not report native HLS support through `video.canPlayType(...)`.
+- Explorer does not currently include `hls.js`.
+
+Recommendation from this reconnaissance:
+
+1. Implement an Explorer live-video modal using `playerUrl` as an iframe source.
+2. Keep opening the provider player in a new tab as a fallback.
+3. Treat direct HLS playback with `hls.js` as the next browser-side option.
+4. Defer backend HLS frame extraction until the direct browser/player paths are proven insufficient.
 
 ## Design Principle
 
@@ -145,7 +167,9 @@ Limitations:
 - May have iframe or cross-origin restrictions depending on player headers.
 - Provides less integrated telemetry than a live lease/status service.
 
-Recommendation: use this as the immediate UX fallback and as a baseline comparison while building the lease-based live service.
+Recommendation: use this as the immediate Explorer implementation path and as a baseline comparison before building the lease-based live service.
+
+Phase 2A testing indicates this should be feasible because the provider page loaded successfully in an iframe from the Explorer origin.
 
 ## Live Output Options
 
@@ -266,7 +290,7 @@ Keep poster-source fields in the existing `storebaeltWebcamImage` output so long
 - Add fields such as `imageChanged`, `firstSeenTime`, `lastChangedTime`, `lastSeenTime`, `unchangedPollCount`, and `stalenessStatus`.
 - Update Explorer to separate `last checked` from `image changed`.
 
-### Phase 2: Live source reconnaissance
+### Phase 2A: Live source reconnaissance and iframe player UX
 
 - Inspect the Mediathand/Video.js player network behavior.
 - Confirm current HLS playlist paths:
@@ -278,6 +302,14 @@ Keep poster-source fields in the existing `storebaeltWebcamImage` output so long
 - Compare poster freshness against HLS segment freshness so the UI can avoid implying that a stale poster means stale live video.
 - Measure bandwidth, latency, cache behavior, and segment cadence.
 - Decide whether Phase 3 should expose only lease/live status first or also return a validated `hlsPlaylistUrl`.
+- Implement the first Explorer live UX as a provider-player iframe modal if embedding remains reliable.
+
+### Phase 2B: Optional direct HLS browser prototype
+
+- Add `hls.js` only if the iframe/player modal is not sufficient.
+- Play the CORS-readable HLS playlist in a controlled card/modal video element.
+- Keep the provider player URL as fallback.
+- Avoid server-side frame extraction during this phase.
 
 ### Phase 3: Live lease service prototype
 
@@ -338,6 +370,8 @@ Keep poster-source fields in the existing `storebaeltWebcamImage` output so long
 
 Phase 1 is now the correct baseline: it makes poster freshness observable and prevents users from mistaking publisher silence for source silence.
 
-For Phase 2, prioritize direct validation of the HLS/player path before building frame extraction. The immediate user need is to reach the real live view when the poster is stale. Frame extraction should remain a later choice, used only if direct player/HLS handoff cannot provide an acceptable Explorer experience or if CSAPI-native live frame observations become a hard requirement.
+For Phase 2, prioritize the iframe provider-player modal. The immediate user need is to reach the real live view when the poster is stale, and Phase 2A found that the player page can load in an iframe. Direct HLS with `hls.js` is a plausible second browser-side option because the playlist and segments are CORS-readable, but it should not be the first implementation unless the iframe UX proves inadequate.
+
+Frame extraction should remain a later choice, used only if direct player/HLS handoff cannot provide an acceptable Explorer experience or if CSAPI-native live frame observations become a hard requirement.
 
 Then prototype the lease service with live status only before adding frame extraction. This keeps the design honest, observable, and reversible while preserving a path to a much better webcam experience.
