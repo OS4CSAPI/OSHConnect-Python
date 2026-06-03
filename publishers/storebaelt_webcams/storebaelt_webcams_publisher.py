@@ -21,6 +21,7 @@ from publishers.bootstrap_helpers import api_get, find_by_uid
 
 USER_AGENT = "OS4CSAPI Storebaelt Webcams Publisher/1.0"
 DS_OUTPUT_NAME = "storebaeltWebcamImage"
+DEFAULT_STALE_SECONDS = 15 * 60
 
 
 def _load_cameras() -> list[dict]:
@@ -49,6 +50,19 @@ def _parse_http_date(value: str | None) -> str | None:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _format_utc(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _parse_iso_utc(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError:
+        return None
 
 
 def _probe_image_url(url: str) -> dict:
@@ -136,8 +150,9 @@ class StorebaeltWebcamsPublisher:
         self._base_url = os.environ.get("OSH_BASE_URL", f"https://{self.osh_address}/{self.osh_root}/api")
         self._auth = "Basic " + base64.b64encode(f"{self.osh_user}:{self.osh_pass}".encode()).decode()
         self._ds_ids: dict[str, str] = {}
-        self._seen: set[str] = set()
+        self._image_state: dict[str, dict] = {}
         self._request_delay = float(os.environ.get("STOREBAELT_WEBCAMS_REQUEST_DELAY", "0.5"))
+        self._stale_seconds = int(os.environ.get("STOREBAELT_WEBCAMS_STALE_SECONDS", str(DEFAULT_STALE_SECONDS)))
         self.stats = {"published": 0, "errors": 0, "reconnects": 0, "skipped": 0}
 
     def connect(self):
@@ -155,6 +170,7 @@ class StorebaeltWebcamsPublisher:
                 print(f"  [WARN] Datastream {DS_OUTPUT_NAME} not found for camera {camera['id']}")
                 continue
             self._ds_ids[camera["id"]] = ds_id
+            self._seed_image_state(camera["id"], ds_id)
             connected += 1
             print(f"  Connected: {camera['id']} -> sys={sys_id} ds={ds_id}")
         print(f"  Ready: {connected}/{len(self.cameras)} cameras connected")
@@ -197,6 +213,78 @@ class StorebaeltWebcamsPublisher:
             body_text = exc.read().decode("utf-8", errors="replace")[:500]
             raise RuntimeError(f"HTTP {exc.code} POST {url}: {body_text}") from exc
 
+    def _seed_image_state(self, camera_id: str, ds_id: str):
+        try:
+            data = api_get(self._base_url, f"datastreams/{ds_id}/observations?limit=1&resultTime=latest", self._auth)
+        except Exception as exc:
+            print(f"  [WARN] Could not seed freshness state for {camera_id}: {exc}")
+            return
+        items = (data or {}).get("items") or []
+        if not items:
+            return
+        obs = items[0]
+        result = obs.get("result") or {}
+        image_sha256 = result.get("imageSha256") or ""
+        if not image_sha256:
+            return
+        observed_time = obs.get("phenomenonTime") or obs.get("resultTime") or _format_utc(datetime.now(timezone.utc))
+        first_seen = result.get("firstSeenTime") or result.get("lastChangedTime") or observed_time
+        last_changed = result.get("lastChangedTime") or first_seen
+        last_seen = result.get("lastSeenTime") or observed_time
+        self._image_state[camera_id] = {
+            "imageSha256": image_sha256,
+            "firstSeenTime": first_seen,
+            "lastChangedTime": last_changed,
+            "lastSeenTime": last_seen,
+            "unchangedPollCount": int(result.get("unchangedPollCount") or 0),
+        }
+
+    def _apply_freshness_status(self, camera_id: str, latest: dict, poll_time: datetime) -> dict:
+        result = dict(latest["result"])
+        poll_time_iso = latest["phenomenonTime"]
+        effective_poll_time = _parse_iso_utc(poll_time_iso) or poll_time
+        image_sha256 = result.get("imageSha256") or latest["dedupeKey"].split("|", 1)[-1]
+        previous = self._image_state.get(camera_id)
+        image_changed = not previous or previous.get("imageSha256") != image_sha256
+
+        if image_changed:
+            first_seen = poll_time_iso
+            last_changed = poll_time_iso
+            unchanged_count = 0
+        else:
+            first_seen = previous.get("firstSeenTime") or poll_time_iso
+            last_changed = previous.get("lastChangedTime") or first_seen
+            unchanged_count = int(previous.get("unchangedPollCount") or 0) + 1
+
+        last_changed_dt = _parse_iso_utc(last_changed) or effective_poll_time
+        source_age_seconds = max(0, int((effective_poll_time - last_changed_dt).total_seconds()))
+        if image_changed:
+            staleness_status = "fresh"
+        elif source_age_seconds >= self._stale_seconds:
+            staleness_status = "stale"
+        else:
+            staleness_status = "unchanged"
+
+        result.update({
+            "imageChanged": image_changed,
+            "firstSeenTime": first_seen,
+            "lastSeenTime": poll_time_iso,
+            "lastChangedTime": last_changed,
+            "unchangedPollCount": unchanged_count,
+            "stalenessStatus": staleness_status,
+            "sourceAgeSeconds": source_age_seconds,
+        })
+        self._image_state[camera_id] = {
+            "imageSha256": image_sha256,
+            "firstSeenTime": first_seen,
+            "lastChangedTime": last_changed,
+            "lastSeenTime": poll_time_iso,
+            "unchangedPollCount": unchanged_count,
+        }
+        latest = dict(latest)
+        latest["result"] = result
+        return latest
+
     def publish_cycle(self, dry_run: bool = False) -> int:
         published = 0
         now = datetime.now(timezone.utc)
@@ -213,25 +301,23 @@ class StorebaeltWebcamsPublisher:
                 self.stats["skipped"] += 1
                 print(f"  [{ts_label}] {camera_id}: no image metadata")
                 continue
-            if latest["dedupeKey"] in self._seen:
-                self.stats["skipped"] += 1
-                print(f"  [{ts_label}] {camera_id}: unchanged, skipping")
-                continue
+            latest = self._apply_freshness_status(camera_id, latest, now)
             obs = {
                 "phenomenonTime": latest["phenomenonTime"],
                 "resultTime": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "result": latest["result"],
             }
-            label = f"{latest['phenomenonTime']} {latest['result']['imageUrl']}"
+            status = latest["result"].get("stalenessStatus", "unknown")
+            changed = "changed" if latest["result"].get("imageChanged") else "unchanged"
+            age = latest["result"].get("sourceAgeSeconds", 0)
+            label = f"{latest['phenomenonTime']} {changed}/{status} age={age}s {latest['result']['imageUrl']}"
             if dry_run:
                 print(f"  [{ts_label}] {camera_id}: [DRY] {label}")
-                self._seen.add(latest["dedupeKey"])
             else:
                 try:
                     self._post_observation(ds_id, obs)
                     self.stats["published"] += 1
                     published += 1
-                    self._seen.add(latest["dedupeKey"])
                     print(f"  [{ts_label}] {camera_id}: OK {label}")
                 except Exception as exc:
                     self.stats["errors"] += 1

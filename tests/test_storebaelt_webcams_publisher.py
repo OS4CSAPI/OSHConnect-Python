@@ -53,12 +53,13 @@ def test_fetch_latest_image_maps_http_metadata(monkeypatch):
     assert latest["result"]["imageSha256"] == "f" * 64
 
 
-def test_publish_cycle_dry_run_dedupes(monkeypatch):
+def test_publish_cycle_dry_run_publishes_unchanged_heartbeat(monkeypatch):
     publisher = StorebaeltWebcamsPublisher.__new__(StorebaeltWebcamsPublisher)
     publisher.cameras = [{"id": "sprogo", "title": "Sprogo Webcam"}]
     publisher._ds_ids = {}
-    publisher._seen = set()
+    publisher._image_state = {}
     publisher._request_delay = 0
+    publisher._stale_seconds = 900
     publisher.stats = {"published": 0, "errors": 0, "reconnects": 0, "skipped": 0}
 
     def fake_fetch(camera):
@@ -68,6 +69,7 @@ def test_publish_cycle_dry_run_dedupes(monkeypatch):
             "result": {
                 "cameraId": camera["id"],
                 "imageUrl": "https://stream.sob.m-dn.net/res/sb2-live.jpg",
+                "imageSha256": "abc",
             },
         }
 
@@ -75,8 +77,69 @@ def test_publish_cycle_dry_run_dedupes(monkeypatch):
 
     assert publisher.publish_cycle(dry_run=True) == 0
     assert publisher.publish_cycle(dry_run=True) == 0
-    assert "sprogo|abc" in publisher._seen
-    assert publisher.stats["skipped"] == 1
+    assert publisher._image_state["sprogo"]["imageSha256"] == "abc"
+    assert publisher._image_state["sprogo"]["unchangedPollCount"] == 1
+    assert publisher.stats["skipped"] == 0
+
+
+def test_freshness_status_tracks_changed_and_unchanged_images():
+    publisher = StorebaeltWebcamsPublisher.__new__(StorebaeltWebcamsPublisher)
+    publisher._image_state = {}
+    publisher._stale_seconds = 900
+    poll_time = datetime(2026, 6, 3, 12, 0, tzinfo=timezone.utc)
+    latest = {
+        "phenomenonTime": "2026-06-03T12:00:00Z",
+        "dedupeKey": "sprogo|abc",
+        "result": {"cameraId": "sprogo", "imageSha256": "abc"},
+    }
+
+    first = publisher._apply_freshness_status("sprogo", latest, poll_time)
+
+    assert first["result"]["imageChanged"] is True
+    assert first["result"]["stalenessStatus"] == "fresh"
+    assert first["result"]["unchangedPollCount"] == 0
+    assert first["result"]["firstSeenTime"] == "2026-06-03T12:00:00Z"
+    assert first["result"]["lastChangedTime"] == "2026-06-03T12:00:00Z"
+
+    second_latest = {
+        "phenomenonTime": "2026-06-03T12:05:00Z",
+        "dedupeKey": "sprogo|abc",
+        "result": {"cameraId": "sprogo", "imageSha256": "abc"},
+    }
+    second = publisher._apply_freshness_status("sprogo", second_latest, datetime(2026, 6, 3, 12, 5, tzinfo=timezone.utc))
+
+    assert second["result"]["imageChanged"] is False
+    assert second["result"]["stalenessStatus"] == "unchanged"
+    assert second["result"]["sourceAgeSeconds"] == 300
+    assert second["result"]["unchangedPollCount"] == 1
+    assert second["result"]["firstSeenTime"] == "2026-06-03T12:00:00Z"
+    assert second["result"]["lastChangedTime"] == "2026-06-03T12:00:00Z"
+
+
+def test_freshness_status_marks_stale_after_threshold():
+    publisher = StorebaeltWebcamsPublisher.__new__(StorebaeltWebcamsPublisher)
+    publisher._image_state = {
+        "sprogo": {
+            "imageSha256": "abc",
+            "firstSeenTime": "2026-06-03T12:00:00Z",
+            "lastChangedTime": "2026-06-03T12:00:00Z",
+            "lastSeenTime": "2026-06-03T12:10:00Z",
+            "unchangedPollCount": 2,
+        }
+    }
+    publisher._stale_seconds = 900
+    latest = {
+        "phenomenonTime": "2026-06-03T12:16:00Z",
+        "dedupeKey": "sprogo|abc",
+        "result": {"cameraId": "sprogo", "imageSha256": "abc"},
+    }
+
+    updated = publisher._apply_freshness_status("sprogo", latest, datetime(2026, 6, 3, 12, 16, tzinfo=timezone.utc))
+
+    assert updated["result"]["imageChanged"] is False
+    assert updated["result"]["stalenessStatus"] == "stale"
+    assert updated["result"]["sourceAgeSeconds"] == 960
+    assert updated["result"]["unchangedPollCount"] == 3
 
 
 def test_http_date_parser_normalizes_to_utc():
