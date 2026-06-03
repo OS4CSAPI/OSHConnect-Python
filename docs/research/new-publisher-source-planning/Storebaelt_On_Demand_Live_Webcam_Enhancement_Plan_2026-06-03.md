@@ -10,6 +10,29 @@ Improve the Storebaelt webcam user experience without permanently running heavie
 
 The baseline publisher should remain cheap and reliable: it continues publishing poster-image freshness/status observations at the normal cadence. A live/HLS mode should activate only when a client explicitly requests it, remain active only while that client renews a short lease, and shut itself off automatically when no users are watching.
 
+## Key Source Finding: Poster Is Not the Live Feed
+
+Follow-up validation showed that Storebaelt's poster JPEG and embedded live video can diverge materially. Explorer displayed a bright daylight still image while the Storebaelt embedded player showed a dark nighttime live view.
+
+This is expected once the player HTML is inspected:
+
+```html
+<video poster="//stream.sob.m-dn.net/res/sb1-live.jpg">
+   <source src="//stream.sob.m-dn.net/live/sb1/index.m3u8" type="application/vnd.apple.mpegurl">
+</video>
+```
+
+The poster JPEG is a separate still asset. It is not guaranteed to be a recent frame from the HLS stream. Therefore, Phase 2 should not attempt to make the poster pipeline look more "live" by presentation alone. It should explicitly add a live-video path alongside the poster status path.
+
+Known source surfaces:
+
+| Camera | Poster JPEG | Player page | HLS playlist |
+| --- | --- | --- | --- |
+| Storebaelt Tower | `https://stream.sob.m-dn.net/res/sb1-live.jpg` | `https://player.sob.m-dn.net/sb1-live.html` | `https://stream.sob.m-dn.net/live/sb1/index.m3u8` |
+| Sprogo | `https://stream.sob.m-dn.net/res/sb2-live.jpg` | `https://player.sob.m-dn.net/sb2-live.html` | `https://stream.sob.m-dn.net/live/sb2/index.m3u8` |
+
+The HLS URLs should still be rediscovered/validated during implementation rather than hard-coded forever, because the provider can change player internals.
+
 ## Design Principle
 
 Use a **lease with TTL**.
@@ -106,7 +129,39 @@ The live service discovers/validates the HLS URL and returns it to Explorer, but
 
 This can provide the most live-feeling experience, but it depends on CORS, token behavior, and player compatibility. It is useful to evaluate, but should not be the only plan.
 
+### Option D: Embedded player handoff as the immediate live path
+
+The Explorer can treat `playerUrl` as the first reliable live view and open it in a new tab, panel, or modal iframe where browser/provider policy allows.
+
+Benefits:
+
+- Fastest way to give users the actual live picture.
+- Avoids server-side HLS fetching, decoding, and frame caching.
+- Uses the provider's intended playback surface.
+
+Limitations:
+
+- Does not produce CSAPI observations for live frames.
+- May have iframe or cross-origin restrictions depending on player headers.
+- Provides less integrated telemetry than a live lease/status service.
+
+Recommendation: use this as the immediate UX fallback and as a baseline comparison while building the lease-based live service.
+
 ## Live Output Options
+
+### Immediate output: poster status plus player/HLS references
+
+Before adding frame extraction, the existing poster observation should carry enough reference metadata for clients to explain the source split:
+
+- `posterUrl`
+- `playerUrl`
+- `pageUrl`
+- optional future `hlsPlaylistUrl` after validation
+- `stalenessStatus` for the poster asset
+- `lastSeenTime` for latest poster check
+- `lastChangedTime` for latest poster image change
+
+This lets Explorer say, in effect: "The poster image is stale, but live video may still be available through the player."
 
 ### Preferred first output: live status plus frame-reference observations
 
@@ -214,9 +269,15 @@ Keep poster-source fields in the existing `storebaeltWebcamImage` output so long
 ### Phase 2: Live source reconnaissance
 
 - Inspect the Mediathand/Video.js player network behavior.
+- Confirm current HLS playlist paths:
+   - `https://stream.sob.m-dn.net/live/sb1/index.m3u8`
+   - `https://stream.sob.m-dn.net/live/sb2/index.m3u8`
 - Identify whether HLS playlist URLs are stable, tokenized, or browser-bound.
-- Determine whether browser direct playback is viable.
-- Measure bandwidth, latency, and cache behavior.
+- Determine whether browser direct playback is viable from Explorer's Cloudflare Pages origin.
+- Determine whether the provider player page can be embedded safely, or whether it must open in a separate tab.
+- Compare poster freshness against HLS segment freshness so the UI can avoid implying that a stale poster means stale live video.
+- Measure bandwidth, latency, cache behavior, and segment cadence.
+- Decide whether Phase 3 should expose only lease/live status first or also return a validated `hlsPlaylistUrl`.
 
 ### Phase 3: Live lease service prototype
 
@@ -224,6 +285,8 @@ Keep poster-source fields in the existing `storebaeltWebcamImage` output so long
 - Implement lease API and per-camera lease table.
 - Add bounded background worker activation per camera.
 - Publish live status observations with no frame extraction first.
+- During an active lease, validate the playlist URL and publish status such as `starting`, `live`, `playlist-unavailable`, or `blocked`.
+- Do not extract frames in this phase unless direct HLS/player handoff proves unusable.
 
 ### Phase 4: Frame or playlist integration
 
@@ -236,7 +299,9 @@ Keep poster-source fields in the existing `storebaeltWebcamImage` output so long
 - Add `Start Live` and live status states to Storebaelt webcam cards.
 - Renew leases while the card is open.
 - Stop renewing when the user leaves the card.
-- Render live frame/playlist when available, otherwise fall back to poster image and external player links.
+- Render live player/playlist when available, otherwise fall back to poster image and external player links.
+- Keep poster status visible even during live mode so users understand the still-image source separately from the live stream.
+- Use copy that distinguishes "poster image stale" from "live video unavailable."
 
 ### Phase 6: Operational hardening
 
@@ -255,6 +320,8 @@ Keep poster-source fields in the existing `storebaeltWebcamImage` output so long
 | Source terms discourage heavy polling | Keep poster mode as default; use low live cadence; only fetch while user-requested. |
 | Latest observation time is confused with frame capture time | Store poll/check time and frame/image change time separately. |
 | Explorer leaves leases active after navigation | TTL expiration is authoritative; client stop signal is only an optimization. |
+| Poster image appears stale while live video is current | Treat poster status and live HLS status as separate surfaces; keep player/HLS link visible. |
+| Hard-coded HLS URL changes upstream | Discover/validate from player page during Phase 2 or at live lease start. |
 
 ## Acceptance Criteria
 
@@ -263,8 +330,14 @@ Keep poster-source fields in the existing `storebaeltWebcamImage` output so long
 - Closing the card or stopping renewals deactivates the camera after the TTL.
 - Poster image and freshness status remain available even when live mode fails.
 - The UI clearly distinguishes last checked time, image/frame changed time, and live activation state.
+- The UI clearly distinguishes poster staleness from live video availability.
+- If the poster JPEG is stale but the HLS/player is live, the card does not imply that the camera itself is stale.
 - Oracle service logs show bounded, understandable live activation and idle behavior.
 
 ## Recommendation
 
-Proceed with Phase 1 first, because it fixes the current stale-image confusion regardless of HLS viability. Then prototype the lease service with live status only before adding frame extraction. This keeps the design honest, observable, and reversible while preserving a path to a much better webcam experience.
+Phase 1 is now the correct baseline: it makes poster freshness observable and prevents users from mistaking publisher silence for source silence.
+
+For Phase 2, prioritize direct validation of the HLS/player path before building frame extraction. The immediate user need is to reach the real live view when the poster is stale. Frame extraction should remain a later choice, used only if direct player/HLS handoff cannot provide an acceptable Explorer experience or if CSAPI-native live frame observations become a hard requirement.
+
+Then prototype the lease service with live status only before adding frame extraction. This keeps the design honest, observable, and reversible while preserving a path to a much better webcam experience.

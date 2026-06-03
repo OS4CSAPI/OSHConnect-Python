@@ -16,11 +16,11 @@ For each 5 minute publisher cycle, the runtime:
    - `https://stream.sob.m-dn.net/res/sb2-live.jpg`
 2. Computes a SHA-256 hash of the JPEG bytes.
 3. Uses the current poll time as `phenomenonTime`.
-4. Publishes an observation only if the image hash is new for that running service process.
+4. Publishes a heartbeat observation with freshness fields even when the image hash is unchanged.
 
-That final dedupe step explains why the Explorer UI can show a latest image observation that is 20+ minutes old. If Storebaelt's poster JPEG endpoint keeps serving the exact same image bytes, the publisher treats it as unchanged and skips publishing duplicates.
+The first implementation skipped duplicate hashes, but Phase 1 changed this behavior. The latest observation now represents the latest successful source check. The image-content freshness is represented separately by fields such as `imageChanged`, `lastSeenTime`, `lastChangedTime`, `sourceAgeSeconds`, and `stalenessStatus`.
 
-This is deliberate data hygiene. It avoids filling CSAPI with repeated observations that point to the same still image while implying that new image content was captured.
+This distinction matters: the observation can be recent while the poster image itself is old. A recent observation with `imageChanged: false` means the publisher is alive and checked the source, not that Storebaelt produced a new camera frame.
 
 ## Why It Works This Way
 
@@ -37,6 +37,49 @@ If the image is more than 20 minutes old, one of these is probably true:
 - The browser/player may show fresher HLS video, but the poster JPEG resource currently ingested by OSHConnect has not changed.
 
 This is not necessarily a publisher failure. It means the current source surface is stable but not guaranteed live.
+
+## Poster JPEG vs Live HLS Player Finding
+
+During follow-up validation, the Explorer card showed a bright daylight still image while the Storebaelt embedded player showed a dark nighttime live view. This was initially confusing because both surfaces appear to represent the same webcam.
+
+The cause is that Storebaelt exposes two different media surfaces:
+
+- Poster JPEG used by OSHConnect/Explorer:
+   - `https://stream.sob.m-dn.net/res/sb1-live.jpg`
+   - `https://stream.sob.m-dn.net/res/sb2-live.jpg`
+- Embedded player pages:
+   - `https://player.sob.m-dn.net/sb1-live.html`
+   - `https://player.sob.m-dn.net/sb2-live.html`
+
+The player page uses the JPEG only as the HTML video poster image. The actual live video source is HLS:
+
+```html
+<video poster="//stream.sob.m-dn.net/res/sb1-live.jpg">
+   <source src="//stream.sob.m-dn.net/live/sb1/index.m3u8" type="application/vnd.apple.mpegurl">
+</video>
+```
+
+Observed HLS playlist paths:
+
+- `https://stream.sob.m-dn.net/live/sb1/index.m3u8`
+- likely counterpart: `https://stream.sob.m-dn.net/live/sb2/index.m3u8`
+
+This means the poster JPEG can be stale while the HLS stream is current. In the observed case, the poster hash matched the published CSAPI observation exactly, so OSHConnect and Explorer were faithfully showing the current poster resource. The mismatch was upstream: Storebaelt's poster JPEG was not representative of the live video stream at that moment.
+
+### UX Implication
+
+The UI must not label the poster image as simply "live" without qualification. It should communicate that this is the latest checked poster image and separately expose the embedded/live player path. The current Explorer heartbeat strip is the right direction because it says things such as:
+
+```text
+Checked 11m ago; image unchanged for 20m
+STALE
+```
+
+That statement is about the poster JPEG, not the HLS stream. A user may still open the player and see current live video.
+
+### Engineering Implication
+
+The poster publisher should remain the durable baseline because it is cheap, stable, and CSAPI-observation-friendly. But it should be treated as an image-reference/status feed, not a video-live feed. Any UI or downstream client that wants current visual reality must use the HLS/player surface or a derived on-demand live snapshot.
 
 ## Optimization Options
 
@@ -71,7 +114,7 @@ Tradeoffs:
 - More observations are stored.
 - The UI must distinguish poll time from image-change time, otherwise latest observation time could be mistaken for latest camera frame time.
 
-For the current demo UX, heartbeat observations are likely the highest-value improvement.
+For the current demo UX, heartbeat observations are the highest-value baseline improvement and have been implemented for Storebaelt. The remaining UX challenge is making the poster-vs-HLS distinction obvious enough that users understand why a stale poster can coexist with a live player.
 
 ### 3. Keep Dedupe but Expose Service Health Separately
 
@@ -81,7 +124,7 @@ This preserves observation sparsity, but the Explorer is already observation-ori
 
 ### 4. Investigate HLS / Media Playlist Ingestion
 
-The embedded Mediathand/Video.js player likely uses live HLS streams. A deeper integration could ingest one of these instead:
+The embedded Mediathand/Video.js player uses live HLS streams. A deeper integration could ingest or expose one of these instead:
 
 - current HLS playlist URL
 - latest HLS segment URL
@@ -108,7 +151,7 @@ If implemented, live/HLS ingestion should be demand-driven. The publisher should
 
 For Storebaelt webcam deployments, the Explorer card should show:
 
-- latest poster image
+- latest poster image, explicitly treated as poster/still imagery rather than guaranteed live video
 - "last checked" time
 - "image changed" time
 - "unchanged for X min"
@@ -122,11 +165,11 @@ This makes the user experience honest and robust even when the poster endpoint s
 
 Recommended implementation order:
 
-1. Change the publisher to publish heartbeat/status observations every 5 minutes.
+1. Keep the publisher heartbeat/status observations every 5 minutes.
 2. Preserve `imageSha256`, `imageChanged`, `firstSeenTime`, `lastChangedTime`, and latest poll/check time in the result payload.
-3. Update the datastream schema to include those fields.
-4. Update Explorer's deployed-system card to display "last checked" separately from "image changed."
-5. Add a stale badge when the same image has persisted longer than a threshold.
+3. Keep Explorer's deployed-system card focused on the distinction between poster check time and image-change time.
+4. Label/link the embedded player as the actual live video path when present.
+5. Avoid implying the poster JPEG is live when `stalenessStatus` is `unchanged` or `stale`.
 6. Research HLS extraction only after the poster-source UX is truthful and useful.
 7. For live/HLS mode, follow the lease-based on-demand plan so heavier capture work activates only when a client requests it and shuts down when not in use.
 
