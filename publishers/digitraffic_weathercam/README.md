@@ -15,6 +15,11 @@ License and attribution reference:
 
 - https://www.digitraffic.fi/en/terms-of-service/
 
+Implementation note:
+
+- On the current OSH/CSAPI server, datastream `documentation` is not retained for this datastream type.
+- Canonical license and attribution metadata therefore live in the publisher procedure SensorML (`documents`/`contacts`), not on the datastream record itself.
+
 The publisher attaches one companion `digitrafficWeatherCamImage` datastream to each existing Digitraffic road-weather station system. This lets deployed-system cards render the camera imagery for the same station card.
 
 ## Bootstrap

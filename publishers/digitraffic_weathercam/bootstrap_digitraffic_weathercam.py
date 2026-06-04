@@ -106,12 +106,6 @@ def _datastream_schema(camera: dict) -> dict:
             f"at {camera['cameraStationName']}, attached to road-weather station "
             f"{camera['roadWeatherStationId']} ({camera['roadWeatherStationName']})."
         ),
-        "documentation": [
-            {"title": "Weathercam Station Latest Data", "href": _station_data_url(camera["cameraStationId"]), "rel": "service"},
-            {"title": "Latest JPEG", "href": _image_url(preset_id), "rel": "alternate"},
-            {"title": "Latest Thumbnail", "href": _thumb_url(preset_id), "rel": "preview"},
-            {"title": "Digitraffic Terms of Use", "href": DIGITRAFFIC_LICENSE, "rel": "license"},
-        ],
         "schema": {
             "obsFormat": "application/om+json",
             "resultSchema": {
