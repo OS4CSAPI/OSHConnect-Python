@@ -23,7 +23,7 @@ DEPLOY_GROUP_UID = "urn:os4csapi:deployment:digitraffic-weathercam-presets:v1"
 DS_OUTPUT_NAME = "digitrafficWeatherCamImage"
 
 DIGITRAFFIC_HOME = "https://www.digitraffic.fi/en/road-traffic/"
-DIGITRAFFIC_LICENSE = "https://www.digitraffic.fi/en/terms-of-use/"
+DIGITRAFFIC_LICENSE = "https://www.digitraffic.fi/en/terms-of-service/"
 DIGITRAFFIC_WEATHERCAM_STATIONS = "https://tie.digitraffic.fi/api/weathercam/v1/stations"
 DIGITRAFFIC_WEATHERCAM_IMAGE_BASE = "https://weathercam.digitraffic.fi"
 
@@ -119,10 +119,27 @@ def _datastream_schema(camera: dict) -> dict:
                 "fields": [
                     {"type": "Text", "name": "stationId", "label": "Road Weather Station ID", "definition": "http://sensorml.com/ont/swe/property/StationID"},
                     {"type": "Text", "name": "camId", "label": "Weather Camera Preset ID", "definition": "http://sensorml.com/ont/swe/property/SensorID"},
+                    {"type": "Text", "name": "cameraStationId", "label": "Camera Station ID", "definition": "http://sensorml.com/ont/swe/property/StationID"},
+                    {"type": "Text", "name": "cameraStationName", "label": "Camera Station Name", "definition": "http://purl.org/dc/elements/1.1/title"},
                     {"type": "Text", "name": "imageUrl", "label": "Full-Size Image URL", "definition": "http://www.opengis.net/def/property/OGC/0/ImageURL"},
                     {"type": "Text", "name": "thumbUrl", "label": "Thumbnail Image URL", "definition": "http://www.opengis.net/def/property/OGC/0/ImageURL"},
                     {"type": "Text", "name": "latestImageUrl", "label": "Latest Image URL", "definition": "http://www.opengis.net/def/property/OGC/0/ImageURL"},
                     {"type": "Text", "name": "mediaType", "label": "Media Type", "definition": "http://purl.org/dc/elements/1.1/format"},
+                    {"type": "Text", "name": "sourceType", "label": "Source Type", "definition": "http://sensorml.com/ont/swe/property/ProcessingType"},
+                    {"type": "Boolean", "name": "live", "label": "Live Source", "definition": "http://sensorml.com/ont/swe/property/Status"},
+                    {"type": "Count", "name": "httpStatus", "label": "HTTP Status", "definition": "http://sensorml.com/ont/swe/property/StatusCode"},
+                    {"type": "Text", "name": "etag", "label": "HTTP ETag", "definition": "http://sensorml.com/ont/swe/property/Identifier"},
+                    {"type": "Text", "name": "lastModified", "label": "HTTP Last-Modified", "definition": "http://sensorml.com/ont/swe/property/Timestamp"},
+                    {"type": "Text", "name": "sourceLastModifiedTime", "label": "Parsed Source Last-Modified Time", "definition": "http://sensorml.com/ont/swe/property/Timestamp"},
+                    {"type": "Text", "name": "contentLength", "label": "Content Length", "definition": "http://sensorml.com/ont/swe/property/Size"},
+                    {"type": "Text", "name": "imageToken", "label": "Image Change Token", "definition": "http://sensorml.com/ont/swe/property/Identifier"},
+                    {"type": "Boolean", "name": "imageChanged", "label": "Image Changed", "definition": "http://sensorml.com/ont/swe/property/Status"},
+                    {"type": "Text", "name": "firstSeenTime", "label": "Current Image First Seen Time", "definition": "http://sensorml.com/ont/swe/property/Timestamp"},
+                    {"type": "Text", "name": "lastSeenTime", "label": "Source Last Checked Time", "definition": "http://sensorml.com/ont/swe/property/Timestamp"},
+                    {"type": "Text", "name": "lastChangedTime", "label": "Image Last Changed Time", "definition": "http://sensorml.com/ont/swe/property/Timestamp"},
+                    {"type": "Count", "name": "unchangedPollCount", "label": "Unchanged Poll Count", "definition": "http://sensorml.com/ont/swe/property/Count"},
+                    {"type": "Text", "name": "stalenessStatus", "label": "Staleness Status", "definition": "http://sensorml.com/ont/swe/property/Status"},
+                    {"type": "Count", "name": "sourceAgeSeconds", "label": "Seconds Since Image Changed", "definition": "http://sensorml.com/ont/swe/property/ElapsedTime"},
                     {"type": "Text", "name": "sourceUrl", "label": "Source URL", "definition": "http://sensorml.com/ont/swe/property/ReferenceURL"},
                 ],
             },
