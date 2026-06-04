@@ -11,6 +11,7 @@ from publishers.bootstrap_helpers import (
     get_config, _auth_header,
     ensure_procedure, ensure_datastream, ensure_deployment,
     find_by_uid, clean_resource, add_bootstrap_args, print_summary,
+    api_get, api_delete,
 )
 
 
@@ -174,6 +175,33 @@ def _deploy_camera(camera: dict, system_server_id: str, base_url: str) -> dict:
 
 
 def clean_all(base_url: str, auth: str, *, dry_run: bool, stats: dict):
+    # Remove companion datastreams first so schema changes can be reapplied on bootstrap.
+    seen_systems: set[str] = set()
+    for camera in _load_cameras():
+        system_uid = _system_uid(camera["roadWeatherStationId"])
+        if system_uid in seen_systems:
+            continue
+        seen_systems.add(system_uid)
+        sys_id = find_by_uid(base_url, auth, "systems", system_uid, no_cache=True)
+        if not sys_id:
+            continue
+        ds_list = api_get(base_url, f"systems/{sys_id}/datastreams", auth) or {}
+        for ds in ds_list.get("items", []):
+            if ds.get("outputName") != DS_OUTPUT_NAME:
+                continue
+            ds_id = ds.get("id")
+            if not ds_id:
+                continue
+            if dry_run:
+                print(f"  [DRY] Would delete datastreams/{ds_id} ({DS_OUTPUT_NAME}) on system {sys_id}")
+                stats.setdefault("dry_deleted", 0)
+                stats["dry_deleted"] += 1
+            else:
+                if api_delete(base_url, f"datastreams/{ds_id}", auth):
+                    print(f"  DELETE datastreams/{ds_id} ({DS_OUTPUT_NAME}) on system {sys_id}")
+                    stats.setdefault("deleted", 0)
+                    stats["deleted"] += 1
+
     for camera in _load_cameras():
         clean_resource(base_url, auth, "deployments", _deploy_uid(camera), dry_run=dry_run, stats=stats, cascade=True)
     clean_resource(base_url, auth, "deployments", DEPLOY_GROUP_UID, dry_run=dry_run, stats=stats, cascade=True)
