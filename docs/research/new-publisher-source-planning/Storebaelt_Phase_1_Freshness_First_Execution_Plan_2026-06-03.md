@@ -1,5 +1,7 @@
 # Storebaelt Phase 1 Freshness-First Execution Plan
 
+> **Retired 2026-06-04:** Phase 1 was implemented and then the Storebaelt source was retired after the provider replied that the webcam service is being shut down and cannot be used as an OGC CSAPI demonstration case. See `Storebaelt_Source_Retirement_Disposition_2026-06-04.md`.
+
 **Date:** 2026-06-03  
 **Scope:** Recommended next implementation step for the Storebaelt webcam publisher and Explorer UI.  
 **Decision:** Do the poster/freshness hardening first, and keep it separate from the later on-demand live/HLS webcam enhancement.

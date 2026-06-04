@@ -1,5 +1,7 @@
 # Storebaelt Webcam Poster Integration Status and UX Options
 
+> **Retired 2026-06-04:** The integration was removed from the public OSH demo after Storebaelt/Sund & Baelt replied that the webcam service is being shut down and cannot be used as an OGC CSAPI demonstration case. See `Storebaelt_Source_Retirement_Disposition_2026-06-04.md`.
+
 **Date:** 2026-06-03  
 **Scope:** Storebaelt public traffic/weather webcam publisher behavior, image freshness semantics, and UI/UX optimization options.
 

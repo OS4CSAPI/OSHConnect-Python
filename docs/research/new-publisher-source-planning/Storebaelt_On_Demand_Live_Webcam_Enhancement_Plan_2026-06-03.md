@@ -1,5 +1,7 @@
 # Storebaelt On-Demand Live Webcam Enhancement Plan
 
+> **Retired 2026-06-04:** Do not proceed with this Storebaelt-specific plan. Storebaelt/Sund & Baelt replied to the permission request that the webcam service is being shut down and cannot be used as an OGC CSAPI demonstration case. See `Storebaelt_Source_Retirement_Disposition_2026-06-04.md`.
+
 **Date:** 2026-06-03  
 **Scope:** Demand-driven live/HLS enhancement for the Storebaelt webcam publisher and Explorer UI.  
 **Related background:**

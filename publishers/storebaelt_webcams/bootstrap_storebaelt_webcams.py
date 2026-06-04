@@ -31,6 +31,20 @@ DS_OUTPUT_NAME = "storebaeltWebcamImage"
 STOREBAELT_HOME = "https://storebaelt.dk/"
 STOREBAELT_WEBCAMS_PAGE = "https://storebaelt.dk/trafik-vejr/webcams/"
 STOREBAELT_OPERATOR = "A/S Storebaelt"
+ARCHIVE_OVERRIDE_ENV = "STOREBAELT_WEBCAMS_ALLOW_ARCHIVED"
+ARCHIVE_MESSAGE = (
+    "Storebaelt webcam resources are archived and must not be bootstrapped as an active public source. "
+    "The provider replied on 2026-06-04 that the service is being shut down and cannot be used "
+    "as an OGC CSAPI demonstration case. Clean-only teardown remains allowed; set "
+    "STOREBAELT_WEBCAMS_ALLOW_ARCHIVED=1 only for controlled historical testing."
+)
+
+
+def _require_archive_override_for_bootstrap(clean_only: bool):
+    if clean_only:
+        return
+    if os.environ.get(ARCHIVE_OVERRIDE_ENV) != "1":
+        raise SystemExit(f"ERROR: {ARCHIVE_MESSAGE}")
 
 
 def _load_cameras() -> list[dict]:
@@ -262,6 +276,7 @@ def clean_all(base_url: str, auth: str, *, dry_run: bool, stats: dict):
 
 
 def bootstrap(*, clean: bool = False, clean_only: bool = False, dry_run: bool = False, force_sml: bool = False):
+    _require_archive_override_for_bootstrap(clean_only)
     config = get_config()
     base_url = config["base_url"]
     auth = _auth_header(config["user"], config["password"])

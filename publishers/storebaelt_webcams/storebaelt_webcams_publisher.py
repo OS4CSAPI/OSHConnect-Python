@@ -22,6 +22,18 @@ from publishers.bootstrap_helpers import api_get, find_by_uid
 USER_AGENT = "OS4CSAPI Storebaelt Webcams Publisher/1.0"
 DS_OUTPUT_NAME = "storebaeltWebcamImage"
 DEFAULT_STALE_SECONDS = 15 * 60
+ARCHIVE_OVERRIDE_ENV = "STOREBAELT_WEBCAMS_ALLOW_ARCHIVED"
+ARCHIVE_MESSAGE = (
+    "Storebaelt webcams publisher is archived and must not be run as an active public source. "
+    "The provider replied on 2026-06-04 that the service is being shut down and cannot be used "
+    "as an OGC CSAPI demonstration case. Set STOREBAELT_WEBCAMS_ALLOW_ARCHIVED=1 only for "
+    "controlled historical testing."
+)
+
+
+def _require_archive_override():
+    if os.environ.get(ARCHIVE_OVERRIDE_ENV) != "1":
+        raise SystemExit(f"ERROR: {ARCHIVE_MESSAGE}")
 
 
 def _load_cameras() -> list[dict]:
@@ -367,6 +379,7 @@ def main():
     parser.add_argument("--once", action="store_true", help="Publish one cycle then exit")
     parser.add_argument("--cameras", type=str, default=None, help="Comma-separated camera IDs to publish")
     args = parser.parse_args()
+    _require_archive_override()
     camera_filter = args.cameras.split(",") if args.cameras else None
     StorebaeltWebcamsPublisher(camera_filter=camera_filter).run(interval=args.interval, dry_run=args.dry_run, once=args.once)
 

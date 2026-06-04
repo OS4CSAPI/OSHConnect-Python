@@ -1,5 +1,7 @@
 # Storebaelt Phase 2A Live Playback Reconnaissance
 
+> **Retired 2026-06-04:** Keep this as historical reconnaissance only. Storebaelt/Sund & Baelt replied that the webcam service is being shut down and cannot be used as an OGC CSAPI demonstration case. See `Storebaelt_Source_Retirement_Disposition_2026-06-04.md`.
+
 **Date:** 2026-06-03  
 **Scope:** Validate the cheapest live-video paths before building backend HLS lease/frame extraction services.
 
